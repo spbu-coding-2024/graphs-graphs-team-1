@@ -18,7 +18,7 @@ abstract class AbstractGraph <K, V, W> {
             addVertex(first)
         if (second !in _vertices)
             addVertex(second)
-        val edge= Edge<K, V, W>(first, second,weight,status)
+        val edge= Edge<K, V, W>(first, second,status, weight)
         _edges[first]?.add(edge) ?: throw IllegalStateException()
         if (edge.status==BOTHDIRECTION)
             _edges[edge.link.second]?.add(edge) ?: throw IllegalStateException()

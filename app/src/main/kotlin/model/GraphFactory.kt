@@ -5,6 +5,6 @@ class GraphFactory {
         var graph =constructor.invoke()
         return graph
     }
-    fun <T>  fronSQLite(): T? {TODO()}
-    fun <T> fromNeo4j(): T? {TODO()}
+    fun <T>  fromSQLite(constructor: ()->T): T? {TODO()}
+    fun <T> fromNeo4j(constructor: ()->T): T? {TODO()}
 }
