@@ -3,9 +3,6 @@ package model.graphs
 
 import model.Edge
 import model.Vertex
-import java.util.Vector
-import model.Edge.Companion.Status.*
-import kotlin.reflect.KClass
 
 
 class DirectedGraph<K, V, W>() : DirWeightGraph<K, V, W>() {
