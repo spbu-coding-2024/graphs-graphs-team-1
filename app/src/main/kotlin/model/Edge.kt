@@ -1,6 +1,6 @@
 package model
 
-open class Edge<K, V, W>(start: Vertex<K, V>, end: Vertex<K, V>, var status: Status, var weight: W?=null) {
+open class Edge<K, V>(start: Vertex<K, V>, end: Vertex<K, V>, var status: Status, var weight: Int) {
     val link= Pair(start, end)
     companion object {
         enum class Status {
