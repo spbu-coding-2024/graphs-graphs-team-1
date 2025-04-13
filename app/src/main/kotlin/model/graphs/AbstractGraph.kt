@@ -1,7 +1,6 @@
 package model.graphs
 
 import model.Edge
-import model.Edge.Companion.Status.BOTHDIRECTION
 import model.Vertex
 import java.util.Vector
 
@@ -16,22 +15,16 @@ abstract class AbstractGraph <K, V> {
         get()=_edges
 
 
-    open fun addEdge(first: Vertex<K, V>, second: Vertex<K, V>, weight: Int,
-                     status: Edge.Companion.Status=BOTHDIRECTION) {
+    open fun addEdge(first: Vertex<K, V>, second: Vertex<K, V>, weight: Int) {
         if (!_vertices.map { it===first }.contains(true))
             addVertex(first)
         if (!_vertices.map { it===second }.contains(true))
             addVertex(second)
-        var edge= Edge<K, V>(first, second,status, weight)
+        var edge= Edge<K, V>(first, second, weight)
         _edges[edge.link.first]?.add(edge) ?: throw IllegalStateException()
-        if (edge.status==BOTHDIRECTION) {
-            edge= Edge<K, V>(second, first,status, weight)
-            _edges[edge.link.second]?.add(edge) ?: throw IllegalStateException()
-        }
     }
 
-    open fun deleteEdge(first: Vertex<K, V>, second: Vertex<K, V>,
-                        status: Edge.Companion.Status=BOTHDIRECTION) {
+    open fun deleteEdge(first: Vertex<K, V>, second: Vertex<K, V>) {
         if (!_vertices.map { it===first }.contains(true) || !_vertices.map { it===second }.contains(true))
             throw IllegalStateException()
         var current: Edge<K, V>?=null
@@ -40,14 +33,6 @@ abstract class AbstractGraph <K, V> {
             _edges[first]?.remove(current)
         else
             throw IllegalStateException()
-        if (status==BOTHDIRECTION) {
-            var current: Edge<K, V>?=null
-            _edges[first]?.forEach { if (it.link.second==second) current=it }
-            if (current!=null)
-                _edges[first]?.remove(current)
-            else
-                throw IllegalStateException()
-        }
     }
 
     fun addVertex(vertex: Vertex<K, V>) {
@@ -61,8 +46,7 @@ abstract class AbstractGraph <K, V> {
         if (!_vertices.map { it===vertex }.contains(true))
             return
         _edges[vertex]?.forEach {
-            if (it.status==BOTHDIRECTION)
-                _edges[it.link.second]?.remove(it)
+            _edges[it.link.second]?.remove(it)
         }
         _edges.remove(vertex)
         vertices.remove(vertex)
