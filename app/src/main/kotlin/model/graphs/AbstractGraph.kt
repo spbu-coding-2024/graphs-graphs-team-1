@@ -35,9 +35,7 @@ abstract class AbstractGraph <K, V> {
             throw IllegalStateException()
     }
 
-    fun addVertex(vertex: Vertex<K, V>) {
-        if (_vertices.map { it===vertex }.contains(true))
-            return
+    internal fun addVertex(vertex: Vertex<K, V>) {
         vertices.add(vertex)
         _edges[vertex]= Vector()
     }

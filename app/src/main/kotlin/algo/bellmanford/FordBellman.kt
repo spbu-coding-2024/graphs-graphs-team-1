@@ -1,7 +1,5 @@
 package algo.bellmanford
 
-import androidx.compose.material.Icon
-
 import model.Vertex
 import model.graphs.DirWeightGraph
 import java.util.Vector
@@ -36,29 +34,31 @@ class FordBellman {
             }
             var cycle:Vector<Vertex<K, V>>?=null
             if (cycleFlag!=null) {
-                var temp=paths[cycleFlag]
+                var temp=cycleFlag
+                for(i in 1..graph.vertices.size)
+                    temp=paths[temp]
+                var cur=temp
                 cycle= Vector<Vertex<K, V>>()
-                cycle.addLast(cycleFlag)
-                while (temp!=cycleFlag) {
-                    cycle.addLast(temp)
-                    temp = paths[temp]
-                }
+                do {
+                    cycle.addLast(cur)
+                    cur=paths[cur]
+                } while (cur!=temp)
+
             }
-            //lengths.map { print("${it.value} ") }
-            return Triple(lengths, paths, cycle)
+           return Triple(lengths, paths, cycle)
         }
 
-        fun <K, V> apply(graph: DirWeightGraph<K, V>, start: Vertex<K, V>, end: Vertex<K, V>): Pair<Int, Vector<Pair<Boolean, Vertex<K, V>>>> {
-            var path= Vector<Pair<Boolean, Vertex<K, V>>>()
-            var current=start
+        fun <K, V> apply(graph: DirWeightGraph<K, V>, start: Vertex<K, V>, end: Vertex<K, V>): Pair<Int, Vector<Vertex<K, V>>> {
+            var path= Vector<Vertex<K, V>>()
             var (lengths, paths, cycle)=apply(graph, start)
-            /*while (current!=end) {
-                path.addLast(Pair(cycle?.map { it === current }?.contains(true) == true, current))
-                current=paths[current]!!
-            }*/
-            path.addLast(Pair(cycle?.map { it === current }?.contains(true) == true, current))
-            //обработка для пользовательского ввода
-            return Pair(lengths[end]!!, path)
+            var cur=end
+            do {
+                path.addLast(cur)
+                cur=paths[cur] ?: throw IllegalStateException()
+            } while (cur!=start)
+            path.addLast(start)
+            path.reverse()
+            return Pair(lengths[end] ?: throw IllegalArgumentException(), path)
         }
     }
 }

@@ -1,72 +1,80 @@
 package algorithms
 
-
 import algo.bellmanford.FordBellman
 import model.Vertex
 import model.graphs.DirWeightGraph
-import org.junit.jupiter.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.Vector
 import java.util.stream.Stream
-import kotlin.math.min
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
 
+const val AMOUNT=200
+const val LOWEST=-500
+const val HIGHEST=500
+
 class FordBellmanTest {
 
     companion object {
-
         @JvmStatic
         fun graphGenerator(): Stream<Arguments> {
             return Stream.generate {
                 val graph = DirWeightGraph<Int, Int>()
-                var branchAmount = Random.nextInt(2, 10)
-                val start = Vertex(Random.nextInt(), Random.nextInt())
-                val end = Vertex(Random.nextInt(), Random.nextInt())
+                var branchAmount =Random.nextInt(2, 5)
+                val start = Vertex(1, 10)
+                val end = Vertex(10, 10)
                 val branches = Array<Vector<Vertex<Int, Int>>>(branchAmount) { Vector() }
                 var answer = Int.MAX_VALUE
+                var answerBranch: Vector<Vertex<Int, Int>>?=null
                 for (branch in branches) {
                     var current = start
                     var sum = Random.nextInt(5000, 10000)
                     var curSum = 0
-                    branch.add(start)
-                    while (curSum < sum) {
+                    var counter=0
+                    while (curSum < sum && counter<AMOUNT) {
                         var new = Vertex(Random.nextInt(), Random.nextInt())
-                        var weight = Random.nextInt(10, 500)
+                        var weight = Random.nextInt(LOWEST, HIGHEST)
                         graph.addEdge(current, new, weight)
                         branch.add(new)
                         current = new
                         curSum += weight
+                        counter++
                     }
-                    var weight = Random.nextInt(10, 50)
+                    var weight = Random.nextInt(LOWEST, HIGHEST)
                     graph.addEdge(current, end, weight)
-                    branch.add(end)
                     curSum += weight
-                    answer = min(answer, curSum)
+                    if (answer>curSum) {
+                        answer = curSum
+                        answerBranch=branch
+                    }
                 }
-
                 for (i in 0..<branchAmount / 2) {
                     for (elem in branches[i]) {
-                        repeat(Random.nextInt(0, branches[branchAmount - 1 - i].size)) {
-                            graph.addEdge(elem, branches[branchAmount - i - 1].random(), answer + 1)
+                        repeat(Random.nextInt(0, branches[branchAmount - 1 - i].size/2)) {
+                            graph.addEdge(elem, branches[branchAmount - i - 1].random(),
+                                HIGHEST*graph.vertices.size + 1)
                         }
                     }
                 }
-                //println(graph.vertices.size)
-                Arguments.of(graph.vertices.size,graph, answer, start, end)
-            }.limit(1000)
+                answerBranch?.addFirst(start)
+                answerBranch?.addLast(end)
+                Arguments.of(graph.edges.map { it.value.count() }.sum(), graph, answer, start, end, answerBranch)
+            }.limit(10)
         }
     }
 
 
-    @ParameterizedTest(name = "test for node of {0}")
+    @ParameterizedTest(name = "test for graph with {0} edges")
     @MethodSource("graphGenerator")
     fun `check for positive weights`(nodes: Int, graph: DirWeightGraph<Int, Int>, answer: Int,
-                                     start: Vertex<Int, Int>, end: Vertex<Int, Int> ) {
+                                     start: Vertex<Int, Int>, end: Vertex<Int, Int>, branch: Vector<Vertex<Int, Int>> ) {
         var (length, path) = FordBellman.apply(graph, start, end)
         assertEquals(answer, length)
+        assertEquals(path.size,branch.size)
+        for (i in 0..<path.size)
+            assertEquals(path[i], branch[i])
     }
 }
