@@ -55,9 +55,9 @@ class FordBellmanTest {
                         }
                     }
                 }
-                println(graph.vertices.size)
+                //println(graph.vertices.size)
                 Arguments.of(graph.vertices.size,graph, answer, start, end)
-            }.limit(100)
+            }.limit(1000)
         }
     }
 

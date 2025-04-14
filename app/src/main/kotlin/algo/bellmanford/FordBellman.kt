@@ -25,8 +25,8 @@ class FordBellman {
                     for (edge in elemEdges.value) {
                         if (lengths[edge.link.first]== Int.MAX_VALUE)
                             continue
-                        if ((lengths[edge.link.second] ?: continue) >
-                            (lengths[edge.link.first]?.plus(edge.weight) ?: continue)) {
+                        if ((lengths[edge.link.second]!!) >
+                            (lengths[edge.link.first]?.plus(edge.weight)!!)) {
                             lengths[edge.link.second]= lengths[edge.link.first]?.plus(edge.weight) ?: throw IllegalStateException()
                             paths[edge.link.second]=edge.link.first
                             cycleFlag=edge.link.second
@@ -58,7 +58,7 @@ class FordBellman {
             }*/
             path.addLast(Pair(cycle?.map { it === current }?.contains(true) == true, current))
             //обработка для пользовательского ввода
-            return Pair(lengths[end] ?: 0, path)
+            return Pair(lengths[end]!!, path)
         }
     }
 }
