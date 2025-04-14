@@ -27,13 +27,14 @@ class GraphTest {
         val constructors=arrayOf(DirectedGraph::class, DirWeightGraph::class, UndirWeightGraph::class, UndirectedGraph::class)
         @JvmStatic fun generateVertices(): Stream<Arguments> {
             return Stream.generate {
-                val numb=Random.nextInt(0,1000)
+                val numb=Random.nextInt(1,1000)
                 val array= HashMap< Int, Vertex<Int, Int>?>(numb)
                 for (i in 0..<numb)
                     array[i]= Vertex(Random.nextInt(), Random.nextInt())
                 Arguments.of(numb, array,constructors.random())
             }.limit(1000)
         }
+
     }
 
     @ParameterizedTest(name = "{0} vertices for {2}")
@@ -45,7 +46,7 @@ class GraphTest {
         assertEquals(amount, graph?.vertices?.size)
     }
 
-    @ParameterizedTest(name = "{0} edges for {2}")
+    @ParameterizedTest(name = "{0} vertices to make edges for {2}")
     @MethodSource("generateVertices")
     fun `test edge insertion`(amount: Int, map: HashMap<Int, Vertex<Int, Int>>, kClass: KClass<AbstractGraph<Int, Int>>) {
         var graph= kClass.primaryConstructor?.call()
@@ -64,10 +65,22 @@ class GraphTest {
 
         for (i in 0..<array.size)
             assertEquals(array[i], graph?.edges?.get(map[i])?.size ?: 0)
-
-        /*when(kClass.simpleName) {
-            "UndirectedGraph", "UndirWeightGraph" -> graph?.edges?.values?.forEach { it.forEach { assertEquals(0, it.weight) } }
-        }*/
-
     }
+
+    @ParameterizedTest(name = "{0} vertices to delete some from {2}")
+    @MethodSource("generateVertices")
+    fun `test vertex deletion`(amount: Int, map: HashMap<Int, Vertex<Int, Int>>, kClass: KClass<AbstractGraph<Int, Int>>) {
+        var graph=kClass.primaryConstructor?.call()
+        for (i in map.values)
+            graph?.addVertex(i)
+        var expected=Random.nextInt(0, amount)
+        repeat(expected) {
+            var cur=map.keys.random()
+            graph?.deleteVertex(map[cur]!!)
+            assert(graph?.edges?.get(map[cur])==null)
+            map.remove(cur)
+        }
+        assertEquals(amount-expected, graph?.vertices?.size ?: 0)
+    }
+
 }
