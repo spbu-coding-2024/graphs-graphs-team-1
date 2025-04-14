@@ -15,7 +15,7 @@ import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.full.*
 import kotlin.test.assertEquals
-
+import algorithms.FordBellmanTest
 
 class GraphTest {
 
@@ -32,8 +32,10 @@ class GraphTest {
                 array[second]++
             array[first]++
         }
+
         return array
     }
+
 
     companion object {
         val constructors=arrayOf(DirectedGraph::class, DirWeightGraph::class, UndirWeightGraph::class, UndirectedGraph::class)
