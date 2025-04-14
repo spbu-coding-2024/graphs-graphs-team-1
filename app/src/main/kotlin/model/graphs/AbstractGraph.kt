@@ -16,9 +16,9 @@ abstract class AbstractGraph <K, V> {
 
 
     open fun addEdge(first: Vertex<K, V>, second: Vertex<K, V>, weight: Int) {
-        if (!_vertices.map { it===first }.contains(true))
+        if (first !in _vertices)
             addVertex(first)
-        if (!_vertices.map { it===second }.contains(true))
+        if (first !in _vertices)
             addVertex(second)
         var edge= Edge<K, V>(first, second, weight)
         _edges[edge.link.first]?.add(edge) ?: throw IllegalStateException()

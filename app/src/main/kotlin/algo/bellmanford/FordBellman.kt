@@ -13,8 +13,10 @@ class FordBellman {
                 Map<Vertex<K, V>, Vertex<K, V>?>, Vector<Vertex<K, V>>?> {
             var lengths=mutableMapOf<Vertex<K, V>, Int>()
             var paths= mutableMapOf<Vertex<K, V>, Vertex<K, V>?>()
-            for (i in graph.vertices)
-                lengths[i]= Int.MAX_VALUE
+            for (i in graph.vertices) {
+                lengths[i] = Int.MAX_VALUE
+                paths[i]=i
+            }
             lengths[start]=0
             var cycleFlag: Vertex<K, V>?=null
             for (iter in 1..graph.vertices.size) {
@@ -42,6 +44,7 @@ class FordBellman {
                     temp = paths[temp]
                 }
             }
+            //lengths.map { print("${it.value} ") }
             return Triple(lengths, paths, cycle)
         }
 
@@ -49,13 +52,14 @@ class FordBellman {
             var path= Vector<Pair<Boolean, Vertex<K, V>>>()
             var current=start
             var (lengths, paths, cycle)=apply(graph, start)
-            while (current!=end) {
+            /*while (current!=end) {
                 path.addLast(Pair(cycle?.map { it === current }?.contains(true) == true, current))
-                current=paths[current] ?: throw IllegalStateException()
-            }
+                current=paths[current]!!
+            }*/
             path.addLast(Pair(cycle?.map { it === current }?.contains(true) == true, current))
             //обработка для пользовательского ввода
-            return Pair(lengths[end] ?: throw IllegalArgumentException(), path)
+            return Pair(lengths[end] ?: 0, path)
         }
     }
 }
+
