@@ -2,9 +2,8 @@ package algo.dijkstra
 
 import model.Vertex
 import model.graphs.DirWeightGraph
-import model.graphs.DirectedGraph
-import org.gradle.internal.impldep.org.codehaus.plexus.util.dag.Vertex
 import java.util.PriorityQueue
+
 
 class Dijkstra {
 
@@ -23,10 +22,24 @@ class Dijkstra {
             }
             distances[start] = 0
 
-            val queue = PriorityQueue<Vertex<K, V>>(compareBy { distances.getValue(it) }
+            val queue = PriorityQueue<Vertex<K, V>>(compareBy { distances.getValue(it) })
             queue.add(start)
 
-
+            while (queue.isNotEmpty()) {
+                val current = queue.poll()
+                if (current in visited) continue
+                visited.add(current)
+                graph.edges[current]?.forEach { edge ->
+                    val neighbor = edge.link.second
+                    val newDistance = distances.getValue(current) + edge.weight
+                    if (newDistance < distances.getValue(neighbor)) {
+                        distances[neighbor] = newDistance
+                        predecessors[neighbor] = current
+                        queue.add(neighbor)
+                    }
+                }
+            }
+            return Triple(distances, predecessors, visited)
         }
     }
 }
