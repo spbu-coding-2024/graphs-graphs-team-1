@@ -41,5 +41,19 @@ class Dijkstra {
             }
             return Triple(distances, predecessors, visited)
         }
+
+        fun <K, V> buildShortestPath(graph: DirWeightGraph<K, V>, start: Vertex<K, V>,
+                                     end: Vertex<K, V>): Pair<Int, List<Vertex<K, V>>> {
+            val path = mutableListOf<Vertex<K, V>>()
+            val (distances, predecessors, _) = apply(graph, start)
+            var current: Vertex<K, V>? = end
+            while (current != start && current != null) {
+                path.add(current)
+                current = predecessors[current]
+            }
+            path.add(start)
+            path.reverse()
+            return distances.getValue(end) to path
+        }
     }
 }
