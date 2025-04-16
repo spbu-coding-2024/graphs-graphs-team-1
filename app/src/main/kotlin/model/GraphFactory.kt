@@ -1,8 +1,6 @@
 package model
 
 import model.graphs.AbstractGraph
-import model.graphs.DirWeightGraph
-import model.graphs.UndirectedGraph
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 
@@ -35,9 +33,4 @@ object GraphFactory {
     }
     fun <K, V>  fromSQLite(constructor: ()->AbstractGraph<K, V>): AbstractGraph<K, V> {TODO()}
     fun <K, V> fromJSON(constructor: ()->AbstractGraph<K, V>): AbstractGraph<K, V> {TODO()}
-}
-
-fun main() {
-    var t =GraphFactory.fromNeo4j<Int, Int>(::UndirectedGraph, "bolt://localhost:7687", "neo4j", "VesperLynd")
-    t.edges.map {it.value.map { println("${it.link.first.key} ${it.link.second.key} ${it.weight}") } }
 }

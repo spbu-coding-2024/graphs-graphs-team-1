@@ -27,6 +27,8 @@ dependencies {
     testImplementation(kotlin("test"))
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.20")
     implementation("org.neo4j.driver:neo4j-java-driver:5.6.0")
+    testImplementation("io.mockk:mockk:1.13.10")
+    implementation(kotlin("stdlib"))
 }
 
 tasks.test {
