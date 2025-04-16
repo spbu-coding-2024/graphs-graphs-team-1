@@ -25,7 +25,7 @@ class GraphTest {
         for (i in 1..t) {
             var first=map.keys.random()
             var second=map.keys.random()
-            if (first==second)
+            if (first==second || graph.edges[map[first]]?.map { it.link.second===map[second] }?.contains(true)==true)
                 continue
             graph.addEdge(map[first] ?: continue, map[second] ?: continue, Random.nextInt())
             if (graph::class.simpleName in arrayOf("UndirectedGraph", "UndirWeightGraph"))
