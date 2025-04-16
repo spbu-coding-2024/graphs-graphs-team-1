@@ -1,6 +1,7 @@
 package algorithms
 
 import algo.bellmanford.FordBellman
+import androidx.compose.material.Icon
 import model.Vertex
 import model.graphs.DirWeightGraph
 import org.junit.jupiter.params.ParameterizedTest
@@ -64,6 +65,35 @@ class FordBellmanTest {
                 Arguments.of(graph.edges.map { it.value.count() }.sum(), graph, answer, start, end, answerBranch)
             }.limit(10)
         }
+
+        @JvmStatic fun negativeCyclesGenerator(): Stream<Arguments> {
+            return Stream.generate {
+                val graph = DirWeightGraph<Int, Int>()
+                val start = Vertex(Random.nextInt(1, Int.MAX_VALUE), Random.nextInt(1, Int.MAX_VALUE))
+                val end = Vertex(Random.nextInt(1, Int.MAX_VALUE), Random.nextInt(1, Int.MAX_VALUE))
+                val cycleStart = Vertex(Random.nextInt(1, Int.MAX_VALUE),Random.nextInt(1, Int.MAX_VALUE))
+                var current = cycleStart
+                var counter = 0
+                val answer= Vector<Vertex<Int, Int>>()
+                graph.addEdge(start, cycleStart, 45)
+                var sum = 45
+                while (counter < 100) {
+                    answer.addLast(current)
+                    var new = Vertex(Random.nextInt(11, 50), Random.nextInt())
+                    var weight = Random.nextInt(-1000, -1)
+                    graph.addEdge(current, new, weight)
+                    current = new
+                    sum += weight
+                    counter++
+                }
+                answer.addLast(current)
+                var weight = Random.nextInt(-1000, -1)
+                graph.addEdge(current, cycleStart, weight)
+                graph.addEdge(cycleStart, end, Random.nextInt(1, Int.MAX_VALUE))
+                sum += weight + 96
+                Arguments.of(graph.edges.map { it.value.size }.sum(), graph, start, end, cycleStart, answer)
+            }.limit(500)
+        }
     }
 
 
@@ -71,10 +101,22 @@ class FordBellmanTest {
     @MethodSource("graphGenerator")
     fun `check for positive weights`(nodes: Int, graph: DirWeightGraph<Int, Int>, answer: Int,
                                      start: Vertex<Int, Int>, end: Vertex<Int, Int>, branch: Vector<Vertex<Int, Int>> ) {
-        var (length, path) = FordBellman.apply(graph, start, end)
+        var (length, path, cycle) = FordBellman.apply(graph, start, end)
         assertEquals(answer, length)
-        assertEquals(path.size,branch.size)
-        for (i in 0..<path.size)
+        assertEquals(path?.size,branch.size)
+        for (i in 0..<path!!.size)
             assertEquals(path[i], branch[i])
+    }
+
+    @ParameterizedTest(name = "test for graph with negative cycle of {0} edges")
+    @MethodSource("negativeCyclesGenerator")
+    fun `check with negative cycle`(edgesAmount: Int, graph: DirWeightGraph<Int, Int>,
+                                     start: Vertex<Int, Int>, end: Vertex<Int, Int>, cycleStart: Vertex<Int, Int>,answer: Vector<Vertex<Int, Int>> ) {
+        var (length, path, cycle) = FordBellman.apply(graph, start, end)
+        assertEquals(cycle?.size,answer.size)
+        println()
+        var start=cycle?.indexOf(cycleStart) ?: throw IllegalArgumentException()
+        for (i in 0..<cycle.size)
+            assertEquals(cycle[(start+i).mod(cycle.size)].key, answer[i].key)
     }
 }
