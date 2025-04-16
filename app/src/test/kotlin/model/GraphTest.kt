@@ -25,12 +25,13 @@ class GraphTest {
         for (i in 1..t) {
             var first=map.keys.random()
             var second=map.keys.random()
-            if (first==second || graph.edges[map[first]]?.map { it.link.second===map[second] }?.contains(true)==true)
+            if (first==second)
                 continue
-            graph.addEdge(map[first] ?: continue, map[second] ?: continue, Random.nextInt())
-            if (graph::class.simpleName in arrayOf("UndirectedGraph", "UndirWeightGraph"))
-                array[second]++
-            array[first]++
+            if (graph.addEdge(map[first] ?: continue, map[second] ?: continue, Random.nextInt())) {
+                if (graph::class.simpleName in arrayOf("UndirectedGraph", "UndirWeightGraph"))
+                    array[second]++
+                array[first]++
+            }
         }
 
         return array
