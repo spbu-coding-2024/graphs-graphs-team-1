@@ -6,9 +6,9 @@ import model.graphs.UndirectedGraph
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 
-class  GraphFactory <K, V> private constructor() {
+object GraphFactory {
 
-    fun fromNeo4j(constructor: ()-> AbstractGraph<K, V>, uri: String, user: String, password: String): AbstractGraph<K, V> {
+    fun <K, V> fromNeo4j(constructor: ()-> AbstractGraph<K, V>, uri: String, user: String, password: String): AbstractGraph<K, V> {
         var graph =constructor.invoke()
         var driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password))
         var session = driver.session()
@@ -33,7 +33,11 @@ class  GraphFactory <K, V> private constructor() {
         }
         return graph
     }
-    fun <T>  fromSQLite(constructor: ()->AbstractGraph<K, V>): AbstractGraph<K, V> {TODO()}
-    fun <T> fromJSON(constructor: ()->AbstractGraph<K, V>): AbstractGraph<K, V> {TODO()}
+    fun <K, V>  fromSQLite(constructor: ()->AbstractGraph<K, V>): AbstractGraph<K, V> {TODO()}
+    fun <K, V> fromJSON(constructor: ()->AbstractGraph<K, V>): AbstractGraph<K, V> {TODO()}
+}
 
+fun main() {
+    var t =GraphFactory.fromNeo4j<Int, Int>(::UndirectedGraph, "bolt://localhost:7687", "neo4j", "VesperLynd")
+    t.edges.map {it.value.map { println("${it.link.first.key} ${it.link.second.key} ${it.weight}") } }
 }
