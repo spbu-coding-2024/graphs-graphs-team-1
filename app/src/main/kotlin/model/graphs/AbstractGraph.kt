@@ -20,8 +20,9 @@ abstract class AbstractGraph <K, V>: Graph<K, V> {
             addVertex(first)
         if (!_vertices.map { it===second }.contains(true))
             addVertex(second)
-        var edge= Edge<K, V>(first, second, weight)
-        _edges[first]?.add(edge) ?: throw IllegalStateException()
+        if (_edges[first]?.map { it.link.second===second}?.contains(true) == false) {
+            _edges[first]?.add(Edge<K, V>(first, second, weight)) ?: throw IllegalStateException()
+        }
     }
 
     override fun deleteEdge(first: Vertex<K, V>, second: Vertex<K, V>) {
