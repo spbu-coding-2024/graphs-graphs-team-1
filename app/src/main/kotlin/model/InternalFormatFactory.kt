@@ -5,13 +5,14 @@ import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 
 
-object InternalFormatFactory {
-    fun <K, V> toNeo4j (graph: AbstractGraph<K, V>, uri: String, user: String, password: String) {
+class InternalFormatFactory {
+    companion object {
+        fun <K, V> toNeo4j(graph: AbstractGraph<K, V>, uri: String, user: String, password: String) {
             var driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password))
             var session = driver.session()
             for (vertex in graph.vertices) {
                 session.executeWrite { transaction ->
-                    transaction.run(
+                    var result = transaction.run(
                         "CREATE (vertex: Vertex {key: \$key, " +
                                 "value: \$value, " +
                                 "hash: \$hash})",
@@ -26,7 +27,7 @@ object InternalFormatFactory {
             for (vertex in graph.edges) {
                 for (edge in vertex.value) {
                     session.executeWrite { transaction ->
-                        transaction.run(
+                        var result = transaction.run(
                             "MATCH (from:Vertex {key: \$fromKey, value: \$fromValue, hash: \$fromHash}) " +
                                     "MATCH (to:Vertex {key: \$toKey, value: \$toValue, hash: \$toHash}) " +
                                     "CREATE (from)-[:CONNECTED {weight: \$weight}]->(to)",
@@ -45,5 +46,6 @@ object InternalFormatFactory {
             }
             session.close()
             driver.close()
+        }
     }
 }

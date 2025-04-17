@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.ir.backend.js.compile
 
 plugins {
     kotlin("jvm") version "1.9.20"
