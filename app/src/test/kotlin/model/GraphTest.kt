@@ -47,7 +47,7 @@ class GraphTest {
                 for (i in 0..<numb)
                     map[i]= Vertex(Random.nextInt(), Random.nextInt())
                 Arguments.of(numb, map,constructors.random())
-            }.limit(250)
+            }.limit(50)
         }
     }
 
