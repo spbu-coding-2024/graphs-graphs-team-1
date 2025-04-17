@@ -7,6 +7,7 @@ import java.util.Vector
 class FordBellman {
 
     companion object {
+
         fun <K, V> apply(graph: DirWeightGraph<K, V>, start: Vertex<K, V>): Triple<Map<Vertex<K, V>, Int>,
                 Map<Vertex<K, V>, Vertex<K, V>?>, Vector<Vertex<K, V>>?> {
             var lengths=mutableMapOf<Vertex<K, V>, Int>()
@@ -27,38 +28,37 @@ class FordBellman {
                             (lengths[edge.link.first]?.plus(edge.weight)!!)) {
                             lengths[edge.link.second]= lengths[edge.link.first]?.plus(edge.weight) ?: throw IllegalStateException()
                             paths[edge.link.second]=edge.link.first
-                            cycleFlag=edge.link.second
+                            cycleFlag=edge.link.first
                         }
                     }
                 }
             }
             var cycle:Vector<Vertex<K, V>>?=null
             if (cycleFlag!=null) {
-                var temp=cycleFlag
-                for(i in 1..graph.vertices.size)
-                    temp=paths[temp]
-                var cur=temp
+                var cur=cycleFlag
                 cycle= Vector<Vertex<K, V>>()
                 do {
                     cycle.addLast(cur)
                     cur=paths[cur]
-                } while (cur!=temp)
-
+                } while (cur!=cycleFlag)
+                cycle.reverse()
             }
            return Triple(lengths, paths, cycle)
         }
 
-        fun <K, V> apply(graph: DirWeightGraph<K, V>, start: Vertex<K, V>, end: Vertex<K, V>): Pair<Int, Vector<Vertex<K, V>>> {
+        fun <K, V> apply(graph: DirWeightGraph<K, V>, start: Vertex<K, V>, end: Vertex<K, V>): Triple<Int, Vector<Vertex<K, V>>?,  Vector<Vertex<K, V>>?> {
             var path= Vector<Vertex<K, V>>()
             var (lengths, paths, cycle)=apply(graph, start)
             var cur=end
-            do {
-                path.addLast(cur)
-                cur=paths[cur] ?: throw IllegalStateException()
-            } while (cur!=start)
+            if (cycle==null) {
+                do {
+                    path.addLast(cur)
+                    cur = paths[cur] ?: throw IllegalStateException()
+                } while (cur != start)
+            }
             path.addLast(start)
             path.reverse()
-            return Pair(lengths[end] ?: throw IllegalArgumentException(), path)
+            return Triple(lengths[end] ?: throw IllegalArgumentException(), path, cycle)
         }
     }
 }
