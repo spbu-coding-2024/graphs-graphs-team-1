@@ -3,6 +3,7 @@ package algo.dijkstra
 import model.Vertex
 import model.graphs.DirWeightGraph
 import java.util.PriorityQueue
+import java.util.Vector
 
 
 class Dijkstra {
@@ -15,10 +16,11 @@ class Dijkstra {
             val distances = mutableMapOf<Vertex<K, V>, Int>().withDefault { INFINITY }
             val predecessors = mutableMapOf<Vertex<K, V>, Vertex<K, V>?>()
 
+            // check negative weights
             for (edges in graph.edges.values) {
                 for (edge in edges) {
                     if (edge.weight < 0){
-                        throw IllegalArgumentException("Graph edge'")
+                        return distances to predecessors
                     }
                 }
             }
@@ -44,6 +46,7 @@ class Dijkstra {
                     if (newDistance < distances.getValue(neighbor)) {
                         distances[neighbor] = newDistance
                         predecessors[neighbor] = current
+                        queue.remove(neighbor)  // remove and then add to update priority
                         queue.add(neighbor)
                     }
                 }
@@ -52,13 +55,29 @@ class Dijkstra {
         }
 
         fun <K, V> buildShortestPath(graph: DirWeightGraph<K, V>, start: Vertex<K, V>,
-                                     end: Vertex<K, V>): Pair<Int, List<Vertex<K, V>>> {
-            val path = mutableListOf<Vertex<K, V>>()
+                                     end: Vertex<K, V>): Pair<Int, Vector<Vertex<K, V>>> {
             val (distances, predecessors) = apply(graph, start)
+            val hasNegativeWeights = graph.edges.values.any { edges ->
+                edges.any { it.weight < 0 }
+            }
+            if (hasNegativeWeights) {
+                return INFINITY to Vector(listOf(start))
+            }
+            // end vertex unreachable
+            if (distances.getValue(end) == INFINITY) {
+                return INFINITY to Vector()
+            }
+            val path = Vector<Vertex<K, V>>()
             var current: Vertex<K, V>? = end
-            while (current != start && current != null) {
-                path.add(current)
-                current = predecessors[current]
+            while (true) {
+                when {
+                    current == null -> return INFINITY to Vector()  // not exist path
+                    current == start -> break  // path is built
+                    else -> {
+                        path.add(current)
+                        current = predecessors[current]
+                    }
+                }
             }
             path.add(start)
             path.reverse()
