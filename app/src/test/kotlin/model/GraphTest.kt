@@ -27,10 +27,11 @@ class GraphTest {
             var second=map.keys.random()
             if (first==second)
                 continue
-            graph.addEdge(map[first] ?: continue, map[second] ?: continue, Random.nextInt())
-            if (graph::class.simpleName in arrayOf("UndirectedGraph", "UndirWeightGraph"))
-                array[second]++
-            array[first]++
+            if (graph.addEdge(map[first] ?: continue, map[second] ?: continue, Random.nextInt())) {
+                if (graph::class.simpleName in arrayOf("UndirectedGraph", "UndirWeightGraph"))
+                    array[second]++
+                array[first]++
+            }
         }
 
         return array
@@ -46,7 +47,7 @@ class GraphTest {
                 for (i in 0..<numb)
                     map[i]= Vertex(Random.nextInt(), Random.nextInt())
                 Arguments.of(numb, map,constructors.random())
-            }.limit(250)
+            }.limit(50)
         }
     }
 

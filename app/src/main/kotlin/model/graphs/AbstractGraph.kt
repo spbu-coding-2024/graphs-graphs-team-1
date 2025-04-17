@@ -15,13 +15,16 @@ abstract class AbstractGraph <K, V>: Graph<K, V> {
         get()=_edges
 
 
-    override fun addEdge(first: Vertex<K, V>, second: Vertex<K, V>, weight: Int) {
+    override fun addEdge(first: Vertex<K, V>, second: Vertex<K, V>, weight: Int): Boolean {
         if (!_vertices.map { it===first }.contains(true))
             addVertex(first)
         if (!_vertices.map { it===second }.contains(true))
             addVertex(second)
-        var edge= Edge<K, V>(first, second, weight)
-        _edges[first]?.add(edge) ?: throw IllegalStateException()
+        if (edges[first]?.map { it.link.second===second}?.contains(true) == false) {
+            edges[first]?.add(Edge<K, V>(first, second, weight)) ?: throw IllegalStateException()
+            return true
+        }
+        return false
     }
 
     override fun deleteEdge(first: Vertex<K, V>, second: Vertex<K, V>) {
