@@ -1,7 +1,6 @@
 package algorithms
 
 import algo.bellmanford.FordBellman
-import androidx.compose.material.Icon
 import model.Vertex
 import model.graphs.DirWeightGraph
 import org.junit.jupiter.params.ParameterizedTest
@@ -14,15 +13,16 @@ import kotlin.test.assertEquals
 
 
 const val AMOUNT=200
-const val LOWEST=-500
 const val HIGHEST=500
 
 class FordBellmanTest {
 
     companion object {
+        val lowest=arrayOf(-500, 1)
         @JvmStatic
         fun graphGenerator(): Stream<Arguments> {
             return Stream.generate {
+                val lowest=lowest.random()
                 val graph = DirWeightGraph<Int, Int>()
                 var branchAmount =Random.nextInt(2, 5)
                 val start = Vertex(1, 10)
@@ -37,14 +37,14 @@ class FordBellmanTest {
                     var counter=0
                     while (curSum < sum && counter<AMOUNT) {
                         var new = Vertex(Random.nextInt(), Random.nextInt())
-                        var weight = Random.nextInt(LOWEST, HIGHEST)
+                        var weight = Random.nextInt(lowest, HIGHEST)
                         graph.addEdge(current, new, weight)
                         branch.add(new)
                         current = new
                         curSum += weight
                         counter++
                     }
-                    var weight = Random.nextInt(LOWEST, HIGHEST)
+                    var weight = Random.nextInt(lowest, HIGHEST)
                     graph.addEdge(current, end, weight)
                     curSum += weight
                     if (answer>curSum) {
