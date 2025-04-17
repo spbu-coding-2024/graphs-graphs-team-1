@@ -1,6 +1,7 @@
 package model
 
 
+import androidx.compose.material.ExtendedFloatingActionButton
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -12,71 +13,90 @@ import java.util.Vector
 import java.util.stream.Stream
 import kotlin.random.Random
 import model.graphs.*
+import org.checkerframework.checker.units.qual.g
+import org.junit.AfterClass
+import org.junit.BeforeClass
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.assertAll
+import org.neo4j.driver.AuthTokens
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+
+
 
 class Neo4jTest {
-    private lateinit var neo4j: Neo4j
+    companion object {
+        const val AMOUNT=50
+        private var neo4j: Neo4j = Neo4jBuilders.newInProcessBuilder().withDisabledServer().build()
+        private var driver = GraphDatabase.driver(neo4j.boltURI())
+        private var session = driver.session()
+        private var vertices = Array<Vertex<Int, Int>>(AMOUNT) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
+        private var edges = Vector<Edge<Int, Int>>()
 
-   fun init(): Vector<Edge<Int, Int>> {
-       neo4j=Neo4jBuilders.newInProcessBuilder().withDisabledServer().build()
-       var driver=GraphDatabase.driver(neo4j.boltURI())
-       var session=driver.session()
-       val numb=Random.nextInt(1,10)
-       val array= Array<Vertex<Int, Int>>(numb) {Vertex(Random.nextInt(), Random.nextInt())}
-       array.map { println("${it.key} ${it.value}") }
-       for (vertex in array) {
-           session.executeWrite { transaction ->
-               transaction.run(
-                   "CREATE (vertex: Vertex {key: \$key, " +
-                           "value: \$value, " +
-                           "hash: \$hash})",
-                   mapOf(
-                       "key" to vertex.key,
-                       "value" to vertex.value,
-                       "hash" to vertex.hashCode(),
-                   )
-               )
-           }
-       }
-       var edges= Vector<Edge<Int, Int>>()
-       for (i in 0..array.size*array.size/2) {
-           var first = Random.nextInt(0, array.size)
-           var second = Random.nextInt(0, array.size)
-           if (first == second)
-               continue
-           edges.addLast(Edge(array[first], array[second], Random.nextInt()))
-       }
-       for (edge in edges) {
-           session.executeWrite { transaction ->
-               transaction.run(
-                   "MATCH (from:Vertex {key: \$fromKey, value: \$fromValue, hash: \$fromHash}) " +
-                           "MATCH (to:Vertex {key: \$toKey, value: \$toValue, hash: \$toHash}) " +
-                           "CREATE (from)-[:CONNECTED {weight: \$weight}]->(to)",
-                   mapOf(
-                       "fromKey" to edge.link.first.key,
-                       "fromValue" to edge.link.first.value,
-                       "fromHash" to edge.link.first.hashCode(),
-                       "toKey" to edge.link.second.key,
-                       "toValue" to edge.link.second.value,
-                       "toHash" to edge.link.second.hashCode(),
-                       "weight" to edge.weight,
-                   )
-               )
-           }
-       }
-       edges.map { println("${it.link.first.key} ${it.link.second.key} ${it.weight}") }
-       return edges
-   }
+        private fun addVertex(vertex: Vertex<Int, Int>) {
+            session.executeWrite { transaction ->
+                var result = transaction.run(
+                    "CREATE (vertex: Vertex {key: \$key, " +
+                            "value: \$value, " +
+                            "hash: \$hash})",
+                    mapOf(
+                        "key" to vertex.key,
+                        "value" to vertex.value,
+                        "hash" to vertex.hashCode(),
+                    )
+                )
+            }
+        }
+
+        private fun addEdge(edge: Edge<Int, Int>) {
+            session.executeWrite { transaction ->
+                var result = transaction.run(
+                    "MATCH (from:Vertex {key: \$fromKey, value: \$fromValue, hash: \$fromHash}) " +
+                            "MATCH (to:Vertex {key: \$toKey, value: \$toValue, hash: \$toHash}) " +
+                            "CREATE (from)-[:CONNECTED {weight: \$weight}]->(to)",
+                    mapOf(
+                        "fromKey" to edge.link.first.key,
+                        "fromValue" to edge.link.first.value,
+                        "fromHash" to edge.link.first.hashCode(),
+                        "toKey" to edge.link.second.key,
+                        "toValue" to edge.link.second.value,
+                        "toHash" to edge.link.second.hashCode(),
+                        "weight" to edge.weight,
+                    )
+                )
+            }
+        }
+        @BeforeClass
+        @JvmStatic fun init() {
+            for (iter in 1..AMOUNT * AMOUNT / 2) {
+                var from = Random.nextInt(0, AMOUNT)
+                var to = Random.nextInt(0, AMOUNT)
+                if (from == to)
+                    continue
+                if (!edges.map { it.link.first === vertices[from] && it.link.second === vertices[to] }.contains(true))
+                    edges.addLast(Edge(vertices[from], vertices[to], Random.nextInt(0, 100)))
+            }
+            for (i in vertices)
+                addVertex(i)
+            for (i in edges)
+                addEdge(i)
+        }
+        @AfterClass
+        @JvmStatic fun close() {
+            session.close()
+            driver.close()
+        }
+    }
 
     @Test
-    fun check() {
-        var edges=init()
+    fun checkGettingFromNeo4j() {
         var graph=GraphFactory.fromNeo4j<Int, Int>(::DirWeightGraph, neo4j.boltURI().toString(), "neo", "pass")
-        //assertEquals(edges.size, graph.edges.map { it.value.size }.sum())
-        graph.edges.map { it.value.map { println("${it.}") }}
-        for (i in edges)
-            assertEquals(graph.edges[i.link.first]?.map { it.link.second===i.link.second }?.contains(true), true)
+        assertEquals(edges.size, graph.edges.values.sumOf { it.size })
+    }
 
+    @Test
+    fun checkSendingToNeo4j() {
 
     }
 }

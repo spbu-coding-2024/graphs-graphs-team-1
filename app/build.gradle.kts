@@ -29,6 +29,8 @@ dependencies {
     implementation("org.neo4j.driver:neo4j-java-driver:5.6.0")
     testImplementation("io.mockk:mockk:1.13.10")
     implementation(kotlin("stdlib"))
+    // https://mvnrepository.com/artifact/org.neo4j.test/neo4j-harness
+    testImplementation("org.neo4j.test:neo4j-harness:2025.03.0")
 }
 
 tasks.test {
