@@ -22,8 +22,8 @@ object FordBellman {
                 for (edge in elemEdges.value) {
                     if (lengths[edge.link.first]== Int.MAX_VALUE)
                         continue
-                    if ((lengths[edge.link.second]!!) >
-                        (lengths[edge.link.first]?.plus(edge.weight)!!)) {
+                    if ((lengths[edge.link.second] ?: throw IllegalStateException()) >
+                        (lengths[edge.link.first]?.plus(edge.weight) ?: throw IllegalStateException())) {
                         lengths[edge.link.second]= lengths[edge.link.first]?.plus(edge.weight) ?: throw IllegalStateException()
                         paths[edge.link.second]=edge.link.first
                         cycleFlag=edge.link.first
