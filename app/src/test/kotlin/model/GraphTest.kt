@@ -16,7 +16,6 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.*
 import kotlin.test.assertEquals
 
-
 class GraphTest {
 
     fun edgeAddition(amount: Int, array: Array<Vertex<Int, Int>?>, graph: AbstractGraph<Int, Int>): IntArray {
