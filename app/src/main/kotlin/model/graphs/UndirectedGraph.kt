@@ -9,7 +9,7 @@ class UndirectedGraph<K, V>: UndirWeightGraph<K, V>() {
         super.addEdge(first, second, 0)
     }
 
-    override fun deleteEdge(first: Vertex<K, V>, second: Vertex<K, V>) {
-        super.deleteEdge(first, second)
+    override fun deleteEdge(first: Vertex<K, V>, second: Vertex<K, V>): Boolean {
+        return super.deleteEdge(first, second)
     }
 }
