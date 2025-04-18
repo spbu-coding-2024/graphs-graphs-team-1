@@ -18,22 +18,21 @@ import kotlin.test.assertEquals
 
 class GraphTest {
 
-    fun edgeAddition(amount: Int, map: HashMap<Int, Vertex<Int, Int>>, graph: AbstractGraph<Int, Int>): IntArray {
-        var array= IntArray(map.keys.size)
+    fun edgeAddition(amount: Int, array: Array<Vertex<Int, Int>?>, graph: AbstractGraph<Int, Int>): IntArray {
+        var amounts= IntArray(array.size)
         var t=min(2000, amount*amount/2)
         for (i in 1..t) {
-            var first=map.keys.random()
-            var second=map.keys.random()
+            var first=array.indices.random()
+            var second=array.indices.random()
             if (first==second)
                 continue
-            if (graph.addEdge(map[first] ?: continue, map[second] ?: continue, Random.nextInt())) {
+            if (graph.addEdge(array[first] ?: continue, array[second] ?: continue, Random.nextInt())) {
                 if (graph::class.simpleName in arrayOf("UndirectedGraph", "UndirWeightGraph"))
-                    array[second]++
-                array[first]++
+                    amounts[second]++
+                amounts[first]++
             }
         }
-
-        return array
+        return amounts
     }
 
 
@@ -42,9 +41,7 @@ class GraphTest {
         @JvmStatic fun generateVertices(): Stream<Arguments> {
             return Stream.generate {
                 val numb=Random.nextInt(1,1000)
-                val map= HashMap< Int, Vertex<Int, Int>?>(numb)
-                for (i in 0..<numb)
-                    map[i]= Vertex(Random.nextInt(), Random.nextInt())
+                val map= Array<Vertex<Int, Int>?>(numb) {Vertex(Random.nextInt(), Random.nextInt())}
                 Arguments.of(numb, map,constructors.random())
             }.limit(50)
         }
@@ -52,34 +49,34 @@ class GraphTest {
 
     @ParameterizedTest(name = "{0} vertices for {2}")
     @MethodSource("generateVertices")
-    fun `test vertex insertion`(amount: Int, map: HashMap<Int, Vertex<Int, Int>>, kClass: KClass<AbstractGraph<Int, Int>>) {
+    fun `test vertex insertion`(amount: Int, array: Array<Vertex<Int, Int>?>, kClass: KClass<AbstractGraph<Int, Int>>) {
         val graph= kClass.primaryConstructor?.call() ?: return
-        for (i in map.values)
-            graph.addVertex(i)
+        for (i in array)
+            graph.addVertex(i ?: return)
         assertEquals(amount, graph.vertices.size)
     }
 
     @ParameterizedTest(name = "{0} vertices to make edges for {2}")
     @MethodSource("generateVertices")
-    fun `test edge insertion`(amount: Int, map: HashMap<Int, Vertex<Int, Int>>, kClass: KClass<AbstractGraph<Int, Int>>) {
+    fun `test edge insertion`(amount: Int, array: Array<Vertex<Int, Int>?>, kClass: KClass<AbstractGraph<Int, Int>>) {
         var graph= kClass.primaryConstructor?.call() ?: return
-        var array=edgeAddition(amount, map, graph)
-        for (i in 0..<array.size)
-            assertEquals(array[i], graph.edges[map[i]]?.size ?: 0)
+        var arrayInt=edgeAddition(amount, array, graph)
+        for (i in arrayInt.indices)
+            assertEquals(arrayInt[i], graph.edges[array[i]]?.size ?: 0)
     }
 
     @ParameterizedTest(name = "{0} vertices to delete some from {2}")
     @MethodSource("generateVertices")
-    fun `test vertex deletion`(amount: Int, map: HashMap<Int, Vertex<Int, Int>>, kClass: KClass<AbstractGraph<Int, Int>>) {
+    fun `test vertex deletion`(amount: Int, array: Array<Vertex<Int, Int>?>, kClass: KClass<AbstractGraph<Int, Int>>) {
         var graph=kClass.primaryConstructor?.call()
-        for (i in map.values)
-            graph?.addVertex(i)
+        for (i in array)
+            graph?.addVertex(i ?: continue)
         var expected=Random.nextInt(0, amount)
         repeat(expected) {
-            var cur=map.keys.random()
-            graph?.deleteVertex(map[cur]!!)
-            assert(graph?.edges?.get(map[cur])==null)
-            map.remove(cur)
+            var cur=array.indices.random()
+            graph?.deleteVertex(array[cur] ?: return)
+            assert(graph?.edges?.get(array[cur])==null)
+            array[cur]=null
         }
         assertEquals(amount-expected, graph?.vertices?.size ?: 0)
     }
@@ -87,28 +84,30 @@ class GraphTest {
 
     @ParameterizedTest(name = "{0} vertices to delete edges from {2}")
     @MethodSource("generateVertices")
-    fun `test edge deletion`(amount: Int, map: HashMap<Int, Vertex<Int, Int>>, kClass: KClass<AbstractGraph<Int, Int>>) {
+    fun `test edge deletion`(amount: Int, vertices: Array<Vertex<Int, Int>?>, kClass: KClass<AbstractGraph<Int, Int>>) {
         var graph=kClass.primaryConstructor?.call() ?: return
-        var array=edgeAddition(amount, map, graph)
+        var array=edgeAddition(amount, vertices, graph)
         var repetitions=Random.nextInt(-1, array.sum())
         for (i in 1..repetitions) {
             if (graph.edges.keys.isEmpty())
                 break
-            var vector=graph.edges[map[array.indices.random()]]
+            var vector=graph.edges[vertices[array.indices.random()]]
             var current: Edge<Int, Int>?=null
             if (vector?.isNotEmpty() == true)
                 current=vector.random()
-            map.forEach {
-                if (it.value===current?.link?.first)
-                    array[it.key]--
-                when(kClass.simpleName) {
-                   "UndirWeightGraph", "UndirectedGraph" -> if (it.value===current?.link?.second) array[it.key]--
+            for (index in vertices.indices) {
+                if (vertices[index] === current?.link?.first)
+                    array[index]--
+                when (kClass.simpleName) {
+                    "UndirWeightGraph", "UndirectedGraph" -> if (vertices[index] === current?.link?.second) array[index]--
                 }
             }
             graph.deleteEdge(current?.link?.first ?: continue, current.link.second)
         }
-        for (i in 0..<array.size)
-            assertEquals(array[i], graph.edges[map[i]]?.size ?: 0)
+        for (i in array.indices)
+            assertEquals(array[i], graph.edges[vertices[i]]?.size ?: 0)
     }
 
 }
+
+

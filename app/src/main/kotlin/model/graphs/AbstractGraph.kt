@@ -27,15 +27,16 @@ abstract class AbstractGraph <K, V>: Graph<K, V> {
         return false
     }
 
-    override fun deleteEdge(first: Vertex<K, V>, second: Vertex<K, V>) {
+    override fun deleteEdge(first: Vertex<K, V>, second: Vertex<K, V>): Boolean {
         if (!_vertices.map { it===first }.contains(true) || !_vertices.map { it===second }.contains(true))
-            throw IllegalStateException()
+            return false
         var current: Edge<K, V>?=null
-        _edges[first]?.forEach { if (it.link.second==second) current=it }
+        _edges[first]?.forEach { if (it.link.second===second) current=it }
         if (current!=null)
             _edges[first]?.remove(current)
         else
             throw IllegalStateException()
+        return true
     }
 
     override fun addVertex(vertex: Vertex<K, V>) {
@@ -43,13 +44,14 @@ abstract class AbstractGraph <K, V>: Graph<K, V> {
         _edges[vertex]= Vector()
     }
 
-    override fun deleteVertex(vertex: Vertex<K, V>) {
+    override fun deleteVertex(vertex: Vertex<K, V>): Boolean {
         if (!_vertices.map { it===vertex }.contains(true))
-            return
+            return false
         _edges[vertex]?.forEach {
             _edges[it.link.second]?.remove(it)
         }
         _edges.remove(vertex)
         vertices.remove(vertex)
+        return true
     }
 }
