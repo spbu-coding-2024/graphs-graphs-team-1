@@ -2,6 +2,7 @@ package model.graphs
 
 import model.Edge
 import model.Vertex
+import java.util.Stack
 import java.util.Vector
 
 abstract class AbstractGraph <K, V>: Graph<K, V> {
@@ -54,4 +55,40 @@ abstract class AbstractGraph <K, V>: Graph<K, V> {
         vertices.remove(vertex)
         return true
     }
+
+    operator fun iterator(): Iterator<Vertex<K, V>> {
+        return DFS()
+    }
+
+
+    inner class DFS(private var start: Vertex<K, V> = vertices.firstElement()): Iterator<Vertex<K, V>> {
+        private var visited=hashMapOf<Vertex<K, V>, Boolean>()
+        private var stack = ArrayDeque<Vertex<K, V>>()
+
+        init {
+            for (vertex in vertices)
+                visited[vertex]=false
+            if (!vertices.map { it===start }.contains(true))
+                    throw IllegalArgumentException()
+            stack.add(start)
+            visited[start]=true
+        }
+
+        override fun hasNext(): Boolean {
+            return stack.isNotEmpty()
+        }
+
+        override fun next(): Vertex<K, V> {
+            var current=stack.removeFirst()
+            visited[current]=true
+            edges[current]?.forEach {
+                if (visited[it.link.second] == false) {
+                    visited[it.link.second] == true
+                    stack.addFirst(it.link.second)
+                }
+            }
+            return current
+        }
+    }
 }
+
