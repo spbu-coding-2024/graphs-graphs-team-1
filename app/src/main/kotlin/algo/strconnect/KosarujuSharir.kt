@@ -10,22 +10,7 @@ import kotlin.reflect.full.primaryConstructor
 
 object KosarujuSharir: StrongConnect {
 
-
-    fun <K, V> dfsOrder(
-        graph: AbstractGraph<K, V>, current: Vertex<K, V>,
-        order: ArrayDeque<Vertex<K, V>>, visited: HashMap<Vertex<K, V>, Boolean>
-    ) {
-        visited[current] = true
-        graph.edges[current]?.forEach {
-            if (visited[it.link.second] == false) {
-                dfsOrder(graph, it.link.second, order, visited)
-            }
-        }
-        order.add(current)
-    }
-
-
-    fun <K, V> dfsComponent(
+    private fun <K, V> dfs(
         graph: AbstractGraph<K, V>, current: Vertex<K, V>,
         component: ArrayDeque<Vertex<K, V>>, visited: HashMap<Vertex<K, V>, Boolean>
     ) {
@@ -33,13 +18,13 @@ object KosarujuSharir: StrongConnect {
         component.add(current)
         graph.edges[current]?.forEach {
             if (visited[it.link.second] == false) {
-                dfsComponent(graph, it.link.second, component, visited)
+                dfs(graph, it.link.second, component, visited)
             }
         }
     }
 
 
-    private fun <K, V> transpon(graph: AbstractGraph<K, V>): AbstractGraph<K, V> {
+    private fun <K, V> reversedGraph(graph: AbstractGraph<K, V>): AbstractGraph<K, V> {
         var new = graph::class.primaryConstructor?.call() ?: throw IllegalStateException()
         for (vertex in graph.edges)
             for (edge in vertex.value)
@@ -47,32 +32,30 @@ object KosarujuSharir: StrongConnect {
         return new
     }
 
-    override fun <K, V> apply(graph: AbstractGraph<K, V>) {
+    override fun <K, V> apply(graph: AbstractGraph<K, V>): ArrayDeque<ArrayDeque<Vertex<K, V>>> {
         var order = ArrayDeque<Vertex<K, V>>()
         var visited = hashMapOf<Vertex<K, V>, Boolean>()
         var component = ArrayDeque<Vertex<K, V>>()
+        var tr=reversedGraph(graph)
+        var result= ArrayDeque<ArrayDeque<Vertex<K, V>>>()
 
-        var tr=transpon(graph)
         for (vertex in graph.vertices)
             visited[vertex] = false
-        for (vertex in graph.edges.values)
-            for (edge in vertex)
-                if (visited[edge.link.first] == false) {
-                    visited[edge.link.first] = true
-                    dfsOrder(graph, edge.link.first, order, visited)
-                }
+
+        for (vertex in graph)
+            order.add(vertex)
+
         for (vertex in graph.vertices)
             visited[vertex] = false
         for (vertex in graph.vertices.indices) {
-            var temp=order[graph.vertices.size-1-vertex]
+            var temp=order[vertex]
             if (visited[temp]==false) {
-                dfsComponent(tr, temp, component, visited)
-                component.map { print("${it.key} ") }
-                println()
-                component.clear()
+                dfs(tr, temp, component, visited)
+                result.add(component)
+                component= ArrayDeque<Vertex<K, V>>()
             }
         }
-
+        return result
     }
 }
 
@@ -92,7 +75,11 @@ fun main() {
     t.addEdge(e[4], e[5], 45)
     t.addEdge(e[5], e[2], 12)
     //t.edges.map { it.value.map { println("${it.link.first.key} ${it.link.second.key}") } }
-    KosarujuSharir.apply(t)
+    var p=KosarujuSharir.apply(t)
+    p.forEach {
+        it.map { print("${it.key} ") }
+        println()
+    }
 }
 
 
