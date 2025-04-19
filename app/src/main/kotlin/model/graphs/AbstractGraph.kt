@@ -14,6 +14,65 @@ abstract class AbstractGraph <K, V>: Graph<K, V> {
     val edges
         get()=_edges
 
+    private inner class BFS (private var start: Vertex<K, V> = vertices.firstElement()) : Iterator<Vertex<K, V>> {
+        var visited = hashMapOf<Vertex<K, V>, Boolean>()
+        var queue = ArrayDeque<Vertex<K, V>>()
+        init {
+            for (vertex in vertices)
+                visited[vertex] = false
+            if (!vertices.map { it === start }.contains(true)) throw IllegalArgumentException()
+            queue.add(start)
+            visited[start] = true
+        }
+
+        override fun hasNext(): Boolean {
+            return visited.values.contains(false) || queue.isNotEmpty()
+        }
+
+        override fun next(): Vertex<K, V> {
+            if (queue.isEmpty())
+                queue.add(visited.filter { it.value == false }.keys.elementAt(0))
+            var current = queue.removeFirst()
+            visited[current] = true
+            edges[current]?.forEach {
+                if (visited[it.link.second] == false) {
+                    visited[it.link.second] = true
+                    queue.add(it.link.second)
+                }
+            }
+            return current
+        }
+    }
+
+    private inner class DFS (private var start: Vertex<K, V> = vertices.firstElement()) : Iterator<Vertex<K, V>> {
+        var visited = hashMapOf<Vertex<K, V>, Boolean>()
+        var stack = ArrayDeque<Vertex<K, V>>()
+        init {
+            for (vertex in vertices)
+                visited[vertex] = false
+            if (!vertices.map { it === start }.contains(true)) throw IllegalArgumentException()
+            stack.addFirst(start)
+            visited[start] = true
+        }
+
+        override fun hasNext(): Boolean {
+            return visited.values.contains(false) || stack.isNotEmpty()
+        }
+
+        override fun next(): Vertex<K, V> {
+            if (stack.isEmpty())
+                stack.addFirst(visited.filter { it.value == false }.keys.elementAt(0))
+            var current = stack.removeFirst()
+            visited[current] = true
+            edges[current]?.forEach {
+                if (visited[it.link.second] == false) {
+                    visited[it.link.second] = true
+                    stack.addFirst(it.link.second)
+                }
+            }
+            return current
+        }
+    }
 
     override fun addEdge(first: Vertex<K, V>, second: Vertex<K, V>, weight: Int): Boolean {
         if (!_vertices.map { it===first }.contains(true))
