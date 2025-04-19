@@ -14,64 +14,57 @@ abstract class AbstractGraph <K, V>: Graph<K, V> {
     val edges
         get()=_edges
 
-    private inner class BFS (private var start: Vertex<K, V> = vertices.firstElement()) : Iterator<Vertex<K, V>> {
+    fun iteratorDFS() = DFS().iterator()
+    fun iteratorBFS() = BFS().iterator()
+
+    class RealStack<K>(): Vector<K>() {
+        override fun add(e: K?): Boolean {
+            super.addFirst(e)
+            return true
+        }
+    }
+
+    open inner class DFS (var start: Vertex<K, V> = vertices.firstElement()) : Iterator<Vertex<K, V>> {
         var visited = hashMapOf<Vertex<K, V>, Boolean>()
-        var queue = ArrayDeque<Vertex<K, V>>()
+        open var stack: Vector<Vertex<K, V>> = RealStack()
+        var started = false
         init {
             for (vertex in vertices)
                 visited[vertex] = false
-            if (!vertices.map { it === start }.contains(true)) throw IllegalArgumentException()
-            queue.add(start)
-            visited[start] = true
+            if (!vertices.map { it === start }.contains(true))
+                throw IllegalArgumentException()
+
         }
 
         override fun hasNext(): Boolean {
-            return visited.values.contains(false) || queue.isNotEmpty()
+            if (!started) {
+                stack.add(start)
+                visited[start] = true
+                started = true
+            }
+            return visited.values.contains(false) || stack.isNotEmpty()
         }
 
         override fun next(): Vertex<K, V> {
-            if (queue.isEmpty())
-                queue.add(visited.filter { it.value == false }.keys.elementAt(0))
-            var current = queue.removeFirst()
+            if (stack.isEmpty())
+                stack.add(visited.filter { it.value == false }.keys.elementAt(0))
+            var current = stack.removeFirst()
             visited[current] = true
             edges[current]?.forEach {
                 if (visited[it.link.second] == false) {
                     visited[it.link.second] = true
-                    queue.add(it.link.second)
+                    stack.add(it.link.second)
                 }
             }
             return current
         }
     }
 
-    private inner class DFS (private var start: Vertex<K, V> = vertices.firstElement()) : Iterator<Vertex<K, V>> {
-        var visited = hashMapOf<Vertex<K, V>, Boolean>()
-        var stack = ArrayDeque<Vertex<K, V>>()
-        init {
-            for (vertex in vertices)
-                visited[vertex] = false
-            if (!vertices.map { it === start }.contains(true)) throw IllegalArgumentException()
-            stack.addFirst(start)
-            visited[start] = true
-        }
-
-        override fun hasNext(): Boolean {
-            return visited.values.contains(false) || stack.isNotEmpty()
-        }
-
-        override fun next(): Vertex<K, V> {
-            if (stack.isEmpty())
-                stack.addFirst(visited.filter { it.value == false }.keys.elementAt(0))
-            var current = stack.removeFirst()
-            visited[current] = true
-            edges[current]?.forEach {
-                if (visited[it.link.second] == false) {
-                    visited[it.link.second] = true
-                    stack.addFirst(it.link.second)
-                }
-            }
-            return current
-        }
+    inner class BFS(): DFS() {
+        /* Here "stack" is a queue because Vector.add() adds elements to the end, and .removeFirst() removes elements
+        from the beginning. This corresponds to FIFO(first in, first out) which forms a queue
+         */
+        override var stack: Vector<Vertex<K, V>> = Vector()
     }
 
     override fun addEdge(first: Vertex<K, V>, second: Vertex<K, V>, weight: Int): Boolean {
