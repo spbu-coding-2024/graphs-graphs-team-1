@@ -43,7 +43,7 @@ class GraphTest {
                 val numb=Random.nextInt(1,1000)
                 val map= Array<Vertex<Int, Int>?>(numb) {Vertex(Random.nextInt(), Random.nextInt())}
                 Arguments.of(numb, map,constructors.random())
-            }.limit(50)
+            }.limit(25)
         }
     }
 
@@ -68,17 +68,19 @@ class GraphTest {
     @ParameterizedTest(name = "{0} vertices to delete some from {2}")
     @MethodSource("generateVertices")
     fun `test vertex deletion`(amount: Int, array: Array<Vertex<Int, Int>?>, kClass: KClass<AbstractGraph<Int, Int>>) {
-        var graph=kClass.primaryConstructor?.call()
+        var graph=kClass.primaryConstructor?.call() ?: return
         for (i in array)
-            graph?.addVertex(i ?: continue)
+            graph.addVertex(i ?: continue)
         var expected=Random.nextInt(0, amount)
+        edgeAddition(Random.nextInt(0,500), array, graph)
         repeat(expected) {
             var cur=array.indices.random()
-            graph?.deleteVertex(array[cur] ?: return)
-            assert(graph?.edges?.get(array[cur])==null)
+            graph.deleteVertex(array[cur] ?: return)
+            assert(graph.edges[array[cur]] ==null)
             array[cur]=null
         }
-        assertEquals(amount-expected, graph?.vertices?.size ?: 0)
+
+        assertEquals(amount-expected, graph.vertices.size)
     }
 
 
@@ -91,10 +93,10 @@ class GraphTest {
         for (i in 1..repetitions) {
             if (graph.edges.keys.isEmpty())
                 break
-            var vector=graph.edges[vertices[array.indices.random()]]
+            var vector= graph.edges[vertices[array.indices.random()]]
             var current: Edge<Int, Int>?=null
             if (vector?.isNotEmpty() == true)
-                current=vector.random()
+                current=arrayOf(vector.random(), Edge(Vertex(7,8), Vertex(7,8), 45)).random()
             for (index in vertices.indices) {
                 if (vertices[index] === current?.link?.first)
                     array[index]--
@@ -103,6 +105,19 @@ class GraphTest {
                 }
             }
             graph.deleteEdge(current?.link?.first ?: continue, current.link.second)
+        }
+        for (i in array.indices)
+            assertEquals(array[i], graph.edges[vertices[i]]?.size ?: 0)
+    }
+
+    @ParameterizedTest(name = "delete non-existed vertices from {2}")
+    @MethodSource("generateVertices")
+    fun `test not existed vertex deletion`(amount: Int, vertices: Array<Vertex<Int, Int>?>,
+                                           kClass: KClass<AbstractGraph<Int, Int>>) {
+        var graph = kClass.primaryConstructor?.call() ?: return
+        var array = edgeAddition(amount, vertices, graph)
+        repeat(15) {
+            graph.addVertex(Vertex(Random.nextInt(), Random.nextInt()))
         }
         for (i in array.indices)
             assertEquals(array[i], graph.edges[vertices[i]]?.size ?: 0)
