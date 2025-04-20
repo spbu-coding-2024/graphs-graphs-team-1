@@ -22,8 +22,9 @@ object Cycles {
                 Color.GRAY -> {
                     val cycleStart = vertexToIndex[current] ?: return
                     val cycle = currentPath.subList(cycleStart, currentPath.size)
-                    if (cycle.isNotEmpty() && cycle.first() == start && cycle.last() == start) {
-                        cycles.add(cycle.toList())
+                    val fullCycle = cycle.toMutableList().also { it.add(current) }
+                    if (fullCycle.first() == start && fullCycle.last() == start) {
+                        cycles.add(fullCycle)
                     }
                     return
                 }
