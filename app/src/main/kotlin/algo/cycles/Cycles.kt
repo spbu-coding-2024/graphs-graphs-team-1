@@ -6,7 +6,7 @@ import model.Vertex
 object Cycles {
     private enum class Color { WHITE, GRAY, BLACK }
 
-    private fun <K, V> findCycles(graph: AbstractGraph<K, V>, start: Vertex<K, V>): Set<List<Vertex<K, V>>> {
+    fun <K, V> findCycles(graph: AbstractGraph<K, V>, start: Vertex<K, V>): Set<List<Vertex<K, V>>> {
         val cycles = mutableSetOf<List<Vertex<K, V>>>()
         val currentPath = mutableListOf<Vertex<K, V>>()
         val color = mutableMapOf<Vertex<K, V>, Color>().apply {
@@ -22,7 +22,9 @@ object Cycles {
                 Color.GRAY -> {
                     val cycleStart = vertexToIndex[current] ?: return
                     val cycle = currentPath.subList(cycleStart, currentPath.size)
-                    cycles.add(cycle.toList())
+                    if (cycle.size > 1) {
+                        cycles.add(cycle.toList())
+                    }
                     return
                 }
                 Color.BLACK -> return
@@ -31,7 +33,9 @@ object Cycles {
                     vertexToIndex[current] = currentPath.size
                     currentPath.add(current)
                     graph.edges[current]?.forEach { edge ->
-                        dfs(edge.link.second)
+                        if (edge.link.second != current) {
+                            dfs(edge.link.second)
+                        }
                     }
 
                     color[current] = Color.BLACK
