@@ -26,7 +26,6 @@ object KosarujuSharir: StrongConnect {
         visited[current] = true
         graph.edges[current]?.forEach {
             if (visited[it.link.second] == false) {
-                //visited[it.link.second] = true
                 dfsDirect(graph, it.link.second, order, visited)
             }
         }
