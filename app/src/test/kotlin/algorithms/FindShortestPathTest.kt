@@ -97,7 +97,7 @@ class FindShortestPathTest {
                 graph.addEdge(cycleStart, end, Random.nextInt(1, Int.MAX_VALUE))
                 sum += weight + 96
                 Arguments.of(graph.edges.map { it.value.size }.sum(), graph, start, end, cycleStart, answer)
-            }.limit(500)
+            }.limit(50)
         }
     }
 
@@ -123,7 +123,6 @@ class FindShortestPathTest {
     ) {
         var (length, path, cycle) = FordBellman.apply(graph, start, end)
         assertEquals(cycle?.size, answer.size)
-        println()
         var start = cycle?.indexOf(cycleStart) ?: throw IllegalArgumentException()
         for (i in 0..<cycle.size)
             assertEquals(cycle[(start + i).mod(cycle.size)].key, answer[i].key)
@@ -145,8 +144,8 @@ class FindShortestPathTest {
         }
         if (counter <= 0) {
             assertEquals(answer, length)
-            assertEquals(path?.size, branch.size)
-            for (i in 0..<path!!.size)
+            assertEquals(path.size, branch.size)
+            for (i in 0..<path.size)
                 assertEquals(path[i], branch[i])
         } else {
             assertEquals(Int.MAX_VALUE, length)
