@@ -1,3 +1,5 @@
+import org.gradle.internal.logging.progress.ResourceOperation.Type.download
+
 
 plugins {
     kotlin("jvm") version "1.9.20"
@@ -30,12 +32,21 @@ dependencies {
     implementation(kotlin("stdlib"))
     // https://mvnrepository.com/artifact/org.neo4j.test/neo4j-harness
     testImplementation("org.neo4j.test:neo4j-harness:2025.03.0")
+    // gephi toolkit
+    implementation(files("src/lib/gephi-toolkit-0.10.0-all.jar"))
+    // https://mvnrepository.com/artifact/org.jgrapht/jgrapht-core
+    implementation("org.jgrapht:jgrapht-core:1.5.2")
 }
+
+
+
 
 tasks.test {
     useJUnitPlatform()
 finalizedBy(tasks.jacocoTestReport)
 }
+
+
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
