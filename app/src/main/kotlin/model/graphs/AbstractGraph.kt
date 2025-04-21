@@ -5,8 +5,13 @@ import model.Vertex
 import java.util.Vector
 
 abstract class AbstractGraph <K, V>: Graph<K, V> {
-    override val vertices = Vector<Vertex<K, V>>()
-    override val edges = hashMapOf<Vertex<K, V>, Vector<Edge<K, V>>>()
+    protected val _vertices = Vector<Vertex<K, V>>()
+    protected val _edges = hashMapOf<Vertex<K, V>, Vector<Edge<K, V>>>()
+
+    val vertices
+        get() = _vertices
+    val edges
+        get() = _edges
 
     fun iteratorDFS() = DFS().iterator()
     fun iteratorBFS() = BFS().iterator()
@@ -100,6 +105,51 @@ abstract class AbstractGraph <K, V>: Graph<K, V> {
         vertices.remove(vertex)
         return true
     }
+
+    override fun containsEdge(from: Vertex<K, V>, to: Vertex<K, V>): Boolean {
+        return edges[from]?.map { it.link.second===to }?.contains(true) == true
+    }
+
+    override fun getEdge(from: Vertex<K, V>, to: Vertex<K, V>): Edge<K, V>? {
+        return edges[from]?.first { it.link.second === to }
+    }
+
+    override fun containsVertexWithKey(key: K): List<Vertex<K, V>> {
+        return vertices.filter { it.key==key }
+    }
+
+    override fun containsVertexWithValue(value: V): List<Vertex<K, V>> {
+        return vertices.filter { it.value==value }
+    }
+
+    override fun getInDegreeOfVertex(vertex: Vertex<K, V>): Int {
+        return edges.values.sumOf {
+            it.filter { it.link.second === vertex }.size
+        }
+    }
+
+    override fun getOutDegreeOfVertex(vertex: Vertex<K, V>): Int {
+        return edges[vertex]?.size ?: 0
+    }
+
+    override fun getEdgesFromVertex(vertex: Vertex<K, V>): Array<Edge<K, V>?> {
+        var array= Array<Edge<K, V>?>(edges[vertex]?.size ?: 0) {null}
+        edges[vertex]?.copyInto(array)
+        return array
+    }
+
+    override fun getEdgesToVertex(vertex: Vertex<K, V>): Vector<Edge<K, V>> {
+        var result= Vector<Edge<K, V>>()
+        edges.values.onEach {
+            it.onEach { edge ->
+                if (edge.link.second === vertex)
+                    result.add(edge)
+            }
+        }
+        return result
+    }
+
+
 }
 
 
