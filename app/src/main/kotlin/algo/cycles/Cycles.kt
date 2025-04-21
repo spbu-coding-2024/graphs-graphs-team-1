@@ -13,6 +13,7 @@ object Cycles {
             graph.vertices.forEach { this[it] = Color.WHITE }
         }
 
+        // Vertex and index correspondence in current path
         val vertexToIndex = mutableMapOf<Vertex<K, V>, Int>()
 
         fun dfs(current: Vertex<K, V>) {
@@ -34,6 +35,7 @@ object Cycles {
                     vertexToIndex[current] = currentPath.size
                     currentPath.add(current)
                     graph.edges[current]?.forEach { edge ->
+                        // Skip loops
                         if (edge.link.second != current) {
                             dfs(edge.link.second)
                         }

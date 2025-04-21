@@ -55,7 +55,7 @@ class CyclesTest {
     }
 
     @ParameterizedTest
-    @MethodSource("graphProvider")
+    @MethodSource("graphGenerator")
     fun testFindCycles(
         graph: DirectedGraph<Int, Int>,
         start: Vertex<Int, Int>,
@@ -67,7 +67,7 @@ class CyclesTest {
 
     companion object {
         @JvmStatic
-        fun graphProvider(): Stream<Arguments> {
+        fun graphGenerator(): Stream<Arguments> {
             val singleCycleGraph = createSingleCycleGraph()
             val multipleCyclesGraph = createMultipleCyclesGraph()
             return Stream.of(
