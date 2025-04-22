@@ -30,47 +30,17 @@ dependencies {
     implementation(kotlin("stdlib"))
     // https://mvnrepository.com/artifact/org.neo4j.test/neo4j-harness
     testImplementation("org.neo4j.test:neo4j-harness:2025.03.0")
-    // gephi toolkit
-    implementation(files("src/main/kotlin/lib/gephi-toolkit-0.10.0-all.jar"))
+//    // gephi toolkit
+//    implementation(files("lib/gephi-toolkit-0.10.0-all.jar"))
     // https://mvnrepository.com/artifact/org.jgrapht/jgrapht-core
     implementation("org.jgrapht:jgrapht-core:1.5.2")
 }
 
 
-tasks.build {
-    dependsOn("downloadGephiToolkit")
-}
-
 tasks.test {
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
 }
-
-tasks.register("downloadGephiToolkit") {
-    val path = "src/main/kotlin/lib/gephi-toolkit-0.10.0-all.jar"
-    val sourceUrl = "https://github.com/gephi/gephi-toolkit/releases/download/v0.10.0/gephi-toolkit-0.10.0-all.jar"
-
-    val libsDirectory = File("src/main/kotlin/lib")
-    val jarFile = File(path)
-
-    if (!libsDirectory.exists())
-        libsDirectory.mkdir()
-
-    if (!jarFile.exists())
-        download(sourceUrl, path)
-
-}
-
-fun download(url: String, path: String){
-    val destinationFile = File(path)
-    ant.invokeMethod("get", mapOf("src" to url, "dest" to destinationFile))
-}
-
-
-tasks.build{
-    dependsOn("load")
-}
-
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
