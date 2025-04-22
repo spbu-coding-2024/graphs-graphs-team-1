@@ -8,9 +8,9 @@ abstract class AbstractGraph <K, V>: Graph<K, V> {
     protected val _vertices = Vector<Vertex<K, V>>()
     protected val _edges = hashMapOf<Vertex<K, V>, Vector<Edge<K, V>>>()
 
-    val vertices
+    override val vertices
         get() = _vertices
-    val edges
+    override val edges
         get() = _edges
 
     fun iteratorDFS() = DFS().iterator()

@@ -2,18 +2,12 @@ package model.graphs
 
 import model.Edge
 import model.Vertex
-import org.gephi.graph.api.EdgeIterable
 import java.util.Vector
 
-import org.gephi.graph.api.Graph
-import org.gephi.graph.api.GraphLock
-import org.gephi.graph.api.GraphModel
-import org.gephi.graph.api.GraphView
-import org.gephi.graph.api.Interval
-import org.gephi.graph.api.Node
-import org.gephi.graph.api.NodeIterable
-
 interface Graph <K, V> {
+    val vertices: Vector<Vertex<K, V>>
+    val edges: HashMap<Vertex<K, V>, Vector<Edge<K, V>>>
+
     fun addEdge(first: Vertex<K, V>, second: Vertex<K, V>, weight: Int): Boolean
     fun deleteEdge(first: Vertex<K, V>, second: Vertex<K, V>): Boolean
     fun addVertex(vertex: Vertex<K, V>)
