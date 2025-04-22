@@ -39,13 +39,39 @@ dependencies {
 }
 
 
-
+tasks.build {
+    dependsOn("downloadGephiToolkit")
+}
 
 tasks.test {
     useJUnitPlatform()
-finalizedBy(tasks.jacocoTestReport)
+    finalizedBy(tasks.jacocoTestReport)
 }
 
+tasks.register("downloadGephiToolkit") {
+    val path = "src/lib/gephi-toolkit-0.10.0-all.jar"
+    val sourceUrl = "https://github.com/gephi/gephi-toolkit/releases/download/v0.10.0/gephi-toolkit-0.10.0-all.jar"
+
+    val libsDirectory = File("src/lib")
+    val jarFile = File(path)
+
+    if (!libsDirectory.exists())
+        libsDirectory.mkdir()
+
+    if (!jarFile.exists())
+        download(sourceUrl, path)
+
+}
+
+fun download(url: String, path: String){
+    val destinationFile = File(path)
+    ant.invokeMethod("get", mapOf("src" to url, "dest" to destinationFile))
+}
+
+
+tasks.build{
+    dependsOn("load")
+}
 
 
 tasks.jacocoTestReport {
