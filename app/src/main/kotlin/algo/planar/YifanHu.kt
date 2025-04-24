@@ -15,7 +15,7 @@ class YifanHu: Planar() {
         if (algorithm.canAlgo())
             algorithm.goAlgo()
         algorithm.endAlgo()
-        return getResult(graph, map)
+        return getResult(map)
     }
 
 }
