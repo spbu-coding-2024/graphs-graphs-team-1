@@ -1,10 +1,7 @@
 package algo.planar
 
-import algo.planar.ForceAtlas2
 import model.Vertex
 import model.graphs.Graph
-import model.graphs.UndirWeightGraph
-import org.gephi.graph.api.DirectedGraph
 import org.gephi.graph.api.GraphController
 import org.gephi.graph.api.Node
 import org.gephi.project.api.ProjectController
@@ -38,7 +35,7 @@ abstract class Planar {
         return array
     }
 
-    fun <K, V> getResult(graph: Graph<K, V>, map: HashMap<Vertex<K, V>, Node>):
+    fun <K, V> getResult(map: HashMap<Vertex<K, V>, Node>):
             HashMap<Vertex<K, V>, Pair<Float, Float>> {
         val result=hashMapOf<Vertex<K, V>, Pair<Float, Float>>()
         for (node in new.nodes) {
@@ -49,51 +46,4 @@ abstract class Planar {
 
     }
     abstract fun <K, V>apply(graph: Graph<K, V>): Map<Vertex<K, V>, Pair<Float, Float>>
-}
-
-
-fun setup(): Graph<Int, Int> {
-    val graph= UndirWeightGraph<Int, Int>()
-    var r1= Vertex(1,5)
-    var r2= Vertex(2,5)
-    var r3= Vertex(3,5)
-    var r4= Vertex(4,5)
-    var r5= Vertex(5,5)
-
-    graph.addEdge(r1, r2, 45)
-    graph.addEdge(r3, r1, 55)
-    graph.addEdge(r2, r3, 65)
-    graph.addEdge(r4, r5, 75)
-    return graph
-}
-
-fun setup2(): Graph<Int, Int> {
-    val graph= UndirWeightGraph<Int, Int>()
-    var r1= Vertex(1,5)
-    var r2= Vertex(2,5)
-    var r3= Vertex(3,5)
-    var r4= Vertex(4,5)
-    var r5= Vertex(5,5)
-
-    graph.addEdge(r1, r2, 45)
-    graph.addEdge(r2, r3, 55)
-    graph.addEdge(r5, r2, 65)
-
-    return graph
-}
-
-fun main() {
-    var t=setup()
-    var q=setup2()
-    var e= ForceAtlas2().apply(t)
-    var w= YifanHu().apply(t)
-    e.forEach {
-        println("${it.key.key} ${it.value}")
-    }
-    w.forEach {
-        println("${it.key.key} ${it.value}")
-    }
-
-
-
 }
