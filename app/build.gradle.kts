@@ -40,10 +40,10 @@ dependencies {
 }
 
 
-//tasks.test {
-//    useJUnitPlatform()
-//    finalizedBy(tasks.jacocoTestReport)
-//}
+tasks.test {
+    useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
@@ -56,17 +56,15 @@ tasks.jacocoTestReport {
 
 
 tasks.build {
-    dependsOn("downloadGephiToolkit")
+    dependsOn("Load")
 }
-
-
 
 tasks.test {
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
 }
 
-tasks.register("downloadGephiToolkit") {
+tasks.register("Load") {
     val path = "lib/gephi-toolkit-0.10.0-all.jar"
     val sourceUrl = "https://github.com/gephi/gephi-toolkit/releases/download/v0.10.0/gephi-toolkit-0.10.0-all.jar"
     val libsDirectory = File("lib")
