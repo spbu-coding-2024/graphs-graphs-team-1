@@ -2,6 +2,7 @@
 plugins {
     kotlin("jvm") version "1.9.20"
     id("org.jetbrains.compose")
+    `java-library`
     jacoco
 }
 
@@ -31,16 +32,18 @@ dependencies {
     // https://mvnrepository.com/artifact/org.neo4j.test/neo4j-harness
     testImplementation("org.neo4j.test:neo4j-harness:2025.03.0")
 //    // gephi toolkit
-//    implementation(files("lib/gephi-toolkit-0.10.0-all.jar"))
+    implementation(files("lib/gephi-toolkit-0.10.0-all.jar"))
     // https://mvnrepository.com/artifact/org.jgrapht/jgrapht-core
     implementation("org.jgrapht:jgrapht-core:1.5.2")
+    implementation("com.google.code.gson:gson:2.13.1")
+
 }
 
 
-tasks.test {
-    useJUnitPlatform()
-    finalizedBy(tasks.jacocoTestReport)
-}
+//tasks.test {
+//    useJUnitPlatform()
+//    finalizedBy(tasks.jacocoTestReport)
+//}
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
@@ -50,3 +53,34 @@ tasks.jacocoTestReport {
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
     }
 }
+
+
+tasks.build {
+    dependsOn("downloadGephiToolkit")
+}
+
+
+
+tasks.test {
+    useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.register("downloadGephiToolkit") {
+    val path = "lib/gephi-toolkit-0.10.0-all.jar"
+    val sourceUrl = "https://github.com/gephi/gephi-toolkit/releases/download/v0.10.0/gephi-toolkit-0.10.0-all.jar"
+    val libsDirectory = File("lib")
+    val jarFile = File(path)
+
+    if (!libsDirectory.exists())
+        libsDirectory.mkdir()
+    if (!jarFile.exists())
+        download(sourceUrl, path)
+}
+
+fun download(url: String, path: String){
+    val destinationFile = File(path)
+    ant.invokeMethod("get", mapOf("src" to url, "dest" to destinationFile))
+}
+
+

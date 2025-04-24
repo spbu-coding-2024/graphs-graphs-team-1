@@ -1,17 +1,18 @@
 package model
 
 import model.graphs.AbstractGraph
+import model.graphs.Graph
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 
 class GraphFactory {
     companion object {
         fun <K, V> fromNeo4j(
-            constructor: () -> AbstractGraph<K, V>,
+            constructor: () -> Graph<K, V>,
             uri: String,
             user: String,
             password: String
-        ): AbstractGraph<K, V> {
+        ): Graph<K, V> {
             var graph = constructor.invoke()
             var driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password))
             var session = driver.session()

@@ -1,13 +1,14 @@
 package model
 
 import model.graphs.AbstractGraph
+import model.graphs.Graph
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 
 
 class InternalFormatFactory {
     companion object {
-        fun <K, V> toNeo4j(graph: AbstractGraph<K, V>, uri: String, user: String, password: String) {
+        fun <K, V> toNeo4j(graph: Graph<K, V>, uri: String, user: String, password: String) {
             var driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password))
             var session = driver.session()
             for (vertex in graph.vertices) {
