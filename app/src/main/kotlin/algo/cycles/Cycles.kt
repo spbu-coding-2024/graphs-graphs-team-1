@@ -1,12 +1,13 @@
 package algo.cycles
 
-import model.graphs.AbstractGraph
 import model.Vertex
+import model.graphs.Graph
 
 object Cycles {
     private enum class Color { WHITE, GRAY, BLACK }
 
-    fun <K, V> findCycles(graph: AbstractGraph<K, V>, start: Vertex<K, V>): Set<List<Vertex<K, V>>> {
+
+    fun <K, V> findCycles(graph: Graph<K, V>, start: Vertex<K, V>): Set<List<Vertex<K, V>>> {
         val cycles = mutableSetOf<List<Vertex<K, V>>>()
         val currentPath = mutableListOf<Vertex<K, V>>()
         val color = mutableMapOf<Vertex<K, V>, Color>().apply {

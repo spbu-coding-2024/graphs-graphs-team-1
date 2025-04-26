@@ -1,8 +1,8 @@
 package algo.strconnect
 
 import model.Vertex
-import model.graphs.AbstractGraph
+import model.graphs.Graph
 
 interface StrongConnect {
-    fun <K, V > apply(graph: AbstractGraph<K, V>): ArrayDeque<ArrayDeque<Vertex<K, V>>>
+    fun <K, V > apply(graph: Graph<K, V>): ArrayDeque<ArrayDeque<Vertex<K, V>>>
 }

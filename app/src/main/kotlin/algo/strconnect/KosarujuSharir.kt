@@ -2,12 +2,13 @@ package algo.strconnect
 
 import model.Vertex
 import model.graphs.AbstractGraph
+import model.graphs.Graph
 import kotlin.reflect.full.primaryConstructor
 
 object KosarujuSharir: StrongConnect {
 
     private fun <K, V> dfsIndirect(
-        graph: AbstractGraph<K, V>, current: Vertex<K, V>,
+        graph: Graph<K, V>, current: Vertex<K, V>,
         component: ArrayDeque<Vertex<K, V>>, visited: HashMap<Vertex<K, V>, Boolean>
     )  {
         visited[current] = true
@@ -20,7 +21,7 @@ object KosarujuSharir: StrongConnect {
     }
 
     private fun <K, V> dfsDirect(
-        graph: AbstractGraph<K, V>, current: Vertex<K, V>,
+        graph: Graph<K, V>, current: Vertex<K, V>,
         order: ArrayDeque<Vertex<K, V>>, visited: HashMap<Vertex<K, V>, Boolean>
     )  {
         visited[current] = true
@@ -32,7 +33,7 @@ object KosarujuSharir: StrongConnect {
         order.add(current)
     }
 
-    internal fun <K, V> reversedGraph(graph: AbstractGraph<K, V>): AbstractGraph<K, V> {
+    internal fun <K, V> reversedGraph(graph: Graph<K, V>): Graph<K, V> {
         var new = graph::class.primaryConstructor?.call() ?: throw IllegalStateException()
         for (vertex in graph.edges)
             for (edge in vertex.value)
@@ -40,7 +41,7 @@ object KosarujuSharir: StrongConnect {
         return new
     }
 
-    override fun <K, V> apply(graph: AbstractGraph<K, V>): ArrayDeque<ArrayDeque<Vertex<K, V>>> {
+    override fun <K, V> apply(graph: Graph<K, V>): ArrayDeque<ArrayDeque<Vertex<K, V>>> {
         var order = ArrayDeque<Vertex<K, V>>()
         var visited = hashMapOf<Vertex<K, V>, Boolean>()
         var component = ArrayDeque<Vertex<K, V>>()
