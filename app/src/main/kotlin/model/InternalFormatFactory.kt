@@ -6,7 +6,11 @@ import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.exceptions.ClientException
 import org.neo4j.driver.exceptions.DatabaseException
-import com.google.gson.*
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonSerializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonArray
 import java.lang.reflect.Type
 
 
@@ -89,8 +93,8 @@ class GraphJsonSerializer<K, V> : JsonSerializer<Graph<K, V>> {
         for ((_, edgeList) in graph.edges) {
             for (edge in edgeList) {
                 val edgeObj = JsonObject()
-                edgeObj.addProperty("source", edge.link.first.hashCode())
-                edgeObj.addProperty("target", edge.link.second.hashCode())
+                edgeObj.addProperty("from", edge.link.first.hashCode())
+                edgeObj.addProperty("to", edge.link.second.hashCode())
                 edgeObj.addProperty("weight", edge.weight)
                 edgesArray.add(edgeObj)
             }
