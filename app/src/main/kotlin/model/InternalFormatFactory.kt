@@ -83,8 +83,12 @@ class GraphJsonSerializer<K, V> : JsonSerializer<Graph<K, V>> {
         for (vertex in graph.vertices) {
             val vertexObj = JsonObject()
             vertexObj.addProperty("id", vertex.hashCode())
-            vertexObj.add("key", context.serialize(vertex.key))
-            vertexObj.add("value", context.serialize(vertex.value))
+            if (vertex.key != null) {
+                vertexObj.add("key", context.serialize(vertex.key))
+            }
+            if (vertex.value != null) {
+                vertexObj.add("value", context.serialize(vertex.value))
+            }
             verticesArray.add(vertexObj)
         }
         result.add("vertices", verticesArray)
