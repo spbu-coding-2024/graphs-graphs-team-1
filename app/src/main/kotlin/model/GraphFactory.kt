@@ -69,7 +69,7 @@ class GraphFactory {
             return GsonBuilder()
                 .registerTypeAdapter(typeToken, GraphJsonDeserializer(constructor, keyType, valueType))
                 .create()
-                .fromJson(json, typeToken)
+                .fromJson(json, typeToken) ?: throw IllegalArgumentException("Invalid JSON: null result")
         }
     }
 }
@@ -77,26 +77,66 @@ class GraphFactory {
 class GraphJsonDeserializer<K, V> (private val constructor: () -> Graph<K, V>, private val keyType: Type,
                                    private val valueType: Type) : JsonDeserializer<Graph<K, V>> {
     override fun deserialize(json: JsonElement, type: Type, context: JsonDeserializationContext): Graph<K, V> {
+        if (!json.isJsonObject) {
+            throw IllegalArgumentException("Expected JSON object")
+        }
         val jsonObject = json.asJsonObject
         val graph = constructor()
         val vertexMap = mutableMapOf<Int, Vertex<K, V>>()
 
-        jsonObject.getAsJsonArray("vertices").forEach { vertexElement ->
-            val vertexObj = vertexElement.asJsonObject
-            vertexMap[vertexObj.get("id").asInt] = Vertex(
-                context.deserialize<K>(vertexObj.get("key"), keyType),
-                context.deserialize<V>(vertexObj.get("value"), valueType)
-            ).also { graph.addVertex(it) }
+        val verticesArray = jsonObject.getAsJsonArray("vertices")
+        if (verticesArray != null) {
+            for (i in 0 until verticesArray.size()) {
+                val vertexElement = verticesArray[i]
+                if (vertexElement.isJsonObject) {
+                    val vertexObj = vertexElement.asJsonObject
+
+                    try {
+                        val id = vertexObj.get("id").asInt
+                        val key = context.deserialize<K>(vertexObj.get("key"), keyType)
+                        val value = context.deserialize<V>(vertexObj.get("value"), valueType)
+
+                        if (key != null && value != null) {
+                            vertexMap[id] = Vertex<K, V>(key, value).also { graph.addVertex(it) }
+                        } else {
+                            println("Vertex with id $id has null key or null value")
+                        }
+                    } catch (e: Exception) {
+                        println("Error processing vertex")
+                        continue
+                    }
+                }
+            }
+        } else {
+            println("Not found verticesArray")
         }
-        jsonObject.getAsJsonArray("edges").forEach { edgeElement ->
-            val edgeObj = edgeElement.asJsonObject
-            graph.addEdge(
-                vertexMap[edgeObj.get("from").asInt]
-                    ?: throw JsonParseException("Vertex ${edgeObj.get("from")} not found"),
-                vertexMap[edgeObj.get("to").asInt]
-                    ?: throw JsonParseException("Vertex ${edgeObj.get("to")} not found"),
-                edgeObj.get("weight").asInt
-            )
+
+        val edgesArray = jsonObject.getAsJsonArray("edges")
+        if (edgesArray != null) {
+            for (i in 0 until edgesArray.size()) {
+                val edgeElement = edgesArray[i]
+                if (edgeElement.isJsonObject) {
+                    val edgeObj = edgeElement.asJsonObject
+                    try {
+                        val fromId = edgeObj.get("from").asInt
+                        val toId = edgeObj.get("to").asInt
+                        val weight = edgeObj.get("weight").asInt
+
+                        val fromVertex = vertexMap[fromId]
+                        val toVertex = vertexMap[toId]
+                        if (fromVertex != null && toVertex != null) {
+                            graph.addEdge(fromVertex, toVertex, weight)
+                        } else {
+                            println("fromVertex is null or toVertex is null")
+                        }
+                    } catch (e: Exception) {
+                        println("Error processing edge")
+                        continue
+                    }
+                }
+            }
+        } else {
+            println("Not found edges array")
         }
         return graph
     }
