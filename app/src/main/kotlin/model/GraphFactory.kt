@@ -6,6 +6,10 @@ import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.exceptions.ClientException
 import org.neo4j.driver.exceptions.DatabaseException
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonDeserializationContext
+import java.lang.reflect.Type
 
 class GraphFactory {
     companion object {
@@ -62,3 +66,21 @@ class GraphFactory {
         }
     }
 }
+
+class GraphJsonDeserializer<K, V> (private val constructor: () -> Graph<K, V>, private val keyType: Type,
+                                   private val valueType: Type) : JsonDeserializer<Graph<K, V>> {
+    override fun deserialize (json: JsonElement, type: Type, context: JsonDeserializationContext): Graph<K, V> {
+        val jsonObject = json.asJsonObject
+        val graph = constructor()
+        val vertexMap = mutableMapOf<Int, Vertex<K, V>>()
+
+        jsonObject.getAsJsonArray("vertices").forEach { vertexElement ->
+            val vertexObj = vertexElement.asJsonObject
+            vertexMap[vertexObj.get("id").asInt] = Vertex(
+                context.deserialize(vertexObj.get("key"), keyType),
+                context.deserialize(vertexObj.get("value"), valueType)
+            ).also { graph.addVertex(it) }
+        }
+    }
+}
+
