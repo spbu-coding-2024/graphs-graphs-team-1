@@ -7,6 +7,7 @@ import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.exceptions.ClientException
 import org.neo4j.driver.exceptions.DatabaseException
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -82,8 +83,8 @@ class GraphJsonSerializer<K, V> : JsonSerializer<Graph<K, V>> {
         for (vertex in graph.vertices) {
             val vertexObj = JsonObject()
             vertexObj.addProperty("id", vertex.hashCode())
-            vertexObj.addProperty("key", vertex.key.toString())
-            vertexObj.addProperty("value", vertex.value.toString())
+            vertexObj.add("key", context.serialize(vertex.key))
+            vertexObj.add("value", context.serialize(vertex.value))
             verticesArray.add(vertexObj)
         }
         result.add("vertices", verticesArray)

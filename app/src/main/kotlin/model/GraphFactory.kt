@@ -12,6 +12,7 @@ import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonParseException
 import com.google.gson.GsonBuilder
 import java.lang.reflect.Type
+import com.google.gson.reflect.TypeToken
 
 class GraphFactory {
     companion object {
@@ -64,10 +65,11 @@ class GraphFactory {
         }
 
         fun <K, V> fromJSON(json: String, constructor: () -> Graph<K, V>, keyType: Type, valueType: Type): Graph<K, V> {
+            val typeToken = TypeToken.getParameterized(Graph::class.java, keyType, valueType).type
             return GsonBuilder()
-                .registerTypeAdapter(Graph::class.java, GraphJsonDeserializer(constructor, keyType, valueType))
+                .registerTypeAdapter(typeToken, GraphJsonDeserializer(constructor, keyType, valueType))
                 .create()
-                .fromJson(json, Graph::class.java)
+                .fromJson(json, typeToken)
         }
     }
 }
@@ -82,21 +84,20 @@ class GraphJsonDeserializer<K, V> (private val constructor: () -> Graph<K, V>, p
         jsonObject.getAsJsonArray("vertices").forEach { vertexElement ->
             val vertexObj = vertexElement.asJsonObject
             vertexMap[vertexObj.get("id").asInt] = Vertex(
-                context.deserialize(vertexObj.get("key"), keyType),
-                context.deserialize(vertexObj.get("value"), valueType)
+                context.deserialize<K>(vertexObj.get("key"), keyType),
+                context.deserialize<V>(vertexObj.get("value"), valueType)
             ).also { graph.addVertex(it) }
         }
         jsonObject.getAsJsonArray("edges").forEach { edgeElement ->
             val edgeObj = edgeElement.asJsonObject
             graph.addEdge(
-                from = vertexMap[edgeObj.get("from").asInt]
+                vertexMap[edgeObj.get("from").asInt]
                     ?: throw JsonParseException("Vertex ${edgeObj.get("from")} not found"),
-                to = vertexMap[edgeObj.get("to").asInt]
+                vertexMap[edgeObj.get("to").asInt]
                     ?: throw JsonParseException("Vertex ${edgeObj.get("to")} not found"),
-                weight = edgeObj.get("weight").asInt
+                edgeObj.get("weight").asInt
             )
         }
         return graph
     }
 }
-
