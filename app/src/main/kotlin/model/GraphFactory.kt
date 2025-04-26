@@ -9,6 +9,7 @@ import org.neo4j.driver.exceptions.DatabaseException
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonParseException
 import java.lang.reflect.Type
 
 class GraphFactory {
@@ -81,6 +82,17 @@ class GraphJsonDeserializer<K, V> (private val constructor: () -> Graph<K, V>, p
                 context.deserialize(vertexObj.get("value"), valueType)
             ).also { graph.addVertex(it) }
         }
+        jsonObject.getAsJsonArray("edges").forEach { edgeElement ->
+            val edgeObj = edgeElement.asJsonObject
+            graph.addEdge(
+                from = vertexMap[edgeObj.get("from").asInt]
+                    ?: throw JsonParseException("Vertex ${edgeObj.get("from")} not found"),
+                to = vertexMap[edgeObj.get("to").asInt]
+                    ?: throw JsonParseException("Vertex ${edgeObj.get("to")} not found"),
+                weight = edgeObj.get("weight").asInt
+            )
+        }
+        return graph
     }
 }
 
