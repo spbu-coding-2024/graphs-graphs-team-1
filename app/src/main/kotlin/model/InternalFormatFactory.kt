@@ -6,6 +6,8 @@ import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 import org.neo4j.driver.exceptions.ClientException
 import org.neo4j.driver.exceptions.DatabaseException
+import com.google.gson.*
+import java.lang.reflect.Type
 
 
 class InternalFormatFactory {
@@ -58,5 +60,20 @@ class InternalFormatFactory {
                 println("Something went wrong!")
             }
         }
+    }
+}
+
+class GraphJsonSerializer<K, V> : JsonSerializer<Graph<K, V>> {
+    override fun serialize(graph: Graph<K, V>, type: Type, context: JsonSerializationContext): JsonElement {
+        val result = JsonObject()
+        val verticesArray = JsonArray()
+        for (vertex in graph.vertices) {
+            val vertexObj = JsonObject()
+            vertexObj.addProperty("id", vertex.hashCode())
+            vertexObj.addProperty("key", vertex.key.toString())
+            vertexObj.addProperty("value", vertex.value.toString())
+            verticesArray.add(vertexObj)
+        }
+        result.add("vertices", verticesArray)
     }
 }
