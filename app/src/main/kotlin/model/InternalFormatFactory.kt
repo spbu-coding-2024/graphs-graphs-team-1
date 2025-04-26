@@ -75,5 +75,19 @@ class GraphJsonSerializer<K, V> : JsonSerializer<Graph<K, V>> {
             verticesArray.add(vertexObj)
         }
         result.add("vertices", verticesArray)
+
+        val edgesArray = JsonArray()
+        for ((_, edgeList) in graph.edges) {
+            for (edge in edgeList) {
+                val edgeObj = JsonObject()
+                edgeObj.addProperty("source", edge.link.first.hashCode())
+                edgeObj.addProperty("target", edge.link.second.hashCode())
+                edgeObj.addProperty("weight", edge.weight)
+                edgesArray.add(edgeObj)
+            }
+        }
+        result.add("edges", edgesArray)
+
+        return result
     }
 }
