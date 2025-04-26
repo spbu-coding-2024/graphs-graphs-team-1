@@ -64,8 +64,7 @@ class InternalFormatFactory {
                 println("Something went wrong!")
             }
         }
-    }
-    companion object {
+
         fun <K, V> toJSON(graph: Graph<K, V>): String {
             val gson = GsonBuilder()
                 .registerTypeAdapter(Graph::class.java, GraphJsonSerializer<K, V>())
