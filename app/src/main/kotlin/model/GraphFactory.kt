@@ -10,6 +10,7 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonParseException
+import com.google.gson.GsonBuilder
 import java.lang.reflect.Type
 
 class GraphFactory {
@@ -62,15 +63,18 @@ class GraphFactory {
             TODO()
         }
 
-        fun <K, V> fromJSON(constructor: () -> AbstractGraph<K, V>): AbstractGraph<K, V> {
-            TODO()
+        fun <K, V> fromJSON(json: String, constructor: () -> Graph<K, V>, keyType: Type, valueType: Type): Graph<K, V> {
+            return GsonBuilder()
+                .registerTypeAdapter(Graph::class.java, GraphJsonDeserializer(constructor, keyType, valueType))
+                .create()
+                .fromJson(json, Graph::class.java)
         }
     }
 }
 
 class GraphJsonDeserializer<K, V> (private val constructor: () -> Graph<K, V>, private val keyType: Type,
                                    private val valueType: Type) : JsonDeserializer<Graph<K, V>> {
-    override fun deserialize (json: JsonElement, type: Type, context: JsonDeserializationContext): Graph<K, V> {
+    override fun deserialize(json: JsonElement, type: Type, context: JsonDeserializationContext): Graph<K, V> {
         val jsonObject = json.asJsonObject
         val graph = constructor()
         val vertexMap = mutableMapOf<Int, Vertex<K, V>>()
