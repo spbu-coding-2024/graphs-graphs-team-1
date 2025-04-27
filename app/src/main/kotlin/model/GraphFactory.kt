@@ -108,7 +108,7 @@ class GraphJsonDeserializer<K, V> (private val constructor: () -> Graph<K, V>, p
                 }
             }
         } else {
-            println("Not found verticesArray")
+            println("Not found vertices array")
         }
 
         val edgesArray = jsonObject.getAsJsonArray("edges")
