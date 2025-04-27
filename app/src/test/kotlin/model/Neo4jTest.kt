@@ -77,5 +77,4 @@ class Neo4jTest {
         var result=GraphFactory.fromNeo4j<Int, Int>(::DirWeightGraph,  neo4j.boltURI().toString(), "neo", "pass")
         assertEquals(graph.edges.values.sumOf { it.size }, result.edges.values.sumOf { it.size })
     }
-
 }

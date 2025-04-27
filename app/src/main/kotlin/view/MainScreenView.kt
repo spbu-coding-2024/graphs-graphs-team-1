@@ -4,16 +4,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import model.Vertex
+import model.graphs.Graph
+import viewmodel.GraphViewModel
 import viewmodel.VertexViewModel
 
 @Composable
-fun <K, V> mainScreen(vertices: Array<Vertex<Int, Int>>) {
-    var t=vertices.associateWith { it ->
-        VertexViewModel(it)
-    }
+fun <K, V> mainScreen(viewModel: GraphViewModel<Int, Int>) {
     Box() {
-        t.values.forEach {
+        viewModel.vertices.values.associateWith {
             VertexView(it, Modifier)
+        }
+        viewModel.edges.values.forEach { e ->
+            EdgeView(e, Modifier)
         }
     }
 }
