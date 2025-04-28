@@ -22,11 +22,12 @@ fun <K, V>  graphView(graphViewModel: GraphViewModel<K, V>) {
     Box(modifier = Modifier
         .fillMaxSize()
     ) {
-        graphViewModel.vertices.values.forEach { v ->
-            VertexView(v, Modifier)
-        }
         graphViewModel.edges.values.forEach {
             EdgeView(it, Modifier)
         }
+        graphViewModel.vertices.values.forEach { v ->
+            VertexView(v, Modifier)
+        }
+
     }
 }

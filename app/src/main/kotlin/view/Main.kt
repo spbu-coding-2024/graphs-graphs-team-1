@@ -24,9 +24,9 @@ fun graph(): Graph<Int, Int> {
 
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication) {
+    Window(onCloseRequest = ::exitApplication, title = "Graph Application") {
         MaterialTheme {
-            mainScreen<Int, Int>(GraphViewModel(graph()))
+            mainScreen(GraphViewModel(graph()), )
         }
     }
 }

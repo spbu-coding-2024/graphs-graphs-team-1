@@ -48,8 +48,7 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
             }
         }
         .onClick(
-            onDoubleClick = {viewModel.color.value=!viewModel.color.value},
-            onClick = { viewModel.show.value=true }
+            onClick = {viewModel.color.value=!viewModel.color.value}
         )
     ) {
             Text(
