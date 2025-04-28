@@ -46,6 +46,7 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
     val selected = viewModel.vertices.values.filter { it.color.value }
     val requester = remember { FocusRequester() }
 
+
     val set: (Double) -> Unit = { n -> viewModel.vertices.values.forEach {
         it.radius *= n
         it.x.value *= n
@@ -131,5 +132,6 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
         ) {
             graphView(viewModel)
         }
+
     }
 }
