@@ -17,13 +17,14 @@ fun <E, V> EdgeView(
 ) {
     Canvas(modifier = modifier.fillMaxSize()) {
         drawLine(
+            strokeWidth = 2f,
             start = Offset(
-                x = viewModel.from.x.value.dp.toPx()+ 25.dp.toPx(),
-                y = viewModel.from.y.value.dp.toPx()+ 25.dp.toPx(),
+                x = viewModel.from.x.value.dp.toPx()+ viewModel.from.radius.dp.toPx(),
+                y = viewModel.from.y.value.dp.toPx()+ viewModel.from.radius.dp.toPx(),
             ),
             end = Offset(
-                x = viewModel.to.x.value.dp.toPx()+ 25.dp.toPx(),
-                y = viewModel.to.y.value.dp.toPx()+ 25.dp.toPx(),
+                x = viewModel.to.x.value.dp.toPx()+ viewModel.to.radius.dp.toPx(),
+                y = viewModel.to.y.value.dp.toPx()+ viewModel.to.radius.dp.toPx(),
             ),
             color = Color.Black
         )

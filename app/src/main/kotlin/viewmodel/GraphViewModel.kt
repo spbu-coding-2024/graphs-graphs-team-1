@@ -9,7 +9,7 @@ import kotlin.text.get
 
 class GraphViewModel<K, V>(graph: Graph<K, V>) {
     val vertices = graph.vertices.associateWith { v ->
-        VertexViewModel(v)
+        VertexViewModel(v, graph.getInDegreeOfVertex(v).toDouble())
     }
     private val temp = Vector<Edge<K, V>>()
     init {
@@ -19,7 +19,6 @@ class GraphViewModel<K, V>(graph: Graph<K, V>) {
             }
         }
     }
-
     val edges = temp.associateWith { e ->
         val fst = vertices[e.link.first]
             ?: throw IllegalStateException("VertexView for ${e.link.first} not found")
