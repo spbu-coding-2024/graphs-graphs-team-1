@@ -1,5 +1,7 @@
 package view
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -8,6 +10,7 @@ import model.Vertex
 import model.graphs.Graph
 import viewmodel.GraphViewModel
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <K, V>  graphView(graphViewModel: GraphViewModel<K, V>) {
     Box(modifier = Modifier

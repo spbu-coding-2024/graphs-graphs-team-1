@@ -1,9 +1,11 @@
 package view
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -19,6 +21,7 @@ import model.Vertex
 import viewmodel.VertexViewModel
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Modifier,) {
     Box(modifier = modifier
@@ -28,6 +31,9 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
             color = Color.Cyan,
             shape = CircleShape
         )
+        .onDrag(onDrag = { offset ->
+            viewModel.onDrag(offset)
+        })
         .border(BorderStroke(2.dp, Color.Black), CircleShape)
         .pointerInput(viewModel) {
             detectDragGestures { change, dragAmount ->
