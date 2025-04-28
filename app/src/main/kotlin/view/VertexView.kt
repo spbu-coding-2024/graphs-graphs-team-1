@@ -7,15 +7,20 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.unit.dp
 import model.Vertex
 import viewmodel.VertexViewModel
@@ -28,12 +33,13 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
         .size(viewModel.radius.dp*2, viewModel.radius.dp*2)
         .offset(viewModel.x.value.dp, viewModel.y.value.dp)
         .background(
-            color = Color.Cyan,
+            color = if (viewModel.color.value) Color.Red else Color.Cyan,
             shape = CircleShape
         )
         .onDrag(onDrag = { offset ->
             viewModel.onDrag(offset)
         })
+
         .border(BorderStroke(2.dp, Color.Black), CircleShape)
         .pointerInput(viewModel) {
             detectDragGestures { change, dragAmount ->
@@ -41,6 +47,10 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
                 viewModel.onDrag(dragAmount)
             }
         }
+        .onClick(
+            onDoubleClick = {viewModel.color.value=!viewModel.color.value},
+            onClick = { viewModel.show.value=true }
+        )
     ) {
             Text(
                 modifier = Modifier
@@ -50,3 +60,4 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
 
     }
 }
+

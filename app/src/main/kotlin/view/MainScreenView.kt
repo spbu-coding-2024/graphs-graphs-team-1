@@ -28,6 +28,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.clearCompositionErrors
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,15 +41,19 @@ import androidx.compose.ui.input.rotary.onRotaryScrollEvent
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.unit.dp
 import viewmodel.GraphViewModel
+import viewmodel.VertexViewModel
+import java.util.Vector
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun <K, V> mainScreen(viewModel: GraphViewModel<Int, Int>) {
+fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
     var scale by remember { mutableStateOf(100) }
     var expanded by remember { mutableStateOf(false) }
+    val selected = viewModel.vertices.values.filter { it.color.value }
+
     Scaffold(
         bottomBar = {
-            BottomAppBar(backgroundColor = Color.Gray) {
+            BottomAppBar(backgroundColor = Color.Gray, modifier = Modifier.height(40.dp)) {
                 Button(
                     onClick = {
                         scale += 10
@@ -79,10 +84,9 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<Int, Int>) {
             }
         },
         topBar = {
-            TopAppBar(backgroundColor = Color.Gray) {
+            TopAppBar(backgroundColor = Color.Gray, modifier = Modifier.height(40.dp)) {
                 Box(
                     modifier = Modifier
-                        .padding(16.dp)
                         .background(Color.Red)
                 ) {
                     IconButton(onClick = { expanded = !expanded }) {
@@ -92,14 +96,8 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<Int, Int>) {
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
                     ) {
-                        DropdownMenuItem(
-                            content = { Text("Option 1") },
-                            onClick = { /* Do something... */ }
-                        )
-                        DropdownMenuItem(
-                            content = { Text("Option 2") },
-                            onClick = { /* Do something... */ }
-                        )
+                        DropdownMenuItem(onClick = {viewModel.vertices.values.forEach { it.color.value=false }}) {Text("reset colors")}
+
                     }
                 }
             }
