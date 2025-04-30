@@ -37,7 +37,7 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
         .size(viewModel.radius.dp*2, viewModel.radius.dp*2)
         .offset(viewModel.x.value.dp, viewModel.y.value.dp)
         .background(
-            color = if (viewModel.color.value) Color.Red else Color.Cyan,
+            color = viewModel.color.value,
             shape = CircleShape
         )
         .onDrag(onDrag = { offset ->
@@ -45,14 +45,8 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
         })
 
         .border(BorderStroke(2.dp, Color.Black), CircleShape)
-        .pointerInput(viewModel) {
-            detectDragGestures { change, dragAmount ->
-                change.consume()
-                viewModel.onDrag(dragAmount)
-            }
-        }
         .onClick(
-            onClick = {viewModel.color.value=!viewModel.color.value},
+            onClick = {viewModel.color.value=if (viewModel.color.value==Color.Red) Color.Cyan else Color.Red},
             onDoubleClick = {openDialog.value=true}
         )
     ) {

@@ -17,8 +17,9 @@ fun graph(): Graph<Int, Int> {
     var r4=Vertex(7, 5)
     var r5=Vertex(8, 5)
     graph.addEdge(r1, r2, 78)
-    graph.addEdge(r1, r3, 64)
-    graph.addEdge(r4, r5, 12)
+    graph.addEdge(r2, r3, 64)
+    graph.addEdge(r3, r4, 12)
+    graph.addEdge(r4, r5, 78)
     return graph
 }
 

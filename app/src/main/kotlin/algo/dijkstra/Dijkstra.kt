@@ -1,7 +1,9 @@
 package algo.dijkstra
 
 import model.Vertex
+import model.graphs.AbstractGraph
 import model.graphs.DirWeightGraph
+import org.gephi.graph.api.Graph
 import java.util.PriorityQueue
 import java.util.Vector
 
@@ -9,7 +11,7 @@ import java.util.Vector
 object Dijkstra {
     private const val INFINITY = Int.MAX_VALUE
 
-    fun <K, V> apply(graph: DirWeightGraph<K, V>, start: Vertex<K, V>): Pair<Map<Vertex<K, V>, Int>,
+    fun <K, V> apply(graph: model.graphs.Graph<K, V>, start: Vertex<K, V>): Pair<Map<Vertex<K, V>, Int>,
             Map<Vertex<K, V>, Vertex<K, V>?>> {
         val distances = mutableMapOf<Vertex<K, V>, Int>().withDefault { INFINITY }
         val predecessors = mutableMapOf<Vertex<K, V>, Vertex<K, V>?>()
@@ -53,7 +55,7 @@ object Dijkstra {
     }
 
     fun <K, V> buildShortestPath(
-        graph: DirWeightGraph<K, V>, start: Vertex<K, V>,
+        graph: model.graphs.Graph<K, V>, start: Vertex<K, V>,
         end: Vertex<K, V>
     ): Pair<Int, Vector<Vertex<K, V>>> {
         val (distances, predecessors) = apply(graph, start)
