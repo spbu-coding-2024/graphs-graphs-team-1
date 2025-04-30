@@ -29,7 +29,7 @@ fun <E, V> EdgeView(
                 x = viewModel.to.x.value.dp.toPx()+ viewModel.to.radius.dp.toPx(),
                 y = viewModel.to.y.value.dp.toPx()+ viewModel.to.radius.dp.toPx(),
             ),
-            color = viewModel.color
+            color = viewModel.color.value
         )
     }
     if (viewModel.isVisible.value) {

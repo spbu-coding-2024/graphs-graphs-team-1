@@ -2,11 +2,12 @@ package algo.bellmanford
 
 import model.Vertex
 import model.graphs.DirWeightGraph
+import model.graphs.Graph
 import java.util.Vector
 
 object FordBellman {
 
-    fun <K, V> apply(graph: DirWeightGraph<K, V>, start: Vertex<K, V>): Triple<Map<Vertex<K, V>, Int>,
+    fun <K, V> apply(graph: Graph<K, V>, start: Vertex<K, V>): Triple<Map<Vertex<K, V>, Int>,
                 Map<Vertex<K, V>, Vertex<K, V>?>, Vector<Vertex<K, V>>?> {
         var lengths=mutableMapOf<Vertex<K, V>, Int>()
         var paths= mutableMapOf<Vertex<K, V>, Vertex<K, V>?>()
@@ -44,7 +45,7 @@ object FordBellman {
         return Triple(lengths, paths, cycle)
     }
 
-    fun <K, V> apply(graph: DirWeightGraph<K, V>, start: Vertex<K, V>, end: Vertex<K, V>): Triple<Int, Vector<Vertex<K, V>>?,  Vector<Vertex<K, V>>?> {
+    fun <K, V> apply(graph: Graph<K, V>, start: Vertex<K, V>, end: Vertex<K, V>): Triple<Int, Vector<Vertex<K, V>>?,  Vector<Vertex<K, V>>?> {
         var path= Vector<Vertex<K, V>>()
         var (lengths, paths, cycle)=apply(graph, start)
         var cur=end
