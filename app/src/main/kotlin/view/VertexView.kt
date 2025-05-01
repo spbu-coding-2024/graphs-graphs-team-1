@@ -49,7 +49,9 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
 
         .border(BorderStroke(2.dp, Color.Black), CircleShape)
         .onClick(
-            onClick = {viewModel.color.value=if (viewModel.color.value==Color.Red) Color.Cyan else Color.Red},
+            onClick = {
+                viewModel.selected.value=!viewModel.selected.value
+                viewModel.color.value=if (!viewModel.selected.value) Color.Cyan else Color.Red},
             onDoubleClick = {openDialog.value=true}
         )
     ) {}
