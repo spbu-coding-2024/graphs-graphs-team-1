@@ -47,7 +47,9 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import model.Vertex
 import viewmodel.GraphViewModel
+import java.util.Vector
 import kotlin.collections.forEach
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObject
@@ -88,6 +90,7 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
             viewModel.vertices[v]?.y?.value=c.second.toDouble()
         }
     }
+
 
     LaunchedEffect(Unit) {
         requester.requestFocus()
@@ -170,6 +173,9 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                 //алгоритмы
                 Box{
                     val openDialog = remember { mutableStateOf(false) }
+                    val warning = remember { mutableStateOf(false) }
+                    val error = remember { mutableStateOf(false) }
+
                     val path= remember { mutableStateOf(0) }
                     IconButton(onClick = { expAlgo = !expAlgo }) {
                         Icon(Icons.Default.Build, contentDescription = "More options")
@@ -179,6 +185,36 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                         onDismissRequest = { expAlgo = false }
                     ) {
 
+                        @Composable
+                        fun indexErrorWindow()  {
+                            if (warning.value)
+                                AlertDialog(
+                                    onDismissRequest = { warning.value = false},
+                                    title = { Text(text = "Invalid selected amount") },
+                                    text = {Text("2 elements required for algorithm")},
+                                    properties = DialogProperties(dismissOnBackPress = false),
+                                    confirmButton = {
+                                        Button({ warning.value = false }) {
+                                            Text("OK", fontSize = 22.sp)
+                                        }
+                                    }
+                                )
+                        }
+                        @Composable
+                        fun errorWindow()  {
+                            if (error.value)
+                                AlertDialog(
+                                    onDismissRequest = { error.value = false},
+                                    title = { Text(text = "Error") },
+                                    text = {Text("Illegal state of graph")},
+                                    properties = DialogProperties(dismissOnBackPress = false),
+                                    confirmButton = {
+                                        Button({ error.value = false }) {
+                                            Text("OK", fontSize = 22.sp)
+                                        }
+                                    }
+                                )
+                        }
 
 
                         @Composable
@@ -200,82 +236,105 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                             //алгоритм Дейкстры
                             DropdownMenuItem(
                                 onClick = {
-                                    val temp = Dijkstra.buildShortestPath(
-                                        viewModel.graph,
-                                        selected[0].vertex,
-                                        selected[1].vertex
-                                    )
-                                    path.value = temp.first
                                     clean()
-                                    temp.second.forEach {
-                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
-                                            viewModel.vertices[it]?.color?.value = Color.Green
+                                    try {
+                                        val temp = Dijkstra.buildShortestPath(
+                                                viewModel.graph,
+                                                selected[0].vertex,
+                                                selected[1].vertex
+                                            )
+                                            path.value = temp.first
+                                            temp.second.forEach {
+                                                if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                                    viewModel.vertices[it]?.color?.value = Color.Green
+                                            }
+                                            for (i in 1..temp.second.size - 1)
+                                                viewModel.edges.forEach {
+                                                    if (it.key.link.first === temp.second[i - 1] && it.key.link.second === temp.second[i])
+                                                        it.value.color.value = Color.Red
+                                                }
+                                            openDialog.value = true
+                                    } catch (e: IndexOutOfBoundsException) {
+                                        warning.value=true
+                                    } catch (e: Exception) {
+                                        error.value=true
                                     }
-                                    for (i in 1..temp.second.size - 1)
-                                        viewModel.edges.forEach {
-                                            if (it.key.link.first === temp.second[i - 1] && it.key.link.second === temp.second[i])
-                                                it.value.color.value = Color.Red
-                                        }
-                                    openDialog.value = true
                                 }
-
                             ) {
-                                Text("Dijkstra algorithm")
+                                Text("Dijkstra")
+                                indexErrorWindow()
                                 alertWindowPath()
+                                errorWindow()
                             }
                             //алгоритм Форда-Беллмана
                             DropdownMenuItem(
                                 onClick = {
-                                    val temp =
-                                        FordBellman.apply(viewModel.graph, selected[0].vertex, selected[1].vertex)
-                                    path.value = temp.first
-
                                     clean()
-
-                                    temp.second?.forEach {
-                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
-                                            viewModel.vertices[it]?.color?.value = Color.Green
-                                    }
-                                    temp.third?.forEach {
-                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
-                                            viewModel.vertices[it]?.color?.value = Color.Yellow
-                                    }
-                                    for (i in 1..(temp.second?.size?.minus(1) ?: 0))
-                                        viewModel.edges.forEach {
-                                            if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second!![i])
-                                                it.value.color.value = Color.Green
+                                    try {
+                                        val temp =
+                                            FordBellman.apply(viewModel.graph, selected[0].vertex, selected[1].vertex)
+                                        path.value = temp.first
+                                                                                temp.second?.forEach {
+                                            if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                                viewModel.vertices[it]?.color?.value = Color.Green
                                         }
-                                    for (i in 1..(temp.third?.size?.minus(1) ?: 0))
-                                        viewModel.edges.forEach {
-                                            if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second!![i])
-                                                it.value.color.value = Color.Yellow
+                                        temp.third?.forEach {
+                                            if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                                viewModel.vertices[it]?.color?.value = Color.Yellow
                                         }
-                                    openDialog.value = true
+                                        for (i in 1..(temp.second?.size?.minus(1) ?: 0))
+                                            viewModel.edges.forEach {
+                                                if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second!![i])
+                                                    it.value.color.value = Color.Green
+                                            }
+                                        for (i in 1..(temp.third?.size?.minus(1) ?: 0))
+                                            viewModel.edges.forEach {
+                                                if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second!![i])
+                                                    it.value.color.value = Color.Yellow
+                                            }
+                                        openDialog.value = true
+                                    } catch (e: IndexOutOfBoundsException) {
+                                        warning.value=true
+                                    } catch (e: Exception) {
+                                        error.value=true
+                                    }
                                 }
 
                             ) {
-                                Text("Ford-Bellman algorithm")
+                                Text("Ford-Bellman")
+                                indexErrorWindow()
                                 alertWindowPath()
+                                errorWindow()
                             }
 
                         //алгоритм поиска циклов
                         DropdownMenuItem(
                             onClick = {
                                 clean()
-                                val temp= Cycles.findCycles(viewModel.graph, selected.first().vertex)
-                                temp.forEach { cycle ->
-                                    for (i in 0..cycle.size-1) {
-                                        viewModel.vertices[cycle[i]]?.color?.value=Color.Magenta
-                                        if (i>0) {
-                                            viewModel.edges.forEach { p0, p1 ->
-                                                if (p0.link.first===cycle[i-1] && p0.link.second===cycle[i])
-                                                    p1.color.value=Color.Magenta
+                                try {
+                                    val temp = Cycles.findCycles(viewModel.graph, selected.first().vertex)
+                                    temp.forEach { cycle ->
+                                        for (i in 0..cycle.size - 1) {
+                                            viewModel.vertices[cycle[i]]?.color?.value = Color.Magenta
+                                            if (i > 0) {
+                                                viewModel.edges.forEach { p0, p1 ->
+                                                    if (p0.link.first === cycle[i - 1] && p0.link.second === cycle[i])
+                                                        p1.color.value = Color.Magenta
+                                                }
                                             }
                                         }
                                     }
+                                }  catch (e: NoSuchElementException) {
+                                    warning.value=true
+                                } catch (e: Exception) {
+                                    error.value=true
                                 }
                             },
-                        ) {Text("Cycles search algorithm")}
+                        ) {
+                            Text("Cycles search")
+                            indexErrorWindow()
+                            errorWindow()
+                        }
 
                         //компоненты сильной связанности
                         DropdownMenuItem(
@@ -295,7 +354,7 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                     }
                                 }
                             },
-                        ) {Text("Connected components")}
+                        ) {Text("Connected components search")}
 
                         //forseAtlas2
                         DropdownMenuItem(

@@ -76,7 +76,7 @@ fun generateGraph(): GraphViewModel<Int, Int> {
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "Graph Application") {
         MaterialTheme {
-            mainScreen(generateGraph())
+            mainScreen(GraphViewModel(DirectedGraph<Int, Int>()))
         }
     }
 }
