@@ -29,15 +29,15 @@ fun graph(): Graph<Int, Int> {
 }
 fun generateGraph(): GraphViewModel<Int, Int> {
 
-    val graph: Graph<Int, Int> = DirWeightGraph()
-    val numb = 2000
+    val graph: Graph<Int, Int> = UndirectedGraph()
+    val numb = 10000
     val vector = Vector<Vertex<Int, Int>>()
     repeat(numb) {
         vector.add(Vertex(Random.nextInt(), Random.nextInt()))
     }
     val toVertex = hashMapOf<Vertex<Int, Int>, Vector<Vertex<Int, Int>>>()
     val fromVertex = hashMapOf<Vertex<Int, Int>, Vector<Vertex<Int, Int>>>()
-    val repeat = Random.nextInt(0, 2000)
+    val repeat = Random.nextInt(0, 1000)
 
     for (i in 0..repeat) {
         val from = vector.random()
@@ -75,7 +75,7 @@ fun generateGraph(): GraphViewModel<Int, Int> {
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "Graph Application") {
         MaterialTheme {
-            mainScreen(GraphViewModel(graph()))
+            mainScreen(generateGraph())
         }
     }
 }

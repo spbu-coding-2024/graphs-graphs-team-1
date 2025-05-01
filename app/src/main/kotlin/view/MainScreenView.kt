@@ -3,6 +3,8 @@ package view
 import algo.bellmanford.FordBellman
 import algo.cycles.Cycles
 import algo.dijkstra.Dijkstra
+import algo.planar.ForceAtlas2
+import algo.planar.YifanHu
 import algo.strconnect.KosarujuSharir
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
@@ -71,7 +73,8 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
     }
 
     val set: (Double) -> Unit = { n -> viewModel.vertices.values.forEach {
-        it.radius *= n
+        if (it.radius>10.0)
+            it.radius *= n
         it.x.value *= n
         it.y.value *= n
     }}
@@ -276,6 +279,31 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                 }
                             },
                         ) {Text("Connected components")}
+
+                        //forseAtlas2
+                        DropdownMenuItem(
+                            onClick = {
+                                clean()
+                                val temp= ForceAtlas2().apply(viewModel.graph)
+                                temp.forEach { v, c ->
+                                    viewModel.vertices[v]?.x?.value=c.first.toDouble()
+                                    viewModel.vertices[v]?.y?.value=c.second.toDouble()
+                                }
+
+                            }
+                        ) {Text("ForceAtlas2")}
+                        //YuifanHu
+                        DropdownMenuItem(
+                            onClick = {
+                                clean()
+                                val temp= YifanHu().apply(viewModel.graph)
+                                temp.forEach { v, c ->
+                                    viewModel.vertices[v]?.x?.value=c.first.toDouble()
+                                    viewModel.vertices[v]?.y?.value=c.second.toDouble()
+                                }
+
+                            }
+                        ) {Text("YuifanHu")}
                     }
                 }
 

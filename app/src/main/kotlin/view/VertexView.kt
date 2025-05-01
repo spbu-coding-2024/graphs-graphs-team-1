@@ -52,13 +52,7 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
             onClick = {viewModel.color.value=if (viewModel.color.value==Color.Red) Color.Cyan else Color.Red},
             onDoubleClick = {openDialog.value=true}
         )
-    ) {
-        Text(
-            modifier = Modifier
-                .align(Alignment.Center),
-            text = "${viewModel.vertex.key}"
-        )
-    }
+    ) {}
 
     if (openDialog.value)
         AlertDialog(

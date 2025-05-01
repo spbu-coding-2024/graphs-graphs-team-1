@@ -10,10 +10,16 @@ class YifanHu: Planar() {
         val algorithm= YifanHuLayout(null, ProportionalDisplacement(1f))
         val map=init(graph)
         algorithm.setGraphModel(graphModel)
-        algorithm.initialStep=10f
         algorithm.initAlgo()
-        if (algorithm.canAlgo())
-            algorithm.goAlgo()
+        algorithm.resetPropertiesValues()
+        algorithm.properties.forEach {
+            println(it.canonicalName)
+            println(it.property.value)
+        }
+        repeat(100) {
+            if (algorithm.canAlgo())
+                algorithm.goAlgo()
+        }
         algorithm.endAlgo()
         return getResult(map)
     }
