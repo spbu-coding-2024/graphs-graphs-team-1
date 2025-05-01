@@ -26,9 +26,9 @@ fun <K, V>  graphView(graphViewModel: GraphViewModel<K, V>) {
         graphViewModel.edges.values.onEach {
             EdgeView(it, Modifier)
         }
-        graphViewModel.vertices.values.forEach { v ->
-            VertexView(v, Modifier)
-        }
+//        graphViewModel.vertices.values.forEach { v ->
+//            VertexView(v, Modifier)
+//        }
 
     }
 }

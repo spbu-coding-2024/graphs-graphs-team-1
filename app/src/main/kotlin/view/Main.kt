@@ -6,11 +6,16 @@ import androidx.compose.ui.window.application
 import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.Graph
+import model.graphs.UndirectedGraph
 import viewmodel.GraphViewModel
+import java.util.Vector
+import java.util.stream.Stream
+import kotlin.random.Random
+import kotlin.reflect.full.primaryConstructor
 
 
 fun graph(): Graph<Int, Int> {
-    var graph = DirWeightGraph<Int, Int>()
+    var graph = UndirectedGraph<Int, Int>()
     var r1=Vertex(4, 5)
     var r2=Vertex(5, 5)
     var r3=Vertex(6, 5)
@@ -18,16 +23,59 @@ fun graph(): Graph<Int, Int> {
     var r5=Vertex(8, 5)
     graph.addEdge(r1, r2, 78)
     graph.addEdge(r2, r3, 64)
-    graph.addEdge(r3, r4, 12)
-    graph.addEdge(r4, r5, 78)
+    graph.addVertex(r4)
+    graph.addVertex(r5)
     return graph
+}
+fun generateGraph(): GraphViewModel<Int, Int> {
+
+    val graph: Graph<Int, Int> = DirWeightGraph()
+    val numb = 2000
+    val vector = Vector<Vertex<Int, Int>>()
+    repeat(numb) {
+        vector.add(Vertex(Random.nextInt(), Random.nextInt()))
+    }
+    val toVertex = hashMapOf<Vertex<Int, Int>, Vector<Vertex<Int, Int>>>()
+    val fromVertex = hashMapOf<Vertex<Int, Int>, Vector<Vertex<Int, Int>>>()
+    val repeat = Random.nextInt(0, 2000)
+
+    for (i in 0..repeat) {
+        val from = vector.random()
+        val to = vector.random()
+        if (from == to)
+            continue
+        if (!graph.addEdge(from, to, 45))
+            continue
+
+        if (toVertex[to] == null)
+            toVertex[to] = Vector()
+        if (fromVertex[from] == null)
+            fromVertex[from] = Vector()
+        when (graph::class.simpleName) {
+            "UndirWeightGraph", "UndirectedGraph" -> {
+                if (toVertex[from] == null)
+                    toVertex[from] = Vector()
+                if (fromVertex[to] == null)
+                    fromVertex[to] = Vector()
+                fromVertex[to]?.add(from)
+                toVertex[from]?.add(to)
+            }
+        }
+        if (toVertex[to] == null)
+            toVertex[to] = Vector()
+        if (fromVertex[from] == null)
+            fromVertex[from] = Vector()
+        fromVertex[from]?.add(to)
+        toVertex[to]?.add(from)
+    }
+    return GraphViewModel(graph)
 }
 
 
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "Graph Application") {
         MaterialTheme {
-            mainScreen(GraphViewModel(graph()), )
+            mainScreen(GraphViewModel(graph()))
         }
     }
 }

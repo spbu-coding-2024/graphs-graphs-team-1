@@ -1,7 +1,9 @@
 package view
 
 import algo.bellmanford.FordBellman
+import algo.cycles.Cycles
 import algo.dijkstra.Dijkstra
+import algo.strconnect.KosarujuSharir
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.onDrag
@@ -42,6 +44,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import viewmodel.GraphViewModel
+import kotlin.collections.forEach
+import kotlin.reflect.full.companionObject
+import kotlin.reflect.full.staticProperties
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -55,6 +60,15 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
     val selected = viewModel.vertices.values.filter { it.color.value==Color.Red }.toMutableList()
     val requester = remember { FocusRequester() }
 
+    val clean= {
+        viewModel.vertices.values.forEach {
+            if (it.color.value!=Color.Red)
+                it.color.value=Color.Cyan
+        }
+        viewModel.edges.values.forEach {
+            it.color.value=Color.Black
+        }
+    }
 
     val set: (Double) -> Unit = { n -> viewModel.vertices.values.forEach {
         it.radius *= n
@@ -119,10 +133,14 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                         onDismissRequest = { expandedSecondary = false }
                     ) {
                         DropdownMenuItem(onClick = {
-                            viewModel.vertices.values.forEach { it.color.value=Color.Cyan }
-
-                        selected.clear() }
-                        ) {Text("Reset colors")}
+                            viewModel.vertices.values.forEach {
+                                it.color.value=Color.Cyan
+                            }
+                            viewModel.edges.values.forEach {
+                                it.color.value=Color.Black
+                            }
+                            selected.clear()
+                        }) {Text("Reset colors")}
 
                         DropdownMenuItem(onClick =
                             {viewModel.edges.values.forEach { it.isVisible.value=!it.isVisible.value
@@ -148,15 +166,7 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                         onDismissRequest = { expAlgo = false }
                     ) {
 
-                        val clean= {
-                            viewModel.vertices.values.forEach {
-                                if (it.color.value!=Color.Red)
-                                    it.color.value=Color.Cyan
-                            }
-                            viewModel.edges.values.forEach {
-                                it.color.value=Color.Black
-                            }
-                        }
+
 
                         @Composable
                         fun alertWindowPath()  {
@@ -228,7 +238,44 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                             Text("Ford-Bellman algorithm")
                             alertWindowPath()
                         }
+                        //алгоритм поиска циклов
+                        DropdownMenuItem(
+                            onClick = {
+                                clean()
+                                val temp= Cycles.findCycles(viewModel.graph, selected.first().vertex)
+                                temp.forEach { cycle ->
+                                    for (i in 0..cycle.size-1) {
+                                        viewModel.vertices[cycle[i]]?.color?.value=Color.Magenta
+                                        if (i>0) {
+                                            viewModel.edges.forEach { p0, p1 ->
+                                                if (p0.link.first===cycle[i-1] && p0.link.second===cycle[i])
+                                                    p1.color.value=Color.Magenta
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                        ) {Text("Cycles search algorithm")}
 
+                        //компоненты сильной связанности
+                        DropdownMenuItem(
+                            onClick = {
+                                clean()
+                                val colors= ColorList().iterator()
+                                val temp= KosarujuSharir.apply(viewModel.graph)
+                                print(temp.size)
+                                temp.forEach { component ->
+                                    colors.hasNext()
+                                    val color =colors.next().toInt(16)
+                                    val red=color/(16*16*16*16)
+                                    val green=(color-red)/(16*16)
+                                    val blue=color-green
+                                    component.forEach {
+                                        viewModel.vertices[it]?.color?.value= Color(red, green, blue )
+                                    }
+                                }
+                            },
+                        ) {Text("Connected components")}
                     }
                 }
 
