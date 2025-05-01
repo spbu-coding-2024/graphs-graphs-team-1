@@ -12,10 +12,6 @@ class YifanHu: Planar() {
         algorithm.setGraphModel(graphModel)
         algorithm.initAlgo()
         algorithm.resetPropertiesValues()
-        algorithm.properties.forEach {
-            println(it.canonicalName)
-            println(it.property.value)
-        }
         repeat(100) {
             if (algorithm.canAlgo())
                 algorithm.goAlgo()

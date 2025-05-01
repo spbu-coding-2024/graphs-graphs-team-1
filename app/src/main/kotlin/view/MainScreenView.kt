@@ -4,11 +4,13 @@ import algo.bellmanford.FordBellman
 import algo.cycles.Cycles
 import algo.dijkstra.Dijkstra
 import algo.planar.ForceAtlas2
+import algo.planar.Planar
 import algo.planar.YifanHu
 import algo.strconnect.KosarujuSharir
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.onDrag
+import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -47,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import viewmodel.GraphViewModel
 import kotlin.collections.forEach
+import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.staticProperties
 
@@ -71,13 +74,20 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
             it.color.value=Color.Black
         }
     }
-
     val set: (Double) -> Unit = { n -> viewModel.vertices.values.forEach {
         if (it.radius>10.0)
             it.radius *= n
         it.x.value *= n
         it.y.value *= n
     }}
+    val planarAlgos: (Planar) -> Unit = {
+        clean()
+        val temp= it.apply(viewModel.graph)
+        temp.forEach { v, c ->
+            viewModel.vertices[v]?.x?.value=c.first.toDouble()
+            viewModel.vertices[v]?.y?.value=c.second.toDouble()
+        }
+    }
 
     LaunchedEffect(Unit) {
         requester.requestFocus()
@@ -187,60 +197,67 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                 )
                         }
 
-                        //алгоритм Дейкстры
-                        DropdownMenuItem(
-                            onClick = {
-                                val temp = Dijkstra.buildShortestPath(viewModel.graph,selected[0].vertex, selected[1].vertex)
-                                path.value=temp.first
-                                clean()
-                                temp.second.forEach {
-                                    if (viewModel.vertices[it]?.color?.value!=Color.Red)
-                                        viewModel.vertices[it]?.color?.value=Color.Green
-                                }
-                                for (i in 1..temp.second.size-1)
-                                    viewModel.edges.forEach {
-                                        if (it.key.link.first===temp.second[i-1] && it.key.link.second===temp.second[i])
-                                            it.value.color.value=Color.Red
+                            //алгоритм Дейкстры
+                            DropdownMenuItem(
+                                onClick = {
+                                    val temp = Dijkstra.buildShortestPath(
+                                        viewModel.graph,
+                                        selected[0].vertex,
+                                        selected[1].vertex
+                                    )
+                                    path.value = temp.first
+                                    clean()
+                                    temp.second.forEach {
+                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                            viewModel.vertices[it]?.color?.value = Color.Green
                                     }
-                                openDialog.value=true
+                                    for (i in 1..temp.second.size - 1)
+                                        viewModel.edges.forEach {
+                                            if (it.key.link.first === temp.second[i - 1] && it.key.link.second === temp.second[i])
+                                                it.value.color.value = Color.Red
+                                        }
+                                    openDialog.value = true
+                                }
+
+                            ) {
+                                Text("Dijkstra algorithm")
+                                alertWindowPath()
+                            }
+                            //алгоритм Форда-Беллмана
+                            DropdownMenuItem(
+                                onClick = {
+                                    val temp =
+                                        FordBellman.apply(viewModel.graph, selected[0].vertex, selected[1].vertex)
+                                    path.value = temp.first
+
+                                    clean()
+
+                                    temp.second?.forEach {
+                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                            viewModel.vertices[it]?.color?.value = Color.Green
+                                    }
+                                    temp.third?.forEach {
+                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                            viewModel.vertices[it]?.color?.value = Color.Yellow
+                                    }
+                                    for (i in 1..(temp.second?.size?.minus(1) ?: 0))
+                                        viewModel.edges.forEach {
+                                            if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second!![i])
+                                                it.value.color.value = Color.Green
+                                        }
+                                    for (i in 1..(temp.third?.size?.minus(1) ?: 0))
+                                        viewModel.edges.forEach {
+                                            if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second!![i])
+                                                it.value.color.value = Color.Yellow
+                                        }
+                                    openDialog.value = true
+                                }
+
+                            ) {
+                                Text("Ford-Bellman algorithm")
+                                alertWindowPath()
                             }
 
-                        ) { Text("Dijkstra algorithm")
-                            alertWindowPath()
-                        }
-                        //алгоритм Форда-Беллмана
-                        DropdownMenuItem(
-                            onClick = {
-                                val temp = FordBellman.apply(viewModel.graph,selected[0].vertex, selected[1].vertex)
-                                path.value=temp.first
-
-                                clean()
-
-                                temp.second?.forEach {
-                                    if (viewModel.vertices[it]?.color?.value!=Color.Red)
-                                        viewModel.vertices[it]?.color?.value=Color.Green
-                                }
-                                temp.third?.forEach {
-                                    if (viewModel.vertices[it]?.color?.value!=Color.Red)
-                                        viewModel.vertices[it]?.color?.value=Color.Yellow
-                                }
-                                for (i in 1..(temp.second?.size?.minus(1) ?: 0))
-                                    viewModel.edges.forEach {
-                                        if (it.key.link.first=== temp.second?.get(i-1) && it.key.link.second=== temp.second!![i])
-                                            it.value.color.value=Color.Green
-                                    }
-                                for (i in 1..(temp.third?.size?.minus(1) ?: 0))
-                                    viewModel.edges.forEach {
-                                        if (it.key.link.first=== temp.second?.get(i-1) && it.key.link.second=== temp.second!![i])
-                                            it.value.color.value=Color.Yellow
-                                    }
-                                openDialog.value=true
-                            }
-
-                        ) {
-                            Text("Ford-Bellman algorithm")
-                            alertWindowPath()
-                        }
                         //алгоритм поиска циклов
                         DropdownMenuItem(
                             onClick = {
@@ -283,25 +300,14 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                         //forseAtlas2
                         DropdownMenuItem(
                             onClick = {
-                                clean()
-                                val temp= ForceAtlas2().apply(viewModel.graph)
-                                temp.forEach { v, c ->
-                                    viewModel.vertices[v]?.x?.value=c.first.toDouble()
-                                    viewModel.vertices[v]?.y?.value=c.second.toDouble()
-                                }
-
+                                planarAlgos(ForceAtlas2())
                             }
                         ) {Text("ForceAtlas2")}
                         //YuifanHu
                         DropdownMenuItem(
                             onClick = {
                                 clean()
-                                val temp= YifanHu().apply(viewModel.graph)
-                                temp.forEach { v, c ->
-                                    viewModel.vertices[v]?.x?.value=c.first.toDouble()
-                                    viewModel.vertices[v]?.y?.value=c.second.toDouble()
-                                }
-
+                                planarAlgos(YifanHu())
                             }
                         ) {Text("YuifanHu")}
                     }
