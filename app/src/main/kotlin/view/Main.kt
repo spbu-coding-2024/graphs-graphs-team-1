@@ -24,13 +24,14 @@ fun graph(): Graph<Int, Int> {
     var r5=Vertex(8, 5)
     graph.addEdge(r1, r2, 78)
     graph.addEdge(r2, r3, 64)
+    graph.addEdge(r3, r1, 64)
     graph.addVertex(r4)
     graph.addVertex(r5)
     return graph
 }
 fun generateGraph(): GraphViewModel<Int, Int> {
 
-    val graph: Graph<Int, Int> = DirectedGraph()
+    val graph: Graph<Int, Int> = UndirectedGraph()
     val numb = 10000
     val vector = Vector<Vertex<Int, Int>>()
     repeat(numb) {
@@ -76,7 +77,7 @@ fun generateGraph(): GraphViewModel<Int, Int> {
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "Graph Application") {
         MaterialTheme {
-            mainScreen(GraphViewModel(DirectedGraph<Int, Int>()))
+            mainScreen(GraphViewModel(graph()))
         }
     }
 }

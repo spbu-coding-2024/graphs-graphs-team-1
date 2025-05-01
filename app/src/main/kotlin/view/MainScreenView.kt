@@ -342,20 +342,23 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                 clean()
                                 val colors= ColorList().iterator()
                                 val temp= KosarujuSharir.apply(viewModel.graph)
-                                print(temp.size)
                                 temp.forEach { component ->
                                     colors.hasNext()
                                     val color =colors.next().toInt(16)
                                     val red=color/(16*16*16*16)
                                     val green=(color-red)/(16*16)
                                     val blue=color-green
-                                    component.forEach {
-                                        viewModel.vertices[it]?.color?.value= Color(red, green, blue )
+                                    component.forEach { v ->
+                                        viewModel.vertices[v]?.color?.value= Color(red, green, blue )
+                                        viewModel.edges.values.forEach { e ->
+                                            if (e.from.vertex===v)
+                                                e.color.value=Color(red, green, blue)
+                                        }
                                     }
+
                                 }
                             },
                         ) {Text("Connected components search")}
-
                         //forseAtlas2
                         DropdownMenuItem(
                             onClick = {
