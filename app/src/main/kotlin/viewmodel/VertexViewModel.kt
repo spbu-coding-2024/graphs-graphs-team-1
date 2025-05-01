@@ -12,7 +12,8 @@ import kotlin.random.Random
 
 class VertexViewModel<K, V> (
     var vertex: Vertex<K, V>,
-    radius: Double
+    radius: Double,
+    var degree: Int
     ) {
     var color= mutableStateOf(false)
     var show= mutableStateOf(false)

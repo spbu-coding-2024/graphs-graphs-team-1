@@ -10,7 +10,10 @@ import kotlin.text.get
 
 class GraphViewModel<K, V>(graph: Graph<K, V>) {
     var vertices= graph.vertices.associateWith { v ->
-        VertexViewModel(v, graph.getInDegreeOfVertex(v).toDouble())
+        VertexViewModel(
+            v,
+            graph.getInDegreeOfVertex(v).toDouble(),
+            degree = graph.getOutDegreeOfVertex(v))
     }
     private val temp = Vector<Edge<K, V>>()
     init {

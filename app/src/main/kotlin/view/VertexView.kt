@@ -71,6 +71,7 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
                 Column() {
                     Text(text = "Key: ${viewModel.vertex.key}")
                     Text(text = "Value: ${viewModel.vertex.value}")
+                    Text("Out-degree: ${viewModel.degree}")
                 }
             },
             properties = DialogProperties(dismissOnBackPress = false),
