@@ -69,6 +69,7 @@ class Neo4jTest {
         InternalFormatFactory.toNeo4j(graph, neo4j.boltURI().toString(), "user", "password")
         assertEquals(graph.vertices.size, getVertexAmount())
         assertEquals(graph.edges.values.sumOf { it.size }, getRelationsAmount())
+        graph.edges
     }
 
     @Test

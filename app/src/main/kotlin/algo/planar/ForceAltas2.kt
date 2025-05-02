@@ -8,11 +8,13 @@ class ForceAtlas2: Planar() {
         val algorithm= org.gephi.layout.plugin.forceAtlas2.ForceAtlas2(null)
         val map=init(graph)
         algorithm.setGraphModel(graphModel)
-        algorithm.isAdjustSizes=true
-        algorithm.threadsCount=15
+        algorithm.resetPropertiesValues()
+        algorithm.isBarnesHutOptimize=true
         algorithm.initAlgo()
-        if (algorithm.canAlgo())
-            algorithm.goAlgo()
+        repeat(100) {
+            if (algorithm.canAlgo())
+                algorithm.goAlgo()
+        }
         algorithm.endAlgo()
         return getResult(map)
     }
