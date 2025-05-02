@@ -9,7 +9,6 @@ class ForceAtlas2: Planar() {
         val map=init(graph)
         algorithm.setGraphModel(graphModel)
         algorithm.resetPropertiesValues()
-        //algorithm.gravity=1000.0
         algorithm.isBarnesHutOptimize=true
         algorithm.initAlgo()
         repeat(100) {

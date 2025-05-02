@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomAppBar
 import androidx.compose.material.Button
+import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
@@ -34,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -44,9 +47,11 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.flow.flow
 import viewmodel.GraphViewModel
 import kotlin.collections.forEach
 import kotlin.math.max
@@ -204,8 +209,6 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                     }
                                 )
                         }
-
-
                         @Composable
                         fun windowPath()  {
                             if (openDialog.value)
@@ -222,8 +225,8 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                 )
                         }
 
-                            //алгоритм Дейкстры
-                            DropdownMenuItem(
+                        //алгоритм Дейкстры
+                        DropdownMenuItem(
                                 onClick = {
                                     clean()
                                     try {
@@ -250,13 +253,13 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                     }
                                 }
                             ) {
-                                Text("Dijkstra")
-                                indexErrorWindow()
-                                windowPath()
-                                errorWindow()
-                            }
-                            //алгоритм Форда-Беллмана
-                            DropdownMenuItem(
+                            Text("Dijkstra")
+                            indexErrorWindow()
+                            windowPath()
+                            errorWindow()
+                        }
+                        //алгоритм Форда-Беллмана
+                        DropdownMenuItem(
                                 onClick = {
                                     clean()
                                     try {
@@ -290,12 +293,13 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                 }
 
                             ) {
-                                Text("Ford-Bellman")
-                                indexErrorWindow()
-                                windowPath()
-                                errorWindow()
-                            }
+                            Text("Ford-Bellman")
+                            indexErrorWindow()
+                            windowPath()
+                            errorWindow()
+                        }
 
+                        Divider()
                         //алгоритм поиска циклов
                         DropdownMenuItem(
                             onClick = {
@@ -324,7 +328,7 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                             indexErrorWindow()
                             errorWindow()
                         }
-
+                        Divider()
                         //компоненты сильной связанности
                         DropdownMenuItem(
                             onClick = {
@@ -348,6 +352,7 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                 }
                             },
                         ) {Text("Connected components search")}
+                        Divider()
                         //forseAtlas2
                         DropdownMenuItem(
                             onClick = {
@@ -365,7 +370,7 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                 }
 
                 //побочные функции
-                Box{
+                Box(modifier = Modifier.align(Alignment.Bottom)){
                     IconButton(onClick = { expandedSecondary = !expandedSecondary }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "More options")
                     }
@@ -384,7 +389,8 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                         }) {Text("Reset")}
 
                         DropdownMenuItem(onClick =
-                            {viewModel.edges.values.forEach { it.isVisible.value=!it.isVisible.value
+                            {viewModel.edges.values.forEach {
+                                it.isVisible.value=!it.isVisible.value
                                 buttonEdgeLabel.value=!buttonEdgeLabel.value }})
                         {Text(
                             when(buttonEdgeLabel.value) {
