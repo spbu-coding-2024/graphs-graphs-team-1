@@ -21,22 +21,25 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import viewmodel.EdgeViewModel
+import java.awt.Toolkit
 
 @Composable
 fun <E, V> EdgeView(
     viewModel: EdgeViewModel<E, V>,
     modifier: Modifier = Modifier,
 ) {
+    val width = Toolkit.getDefaultToolkit().screenSize.width
+    val height = Toolkit.getDefaultToolkit().screenSize.height
     Canvas(modifier = modifier.fillMaxSize()) {
         drawLine(
             strokeWidth = 2f,
             start = Offset(
-                x = viewModel.from.x.value.dp.toPx()+ viewModel.from.radius.dp.toPx(),
-                y = viewModel.from.y.value.dp.toPx()+ viewModel.from.radius.dp.toPx(),
+                x = viewModel.from.x.value.dp.toPx()+ viewModel.from.radius.dp.toPx()+width/2,
+                y = viewModel.from.y.value.dp.toPx()+ viewModel.from.radius.dp.toPx()+height/2,
             ),
             end = Offset(
-                x = viewModel.to.x.value.dp.toPx()+ viewModel.to.radius.dp.toPx(),
-                y = viewModel.to.y.value.dp.toPx()+ viewModel.to.radius.dp.toPx(),
+                x = viewModel.to.x.value.dp.toPx()+ viewModel.to.radius.dp.toPx()+width/2,
+                y = viewModel.to.y.value.dp.toPx()+ viewModel.to.radius.dp.toPx()+height/2,
             ),
             color = viewModel.color.value
         )

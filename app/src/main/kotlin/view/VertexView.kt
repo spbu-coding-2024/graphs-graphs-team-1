@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import viewmodel.VertexViewModel
+import java.awt.Toolkit
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.staticProperties
 
@@ -35,10 +36,12 @@ import kotlin.reflect.full.staticProperties
 @Composable
 fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Modifier,) {
     val openDialog = remember { mutableStateOf(false) }
+    val width = Toolkit.getDefaultToolkit().screenSize.width
+    val height = Toolkit.getDefaultToolkit().screenSize.height
 
     Box(modifier = modifier
         .size(viewModel.radius.dp*2, viewModel.radius.dp*2)
-        .offset(viewModel.x.value.dp, viewModel.y.value.dp)
+        .offset(viewModel.x.value.dp+width.dp/2, viewModel.y.value.dp+height.dp/2)
         .background(
             color = viewModel.color.value,
             shape = CircleShape
