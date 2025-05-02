@@ -235,17 +235,18 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                                 selected[0].vertex,
                                                 selected[1].vertex
                                             )
-                                            path.value = temp.first
-                                            temp.second.forEach {
-                                                if (viewModel.vertices[it]?.color?.value != Color.Red)
-                                                    viewModel.vertices[it]?.color?.value = Color.Green
+                                        path.value = temp.first
+                                        temp.second.forEach {
+                                            if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                                viewModel.vertices[it]?.color?.value = Color.Green
+                                        }
+                                        for (i in 1..temp.second.size - 1)
+                                            viewModel.edges.forEach {
+                                                if (it.key.link.first === temp.second[i - 1] && it.key.link.second === temp.second[i] ||
+                                                    it.key.link.second === temp.second[i - 1] && it.key.link.first === temp.second[i])
+                                                    it.value.color.value = Color.Red
                                             }
-                                            for (i in 1..temp.second.size - 1)
-                                                viewModel.edges.forEach {
-                                                    if (it.key.link.first === temp.second[i - 1] && it.key.link.second === temp.second[i])
-                                                        it.value.color.value = Color.Red
-                                                }
-                                            openDialog.value = true
+                                        openDialog.value = true
                                     } catch (e: IndexOutOfBoundsException) {
                                         warning.value=true
                                     } catch (e: Exception) {
@@ -266,7 +267,7 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                         val temp =
                                             FordBellman.apply(viewModel.graph, selected[0].vertex, selected[1].vertex)
                                         path.value = temp.first
-                                                                                temp.second?.forEach {
+                                        temp.second?.forEach {
                                             if (viewModel.vertices[it]?.color?.value != Color.Red)
                                                 viewModel.vertices[it]?.color?.value = Color.Green
                                         }
@@ -276,12 +277,14 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                         }
                                         for (i in 1..(temp.second?.size?.minus(1) ?: 0))
                                             viewModel.edges.forEach {
-                                                if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second!![i])
+                                                if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(i) ||
+                                                    it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(i))
                                                     it.value.color.value = Color.Green
                                             }
                                         for (i in 1..(temp.third?.size?.minus(1) ?: 0))
                                             viewModel.edges.forEach {
-                                                if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second!![i])
+                                                if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(i) ||
+                                                    it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(i))
                                                     it.value.color.value = Color.Yellow
                                             }
                                         openDialog.value = true
@@ -311,7 +314,8 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                             viewModel.vertices[cycle[i]]?.color?.value = Color.Magenta
                                             if (i > 0) {
                                                 viewModel.edges.forEach { p0, p1 ->
-                                                    if (p0.link.first === cycle[i - 1] && p0.link.second === cycle[i])
+                                                    if (p0.link.first === cycle[i - 1] && p0.link.second === cycle[i] ||
+                                                        p0.link.second === cycle[i - 1] && p0.link.first === cycle[i])
                                                         p1.color.value = Color.Magenta
                                                 }
                                             }

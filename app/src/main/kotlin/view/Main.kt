@@ -4,19 +4,15 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import model.Vertex
-import model.graphs.DirWeightGraph
-import model.graphs.DirectedGraph
 import model.graphs.Graph
 import model.graphs.UndirectedGraph
 import viewmodel.GraphViewModel
 import java.util.Vector
-import java.util.stream.Stream
 import kotlin.random.Random
-import kotlin.reflect.full.primaryConstructor
 
 
 fun graph(): Graph<Int, Int> {
-    var graph = DirectedGraph<Int, Int>()
+    var graph = UndirectedGraph<Int, Int>()
     var r1=Vertex(4, 5)
     var r2=Vertex(5, 5)
     var r3=Vertex(6, 5)
@@ -77,7 +73,7 @@ fun generateGraph(): GraphViewModel<Int, Int> {
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "Graph Application") {
         MaterialTheme {
-            mainScreen(GraphViewModel(graph()))
+            mainScreen(generateGraph())
         }
     }
 }

@@ -1,15 +1,8 @@
 package viewmodel
 
-import androidx.compose.runtime.collection.mutableVectorOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import model.Edge
-import model.Vertex
 import model.graphs.Graph
 import java.util.Vector
-import kotlin.text.get
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
     var vertices= graph.vertices.associateWith { v ->
@@ -19,10 +12,14 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
     private val temp = Vector<Edge<K, V>>()
     init {
         graph.edges.values.forEach { it ->
-            it.forEach {
-                temp.add(it)
+            for (i in it) {
+                if (graph::class.simpleName in arrayOf("UndirectedGraph", "UndirWeightGraph"))
+                    if (temp.any { it.link.first === i.link.second && it.link.second === i.link.first })
+                        continue
+                temp.add(i)
             }
         }
+        print(temp.size)
     }
 
     var edges= temp.associateWith { e ->
