@@ -1,4 +1,4 @@
 package model
 
-open class Vertex<K, V>(val key: K, val value: V) {
+open class Vertex<K, V>(var key: K, var value: V) {
 }
