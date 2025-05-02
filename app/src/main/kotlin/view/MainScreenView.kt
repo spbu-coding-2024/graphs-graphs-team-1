@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -48,6 +49,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import viewmodel.GraphViewModel
 import kotlin.collections.forEach
+import kotlin.math.max
+import kotlin.math.min
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -71,8 +74,7 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
         }
     }
     val set: (Double) -> Unit = { n -> viewModel.vertices.values.forEach {
-        if (it.radius>10.0)
-            it.radius *= n
+        it.radius.value=min(max(it.radius.value*n, 10.0), 35.0)
         it.x.value *= n
         it.y.value *= n
     }}
@@ -101,6 +103,30 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Equals -> {
                     set(1.1)
                     scale+=10
+                    true
+                }
+                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionRight -> {
+                    viewModel.vertices.values.forEach {
+                        it.onDrag(Offset(25f, 0f))
+                    }
+                    true
+                }
+                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionLeft -> {
+                    viewModel.vertices.values.forEach {
+                        it.onDrag(Offset(-25f, 0f))
+                    }
+                    true
+                }
+                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionUp -> {
+                    viewModel.vertices.values.forEach {
+                        it.onDrag(Offset(0f,-25f,))
+                    }
+                    true
+                }
+                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionDown -> {
+                    viewModel.vertices.values.forEach {
+                        it.onDrag(Offset(0f, 25f))
+                    }
                     true
                 }
                 else -> false

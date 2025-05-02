@@ -34,12 +34,12 @@ fun <E, V> EdgeView(
         drawLine(
             strokeWidth = 2f,
             start = Offset(
-                x = viewModel.from.x.value.dp.toPx()+ viewModel.from.radius.dp.toPx()+width/2,
-                y = viewModel.from.y.value.dp.toPx()+ viewModel.from.radius.dp.toPx()+height/2,
+                x = viewModel.from.x.value.dp.toPx()+ viewModel.from.radius.value.dp.toPx()+width/2,
+                y = viewModel.from.y.value.dp.toPx()+ viewModel.from.radius.value.dp.toPx()+height/2,
             ),
             end = Offset(
-                x = viewModel.to.x.value.dp.toPx()+ viewModel.to.radius.dp.toPx()+width/2,
-                y = viewModel.to.y.value.dp.toPx()+ viewModel.to.radius.dp.toPx()+height/2,
+                x = viewModel.to.x.value.dp.toPx()+ viewModel.to.radius.value.dp.toPx()+width/2,
+                y = viewModel.to.y.value.dp.toPx()+ viewModel.to.radius.value.dp.toPx()+height/2,
             ),
             color = viewModel.color.value
         )

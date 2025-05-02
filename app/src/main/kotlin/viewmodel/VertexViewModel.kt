@@ -16,7 +16,7 @@ class VertexViewModel<K, V> (
     ) {
     var color= mutableStateOf(Color.Cyan)
     var selected= mutableStateOf(false)
-    var radius=if (radius>50.0) 50.0 else if (radius<25.0) 25.0 else radius*2
+    var radius=mutableStateOf(radius)
     val width = Toolkit.getDefaultToolkit().screenSize.width
     val height = Toolkit.getDefaultToolkit().screenSize.height
     private var _x= Random.nextDouble(-width.toDouble()/2, width.toDouble()/2)

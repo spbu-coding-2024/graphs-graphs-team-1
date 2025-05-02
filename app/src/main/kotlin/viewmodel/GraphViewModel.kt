@@ -13,7 +13,7 @@ import kotlin.text.get
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
     var vertices= graph.vertices.associateWith { v ->
-        VertexViewModel(v, graph.getInDegreeOfVertex(v).toDouble())
+        VertexViewModel(v, 25.0)
     }.toMutableMap()
 
     private val temp = Vector<Edge<K, V>>()

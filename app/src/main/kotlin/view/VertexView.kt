@@ -40,7 +40,7 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
     val height = Toolkit.getDefaultToolkit().screenSize.height
 
     Box(modifier = modifier
-        .size(viewModel.radius.dp*2, viewModel.radius.dp*2)
+        .size(viewModel.radius.value.dp*2, viewModel.radius.value.dp*2)
         .offset(viewModel.x.value.dp+width.dp/2, viewModel.y.value.dp+height.dp/2)
         .background(
             color = viewModel.color.value,
