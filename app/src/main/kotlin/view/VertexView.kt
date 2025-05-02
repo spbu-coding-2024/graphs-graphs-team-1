@@ -21,23 +21,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import viewmodel.VertexViewModel
+import java.awt.Toolkit
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.staticProperties
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Modifier,) {
     val openDialog = remember { mutableStateOf(false) }
+    val width = Toolkit.getDefaultToolkit().screenSize.width
+    val height = Toolkit.getDefaultToolkit().screenSize.height
 
     Box(modifier = modifier
-        .size(viewModel.radius.dp*2, viewModel.radius.dp*2)
-        .offset(viewModel.x.value.dp, viewModel.y.value.dp)
+        .size(viewModel.radius.value.dp*2, viewModel.radius.value.dp*2)
+        .offset(viewModel.x.value.dp+width.dp/2, viewModel.y.value.dp+height.dp/2)
         .background(
-            color = if (viewModel.color.value) Color.Red else Color.Cyan,
+            color = viewModel.color.value,
             shape = CircleShape
         )
         .onDrag(onDrag = { offset ->
@@ -45,23 +51,13 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
         })
 
         .border(BorderStroke(2.dp, Color.Black), CircleShape)
-        .pointerInput(viewModel) {
-            detectDragGestures { change, dragAmount ->
-                change.consume()
-                viewModel.onDrag(dragAmount)
-            }
-        }
         .onClick(
-            onClick = {viewModel.color.value=!viewModel.color.value},
+            onClick = {
+                viewModel.selected.value=!viewModel.selected.value
+                viewModel.color.value=if (!viewModel.selected.value) Color.Cyan else Color.Red},
             onDoubleClick = {openDialog.value=true}
         )
-    ) {
-        Text(
-            modifier = Modifier
-                .align(Alignment.Center),
-            text = "${viewModel.vertex.key}"
-        )
-    }
+    ) {}
 
     if (openDialog.value)
         AlertDialog(

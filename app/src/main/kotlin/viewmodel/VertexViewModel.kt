@@ -14,13 +14,13 @@ class VertexViewModel<K, V> (
     var vertex: Vertex<K, V>,
     radius: Double
     ) {
-    var color= mutableStateOf(false)
-    var show= mutableStateOf(false)
-    var radius=if (radius>50.0) 50.0 else if (radius<25.0) 25.0 else radius*2
+    var color= mutableStateOf(Color.Cyan)
+    var selected= mutableStateOf(false)
+    var radius=mutableStateOf(radius)
     val width = Toolkit.getDefaultToolkit().screenSize.width
     val height = Toolkit.getDefaultToolkit().screenSize.height
-    private var _x= Random.nextDouble(100.0, width.toDouble()-100.0)
-    private var _y= Random.nextDouble(100.0, height.toDouble()-100.0)
+    private var _x= Random.nextDouble(-width.toDouble()/2, width.toDouble()/2)
+    private var _y= Random.nextDouble(100.0-height.toDouble()/2, height.toDouble()/2-100.0)
 
     var x= mutableStateOf(_x)
     var y=mutableStateOf(_y)

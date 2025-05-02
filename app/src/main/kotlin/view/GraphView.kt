@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -22,7 +23,7 @@ fun <K, V>  graphView(graphViewModel: GraphViewModel<K, V>) {
     Box(modifier = Modifier
         .fillMaxSize()
     ) {
-        graphViewModel.edges.values.forEach {
+        graphViewModel.edges.values.onEach {
             EdgeView(it, Modifier)
         }
         graphViewModel.vertices.values.forEach { v ->

@@ -22,10 +22,10 @@ class GraphFactory {
             user: String,
             password: String
         ): Graph<K, V> {
-            var graph = constructor.invoke()
+            val graph = constructor.invoke()
             try {
-                var driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password))
-                var session = driver.session()
+                val driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password))
+                val session = driver.session()
                 session.executeRead { transaction ->
                     val amount = transaction.run(
                         "MATCH (n) RETURN max(ID(n))"
