@@ -3,6 +3,7 @@ package viewmodel
 import model.Vertex
 import model.Edge
 import model.graphs.Graph
+import viewmodel.VertexViewModel
 import java.util.Vector
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
@@ -37,36 +38,25 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
     }.toMutableMap()
 
     fun updateVertex(vertex: Vertex<K, V>, newKey: String, newValue: String): String? {
-        return try {
-            val parsedKey = convertKey(newKey, vertex.key)
-            val parsedValue = convertValue(newValue, vertex.value)
+        val vertexViewModel = vertices[vertex] ?: return "Vertex not found"
 
-            if (!isKeyUnique(vertex, parsedKey)) {
-                return "This key already exist"
-            }
-            vertex.key = parsedKey
-            vertex.value = parsedValue
-            null
-        } catch (e: Exception) {
-            "Error update vertex"
+        val parsedKey = vertexViewModel.parseKey(newKey)
+        if (parsedKey == null) {
+            return "Failed to parse key"
         }
-    }
 
-    private fun isKeyUnique(vertex: Vertex<K, V>, newKey: K): Boolean {
-        return vertices.keys.none { it.key == newKey && it != vertex }
-    }
+        val parsedValue = vertexViewModel.parseValue(newValue)
+        if (parsedValue == null) {
+            return "Failed to parse value"
+        }
 
-    private fun convertKey(input: String, example: K): K = when (example) {
-        is Int -> input.toInt() as K
-        is String -> input as K
-        is Double -> input.toDouble() as K
-        else -> throw IllegalArgumentException("Invalid key type")
-    }
+        if (vertices.keys.any { it != vertex && it.key?.equals(parsedKey) == true }) {
+            return "Key must be unique"
+        }
 
-    private fun convertValue(input: String, example: V): V = when (example) {
-        is Int -> input.toInt() as V
-        is String -> input as V
-        is Double -> input.toDouble() as V
-        else -> throw IllegalArgumentException("Invalid value type")
+        vertex.key = parsedKey
+        vertex.value = parsedValue
+        vertices[vertex]?.degree = graph.getOutDegreeOfVertex(vertex)
+        return null
     }
 }

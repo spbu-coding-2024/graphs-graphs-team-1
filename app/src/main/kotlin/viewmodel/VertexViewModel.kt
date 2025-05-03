@@ -15,19 +15,37 @@ class VertexViewModel<K, V> (
     radius: Double,
     var degree: Int
     ) {
-    var color= mutableStateOf(Color.Cyan)
-    var selected= mutableStateOf(false)
-    var radius=mutableStateOf(radius)
+    var color = mutableStateOf(Color.Cyan)
+    var selected = mutableStateOf(false)
+    var radius = mutableStateOf(radius)
     val width = Toolkit.getDefaultToolkit().screenSize.width
     val height = Toolkit.getDefaultToolkit().screenSize.height
-    private var _x= Random.nextDouble(-width.toDouble()/2, width.toDouble()/2)
-    private var _y= Random.nextDouble(100.0-height.toDouble()/2, height.toDouble()/2-100.0)
+    private var _x = Random.nextDouble(-width.toDouble() / 2, width.toDouble() / 2)
+    private var _y = Random.nextDouble(100.0 - height.toDouble() / 2, height.toDouble() / 2 - 100.0)
 
-    var x= mutableStateOf(_x)
-    var y=mutableStateOf(_y)
+    var x = mutableStateOf(_x)
+    var y = mutableStateOf(_y)
 
     fun onDrag(offset: Offset) {
-        x.value+= offset.x
+        x.value += offset.x
         y.value += offset.y
+    }
+
+    fun parseAny(input: String): Any? {
+        return when {
+            input.toIntOrNull() != null -> input.toInt()
+            input.toDoubleOrNull() != null -> input.toDouble()
+            else -> input
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun parseKey(keyStr: String): K? {
+        return parseAny(keyStr) as? K
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun parseValue(valueStr: String): V? {
+        return parseAny(valueStr) as? V
     }
 }
