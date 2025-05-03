@@ -31,21 +31,23 @@ class VertexViewModel<K, V> (
         y.value += offset.y
     }
 
-    fun parseAny(input: String): Any? {
+    fun parseKey(keyStr: String): K {
+        require(keyStr.isNotBlank()) { "Key cannot be empty" }
+        require(keyStr.lowercase() != "null") { "Key cannot be \"null\"" }
         return when {
-            input.toIntOrNull() != null -> input.toInt()
-            input.toDoubleOrNull() != null -> input.toDouble()
-            else -> input
-        }
+            keyStr.toIntOrNull() != null -> keyStr.toInt()
+            keyStr.toDoubleOrNull() != null -> keyStr.toDouble()
+            else -> keyStr
+        } as K
     }
 
-    @Suppress("UNCHECKED_CAST")
-    fun parseKey(keyStr: String): K? {
-        return parseAny(keyStr) as? K
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    fun parseValue(valueStr: String): V? {
-        return parseAny(valueStr) as? V
+    fun parseValue(valueStr: String): V {
+        require(valueStr.isNotBlank()) { "Value cannot be empty" }
+        require(valueStr.lowercase() != "null") { "Value cannot be \"null\"" }
+        return when {
+            valueStr.toIntOrNull() != null -> valueStr.toInt()
+            valueStr.toDoubleOrNull() != null -> valueStr.toDouble()
+            else -> valueStr
+        } as V
     }
 }

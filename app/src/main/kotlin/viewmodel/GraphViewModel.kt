@@ -40,23 +40,22 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
     fun updateVertex(vertex: Vertex<K, V>, newKey: String, newValue: String): String? {
         val vertexViewModel = vertices[vertex] ?: return "Vertex not found"
 
-        val parsedKey = vertexViewModel.parseKey(newKey)
-        if (parsedKey == null) {
-            return "Failed to parse key"
-        }
+        return try {
+            val parsedKey = vertexViewModel.parseKey(newKey)
+            val parsedValue = vertexViewModel.parseValue(newValue)
 
-        val parsedValue = vertexViewModel.parseValue(newValue)
-        if (parsedValue == null) {
-            return "Failed to parse value"
-        }
+            if (vertices.keys.any { it != vertex && it.key == parsedKey }) {
+                return "Key must be unique"
+            }
 
-        if (vertices.keys.any { it != vertex && it.key?.equals(parsedKey) == true }) {
-            return "Key must be unique"
+            vertex.key = parsedKey
+            vertex.value = parsedValue
+            vertices[vertex]?.degree = graph.getOutDegreeOfVertex(vertex)
+            null
+        } catch (e: IllegalArgumentException) {
+            e.message
+        } catch (e: Exception) {
+            "Invalid input format"
         }
-
-        vertex.key = parsedKey
-        vertex.value = parsedValue
-        vertices[vertex]?.degree = graph.getOutDegreeOfVertex(vertex)
-        return null
     }
 }
