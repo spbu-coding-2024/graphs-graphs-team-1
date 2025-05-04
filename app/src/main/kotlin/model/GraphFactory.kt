@@ -23,41 +23,32 @@ class GraphFactory {
             password: String
         ): Graph<K, V> {
             val graph = constructor.invoke()
-            try {
-                val driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password))
-                val session = driver.session()
-                session.executeRead { transaction ->
-                    val amount = transaction.run(
-                        "MATCH (n) RETURN max(ID(n))"
-                    ).list()[0].get("max(ID(n))")
-                    val vertices = Array<Vertex<K, V>?>(amount.asInt() + 1) { null }
-                    val result = transaction.run(
-                        "MATCH (x: Vertex)-[t]->(y: Vertex) RETURN ID(x) AS fid, x.key AS fk, x.value AS fv, " +
-                                "ID(y) as sid, y.key AS sk, y.value AS sv, t.weight AS weight"
+            val driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password))
+            val session = driver.session()
+            session.executeRead { transaction ->
+                val amount = transaction.run(
+                    "MATCH (n) RETURN max(ID(n))"
+                ).list()[0].get("max(ID(n))")
+                val vertices = Array<Vertex<K, V>?>(amount.asInt() + 1) { null }
+                val result = transaction.run(
+                    "MATCH (x: Vertex)-[t]->(y: Vertex) RETURN ID(x) AS fid, x.key AS fk, x.value AS fv, " +
+                            "ID(y) as sid, y.key AS sk, y.value AS sv, t.weight AS weight"
+                )
+                for (record in result) {
+                    if (vertices[record["fid"].asInt()] == null)
+                        vertices[record["fid"].asInt()] = Vertex(record["fk"] as K, record["fv"] as V)
+                    if (vertices[record["sid"].asInt()] == null)
+                        vertices[record["sid"].asInt()] = Vertex(record["sk"] as K, record["sv"] as V)
+                    graph.addEdge(
+                        vertices[record["fid"].asInt()] ?: throw IllegalStateException(),
+                        vertices[record["sid"].asInt()] ?: throw IllegalStateException(),
+                        record["weight"].asInt()
                     )
-                    for (record in result) {
-                        if (vertices[record["fid"].asInt()] == null)
-                            vertices[record["fid"].asInt()] = Vertex(record["fk"] as K, record["fv"] as V)
-                        if (vertices[record["sid"].asInt()] == null)
-                            vertices[record["sid"].asInt()] = Vertex(record["sk"] as K, record["sv"] as V)
-                        graph.addEdge(
-                            vertices[record["fid"].asInt()] ?: throw IllegalStateException(),
-                            vertices[record["sid"].asInt()] ?: throw IllegalStateException(),
-                            record["weight"].asInt()
-                        )
-                    }
                 }
-                session.close()
-                driver.close()
-            } catch (e: ClientException) {
-                println("Wrong password/login or uri!")
-            } catch (e: DatabaseException) {
-                println("Something wrong with database you are trying to reach!")
-            } catch (e: Exception) {
-                println("Something went wrong!")
-            } finally {
-                return graph
             }
+            session.close()
+            driver.close()
+            return graph
         }
 
         fun <K, V> fromSQLite(constructor: () -> AbstractGraph<K, V>): AbstractGraph<K, V> {
