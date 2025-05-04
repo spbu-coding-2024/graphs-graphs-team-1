@@ -17,19 +17,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomAppBar
 import androidx.compose.material.Button
-import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
@@ -39,7 +36,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.Composable
@@ -60,52 +57,36 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.Role.Companion.Button
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.DialogWindow
-import androidx.compose.ui.window.rememberDialogState
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import model.GraphFactory
-import model.Vertex
+import model.InternalFormatFactory
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
+import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
-import org.gephi.preview.api.PreviewMouseEvent
 import viewmodel.GraphViewModel
-import viewmodel.VertexViewModel
-import java.awt.Window
 import java.io.File
-import java.util.Timer
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.swing.JFileChooser
-import javax.swing.UIManager
-import javax.swing.filechooser.FileFilter
 import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.reflect.full.primaryConstructor
 
 
 @OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun <K, V> mainScreen() {
-    val viewModel=GraphViewModel<K, V>(EmptyGraph())
+    var viewModel=GraphViewModel<K, V>(EmptyGraph())
+
     var scale by remember { mutableStateOf(100) }
 
 
@@ -113,6 +94,7 @@ fun <K, V> mainScreen() {
     var expAlgo by remember { mutableStateOf(false) }
     var create by remember { mutableStateOf(false) }
     var downloader by remember { mutableStateOf(false) }
+    var uploader by remember { mutableStateOf(false) }
 
     val buttonEdgeLabel=mutableStateOf(false)
     val selected = viewModel.vertices.values.filter { it.selected.value}.toMutableList()
@@ -144,6 +126,21 @@ fun <K, V> mainScreen() {
 
     LaunchedEffect(Unit) {
         requester.requestFocus()
+    }
+
+    @Composable
+    fun errorWindow(errorText: String?, flag: MutableState<Boolean>) {
+        AlertDialog(
+            onDismissRequest = { flag.value = false},
+            title = { Text(text = "Error Neo4j") },
+            text = {Text("$errorText")},
+            properties = DialogProperties(dismissOnBackPress = false),
+            confirmButton = {
+                Button({ flag.value = false}) {
+                    Text("OK", fontSize = 22.sp)
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -212,7 +209,7 @@ fun <K, V> mainScreen() {
         },
         topBar = {
             TopAppBar(backgroundColor = Color.White, modifier = Modifier.height(40.dp)) {
-
+                var errorText: String?=null
                 //загрузка графа !!!как-то нужно доработать результат
                 Box{
                     IconButton(onClick = { downloader = !downloader }) {
@@ -226,7 +223,9 @@ fun <K, V> mainScreen() {
                         val openNeo4j=mutableStateOf(false)
                         val errorNeo4j=mutableStateOf(false)
 
-                        var errorText: String?=null
+
+
+
                         DropdownMenuItem(
                             onClick = {
                                 try {
@@ -251,23 +250,14 @@ fun <K, V> mainScreen() {
                         ) {
                             Text("From JSON...")
                             if (openJson.value)
-                                AlertDialog(
-                                    onDismissRequest = { openJson.value = false},
-                                    title = { Text(text = "Error") },
-                                    text = {Text("$errorText")},
-                                    properties = DialogProperties(dismissOnBackPress = false),
-                                    confirmButton = {
-                                        Button({ openJson.value = false}) {
-                                            Text("OK", fontSize = 22.sp)
-                                        }
-                                    }
-                                )
+                                errorWindow(errorText, openJson)
                         }
 
-                        var set= mutableStateOf(false)
-                        var uri= remember { mutableStateOf("") }
-                        var password = remember { mutableStateOf("") }
-                        var login = remember { mutableStateOf("") }
+
+                        val set= mutableStateOf(false)
+                        val uri= remember { mutableStateOf("") }
+                        val password = remember { mutableStateOf("") }
+                        val login = remember { mutableStateOf("") }
                         DropdownMenuItem(
                             onClick = {
                                 openNeo4j.value=true
@@ -286,6 +276,7 @@ fun <K, V> mainScreen() {
                                                 else -> ::UndirWeightGraph
                                             }, uri.value, login.value, password.value
                                         )
+                                        print(result.vertices.size)
                                     } catch (e: Exception) {
                                         openNeo4j.value = false
                                         errorText = e.message
@@ -329,20 +320,41 @@ fun <K, V> mainScreen() {
                                 )
                             }
                             if (errorNeo4j.value)
-                                AlertDialog(
-                                    onDismissRequest = { errorNeo4j.value = false},
-                                    title = { Text(text = "Error Neo4j") },
-                                    text = {Text("$errorText")},
-                                    properties = DialogProperties(dismissOnBackPress = false),
-                                    confirmButton = {
-                                        Button({ errorNeo4j.value = false}) {
-                                            Text("OK", fontSize = 22.sp)
-                                        }
-                                    }
-                                )
+                                errorWindow(errorText, errorNeo4j)
                         }
 
                     }
+                }
+
+                Box{
+                    IconButton(onClick = { uploader = !uploader }) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Upload")
+                    }
+                    DropdownMenu(
+                        expanded = uploader,
+                        onDismissRequest = { uploader = false },
+                    ) {
+                        val uploadJson = mutableStateOf(false)
+                        DropdownMenuItem(
+                            onClick = {
+                                try {
+                                    val chooser= JFileChooser()
+                                    chooser.dialogTitle = "Choose path to save"
+                                    chooser.showSaveDialog( null)
+                                    val file=File(chooser.selectedFile.toString())
+                                    file.writeText(InternalFormatFactory.toJSON(viewModel.graph))
+                                } catch (e: Exception) {
+                                    errorText=e.message
+                                    uploadJson.value=true
+                                }
+                            }
+                        ) {
+                            Text("To JSON...")
+                            if (uploadJson.value)
+                                errorWindow(errorText, uploadJson)
+                        }
+                    }
+
                 }
 
                 //выбор графа
@@ -396,13 +408,13 @@ fun <K, V> mainScreen() {
                                     confirmButton = {
                                         Button(
                                             onClick = {
-                                                val g = when (selectedOption) {
+                                                val graph = when (selectedOption) {
                                                     graphs[0] -> UndirectedGraph<K, V>()
                                                     graphs[1] -> UndirWeightGraph()
                                                     graphs[2] -> DirWeightGraph()
                                                     else -> DirectedGraph()
                                                 }
-                                                //viewModel= GraphViewModel(g)
+                                                viewModel= GraphViewModel(graph)
                                                 start.value = false
                                             }
                                         ) { Text("OK") }
@@ -649,7 +661,6 @@ fun <K, V> mainScreen() {
                         ) {Text("YuifanHu")}
                     }
                 }
-
                 //побочные функции
                 Box{
                     IconButton(onClick = { expandedSecondary = !expandedSecondary }) {
@@ -691,8 +702,7 @@ fun <K, V> mainScreen() {
                 viewModel.vertices.values.forEach {
                     it.onDrag(offset)
                 }
-            }
-            )
+            })
         ) {
             graphView(viewModel)
         }
