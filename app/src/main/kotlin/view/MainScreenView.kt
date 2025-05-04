@@ -35,9 +35,7 @@ import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Send
@@ -67,15 +65,12 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.DelicateCoroutinesApi
 import model.GraphFactory
 import model.InternalFormatFactory
-import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
-import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import viewmodel.GraphViewModel
-import viewmodel.VertexViewModel
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -84,7 +79,6 @@ import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
 import kotlin.math.max
 import kotlin.math.min
-
 
 @OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
@@ -210,7 +204,7 @@ fun <K, V> mainScreen() {
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionUp -> {
                     viewModel.vertices.values.forEach {
-                        it.onDrag(Offset(0f,-25f,))
+                        it.onDrag(Offset(0f,-25f))
                     }
                     true
                 }
@@ -546,7 +540,6 @@ fun <K, V> mainScreen() {
                                     }
                                 )
                         }
-
 
                         //переделать на selected
                         //алгоритм Дейкстры

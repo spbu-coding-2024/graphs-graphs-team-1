@@ -6,9 +6,9 @@ import model.graphs.Graph
 import java.util.Vector
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
-    
+
     var vertices= graph.vertices.associateWith { v ->
-        VertexViewModel(v, 25.0)
+        VertexViewModel(v)
     }.toMutableMap()
 
 
