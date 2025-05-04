@@ -264,25 +264,30 @@ fun <K, V> mainScreen() {
                         val errorNeo4j=mutableStateOf(false)
                         val set= mutableStateOf(false)
 
-
-
-
                         DropdownMenuItem(
                             onClick = {
                                 try {
-                                    var file: File?=null
-                                    val chooser= JFileChooser()
+                                    if (viewModel.graph is EmptyGraph<*, *>)
+                                        throw IllegalStateException()
+                                    var file: File? = null
+                                    val chooser = JFileChooser()
                                     chooser.dialogTitle = "Choose json file"
                                     chooser.fileSelectionMode = JFileChooser.FILES_ONLY
                                     chooser.addChoosableFileFilter(FileNameExtensionFilter("JSON file", "json"))
-                                    if (chooser.showOpenDialog( null) == JFileChooser.APPROVE_OPTION)
+                                    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
                                         file = chooser.selectedFile
-                                    val result= GraphFactory.fromJSON<K, V>(file!!.readText(), when(viewModel.graph::class.simpleName) {
-                                        "DirectedGraph" -> ::DirectedGraph
-                                        "DirWeightGraph" -> ::DirWeightGraph
-                                        "UndirectedGraph" -> ::UndirectedGraph
-                                        else -> ::UndirWeightGraph
-                                    }, object : TypeToken<K>() {}.type, object : TypeToken<V>() {}.type )
+                                    val result =
+                                        GraphFactory.fromJSON<K, V>(
+                                            file!!.readText(), when (viewModel.graph::class.simpleName) {
+                                                "DirectedGraph" -> ::DirectedGraph
+                                                "DirWeightGraph" -> ::DirWeightGraph
+                                                "UndirectedGraph" -> ::UndirectedGraph
+                                                else -> ::UndirWeightGraph
+                                            }, object : TypeToken<K>() {}.type, object : TypeToken<V>() {}.type
+                                        )
+                                } catch (e: IllegalStateException) {
+                                    errorText="Choose graph type first"
+                                    errorJson.value=true
                                 } catch (e: Exception) {
                                     errorText=e.message
                                     errorJson.value=true
@@ -294,19 +299,21 @@ fun <K, V> mainScreen() {
                                 errorWindow(errorText, errorJson)
                         }
 
-
-
-
                         DropdownMenuItem(
                             onClick = {
-                                openNeo4j.value=true
+                                if (viewModel.graph !is EmptyGraph<*, *>)
+                                    openNeo4j.value=true
                             }
                         ) {
                             Text("From Neo4j...")
+                            if (viewModel.graph is EmptyGraph<*, *>)
+                                errorWindow("Choose graph type first", errorNeo4j)
                             if (set.value) {
                                 val executor= Executors.newScheduledThreadPool(2)
                                 val feature=executor.submit {
                                     try {
+                                        if (viewModel.graph is EmptyGraph<*, *>)
+                                            throw IllegalStateException()
                                         val result = GraphFactory.fromNeo4j<K, V>(
                                             when (viewModel.graph::class.simpleName) {
                                                 "DirectedGraph" -> ::DirectedGraph
@@ -315,6 +322,10 @@ fun <K, V> mainScreen() {
                                                 else -> ::UndirWeightGraph
                                             }, uriNeo4j.value, loginNeo4j.value, passwordNeo4j.value
                                         )
+                                    } catch (e: IllegalStateException) {
+                                        openNeo4j.value = false
+                                        errorText="Choose graph type first"
+                                        errorNeo4j.value = true
                                     } catch (e: Exception) {
                                         openNeo4j.value = false
                                         errorText = e.message
@@ -326,9 +337,8 @@ fun <K, V> mainScreen() {
                                 executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
                                 executor.shutdown()
                             }
-                            if (openNeo4j.value) {
+                            if (openNeo4j.value)
                                 inputNeo4j(openNeo4j, set)
-                            }
                             if (errorNeo4j.value)
                                 errorWindow(errorText, errorNeo4j)
                         }
@@ -351,11 +361,16 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 try {
-                                    val chooser= JFileChooser()
+                                    if (viewModel.graph is EmptyGraph<*, *>)
+                                        throw IllegalStateException()
+                                    val chooser = JFileChooser()
                                     chooser.dialogTitle = "Choose path to save"
-                                    chooser.showSaveDialog( null)
-                                    val file=File(chooser.selectedFile.toString())
+                                    chooser.showSaveDialog(null)
+                                    val file = File(chooser.selectedFile.toString())
                                     file.writeText(InternalFormatFactory.toJSON(viewModel.graph))
+                                } catch (e: IllegalStateException) {
+                                    errorText="Choose graph type first"
+                                    uploadJson.value=true
                                 } catch (e: Exception) {
                                     errorText=e.message
                                     uploadJson.value=true
@@ -369,9 +384,13 @@ fun <K, V> mainScreen() {
 
                         DropdownMenuItem(
                             onClick = {
-                                uploadNeo4j.value=true
+                                if (viewModel.graph !is  EmptyGraph<*, *>)
+                                    uploadNeo4j.value=true
                             }
                         ){
+                            if (viewModel.graph is EmptyGraph<*, *>)
+                                errorWindow("Choose graph type first", errorNeo4j)
+
                             Text("To Neo4j...")
                             if (uploadNeo4j.value)
                                 inputNeo4j(uploadNeo4j, set)
@@ -402,7 +421,7 @@ fun <K, V> mainScreen() {
                 Box {
                     val start=mutableStateOf(false)
                     IconButton(onClick = { create = !create }) {
-                        Icon(Icons.Default.Add, contentDescription = "More options")
+                        Icon(Icons.Default.Add, contentDescription = "Graph types")
                     }
                     DropdownMenu(
                         expanded = create,
@@ -498,12 +517,12 @@ fun <K, V> mainScreen() {
                                 )
                         }
                         @Composable
-                        fun errorWindow()  {
+                        fun errorWindow(text: String)  {
                             if (error.value)
                                 AlertDialog(
                                     onDismissRequest = { error.value = false},
                                     title = { Text(text = "Error") },
-                                    text = {Text("")},
+                                    text = {Text(text)},
                                     properties = DialogProperties(dismissOnBackPress = false),
                                     confirmButton = {
                                         Button({ error.value = false }) {
@@ -557,7 +576,11 @@ fun <K, V> mainScreen() {
                                     openDialog.value = true
                                 } catch (e: IndexOutOfBoundsException) {
                                     warning.value=true
+                                } catch (e: IllegalStateException) {
+                                    errorText="Choose graph type first"
+                                    error.value=true
                                 } catch (e: Exception) {
+                                    errorText=e.message
                                     error.value=true
                                 }
                             }
@@ -565,7 +588,7 @@ fun <K, V> mainScreen() {
                             Text("Dijkstra")
                             indexErrorWindow()
                             windowPath()
-                            errorWindow()
+                            errorWindow(errorText.toString())
                         }
                         //алгоритм Форда-Беллмана
                         DropdownMenuItem(
@@ -598,9 +621,13 @@ fun <K, V> mainScreen() {
                                                 it.value.color.value = Color.Yellow
                                         }
                                     openDialog.value = true
+                                } catch (e: IllegalStateException) {
+                                    errorText="Choose graph type first"
+                                    error.value=true
                                 } catch (e: IndexOutOfBoundsException) {
                                     warning.value=true
                                 } catch (e: Exception) {
+                                    errorText=e.message
                                     error.value=true
                                 }
                             }
@@ -609,7 +636,7 @@ fun <K, V> mainScreen() {
                             Text("Ford-Bellman")
                             indexErrorWindow()
                             windowPath()
-                            errorWindow()
+                            errorWindow(errorText.toString())
                         }
 
                         Divider()
@@ -635,14 +662,18 @@ fun <K, V> mainScreen() {
                                     }
                                 }  catch (e: NoSuchElementException) {
                                     warning.value=true
+                                } catch (e: IllegalStateException) {
+                                    errorText="Choose graph type first"
+                                    error.value=true
                                 } catch (e: Exception) {
+                                    errorText=e.message
                                     error.value=true
                                 }
                             },
                         ) {
                             Text("Cycles search")
                             indexErrorWindow()
-                            errorWindow()
+                            errorWindow(errorText.toString())
                         }
                         Divider()
                         //компоненты сильной связанности
@@ -670,11 +701,18 @@ fun <K, V> mainScreen() {
                                         }
 
                                     }
+                                } catch (e: IllegalStateException) {
+                                    errorText="Choose graph type first"
+                                    error.value=true
                                 } catch (e: Exception) {
+                                    errorText=e.message
                                     error.value=true
                                 }
                             },
-                        ) {Text("Connected components search")}
+                        ) {
+                            Text("Connected components search")
+                            errorWindow(errorText.toString())
+                        }
                         Divider()
                         //forseAtlas2
                         DropdownMenuItem(
@@ -684,11 +722,18 @@ fun <K, V> mainScreen() {
                                     if (viewModel.graph is EmptyGraph<*, *>)
                                         throw IllegalStateException()
                                     planarAlgos(ForceAtlas2())
+                                } catch (e: IllegalStateException) {
+                                    errorText="Choose graph type first"
+                                    error.value=true
                                 } catch (e: Exception) {
+                                    errorText=e.message
                                     error.value=true
                                 }
                             }
-                        ) {Text("ForceAtlas2")}
+                        ) {
+                            Text("ForceAtlas2")
+                            errorWindow(errorText.toString())
+                        }
                         //YuifanHu
                         DropdownMenuItem(
                             onClick = {
@@ -697,11 +742,18 @@ fun <K, V> mainScreen() {
                                     if (viewModel.graph is EmptyGraph<*, *>)
                                         throw IllegalStateException()
                                     planarAlgos(YifanHu())
+                                } catch (e: IllegalStateException) {
+                                    errorText="Choose graph type first"
+                                    error.value=true
                                 } catch (e: Exception) {
+                                    errorText=e.message
                                     error.value=true
                                 }
                             }
-                        ) {Text("YuifanHu")}
+                        ) {
+                            Text("YuifanHu")
+                            errorWindow(errorText.toString())
+                        }
                     }
                 }
                 //побочные функции
@@ -733,13 +785,6 @@ fun <K, V> mainScreen() {
                                 true -> "Hide edge weights"
                             }
                         )}
-
-                        DropdownMenuItem(
-                            onClick = {
-                                var t= Vertex(5 as K, 7 as V)
-                                viewModel.vertices[t]= VertexViewModel(t, 25.0)
-                            }
-                        ) {Text("add")}
                     }
                 }
             }
