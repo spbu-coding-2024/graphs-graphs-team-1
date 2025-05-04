@@ -6,8 +6,8 @@ import java.util.Vector
 
 interface Graph <K, V> {
 
-    val vertices: Vector<Vertex<K, V>>
-    val edges: HashMap<Vertex<K, V>, Vector<Edge<K, V>>>
+    val vertices: MutableCollection<Vertex<K, V>>
+    val edges: MutableMap<Vertex<K, V>, Vector<Edge<K, V>>>
 
     fun addEdge(first: Vertex<K, V>, second: Vertex<K, V>, weight: Int): Boolean {
         if (!vertices.map { it === first }.contains(true))

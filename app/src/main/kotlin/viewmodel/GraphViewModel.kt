@@ -5,7 +5,8 @@ import model.graphs.Graph
 import java.util.Vector
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
-    var vertices= graph.vertices.associateWith { v ->
+
+    var vertices=graph.vertices.associateWith { v ->
         VertexViewModel(v, 25.0)
     }.toMutableMap()
 
@@ -22,7 +23,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         print(temp.size)
     }
 
-    var edges= temp.associateWith { e ->
+    var edges = temp.associateWith { e ->
         val fst = vertices[e.link.first]
             ?: throw IllegalStateException("VertexView for ${e.link.first} not found")
         val snd = vertices[e.link.second]

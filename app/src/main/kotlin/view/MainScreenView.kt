@@ -11,23 +11,32 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomAppBar
 import androidx.compose.material.Button
+import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.Composable
@@ -48,22 +57,40 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.HorizontalAlignmentLine
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.Role.Companion.Button
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindow
+import androidx.compose.ui.window.rememberDialogState
 import kotlinx.coroutines.flow.flow
+import model.Vertex
+import model.graphs.DirWeightGraph
+import model.graphs.DirectedGraph
+import model.graphs.EmptyGraph
+import model.graphs.UndirWeightGraph
+import model.graphs.UndirectedGraph
 import viewmodel.GraphViewModel
+import viewmodel.VertexViewModel
 import kotlin.collections.forEach
 import kotlin.math.max
 import kotlin.math.min
 
+
+
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
+fun <K, V> mainScreen() {
+    val viewModel=GraphViewModel<K, V>(EmptyGraph())
     var scale by remember { mutableStateOf(100) }
+
 
     var expandedSecondary by remember { mutableStateOf(false) }
     var expAlgo by remember { mutableStateOf(false) }
+    var create by remember { mutableStateOf(false) }
 
     val buttonEdgeLabel=mutableStateOf(false)
     val selected = viewModel.vertices.values.filter { it.selected.value}.toMutableList()
@@ -163,6 +190,67 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
         },
         topBar = {
             TopAppBar(backgroundColor = Color.White, modifier = Modifier.height(40.dp)) {
+                val start=mutableStateOf(false)
+                IconButton(onClick = { create = !create }) {
+                    Icon(Icons.Default.Add, contentDescription = "More options")
+                }
+                DropdownMenu(
+                    expanded = create,
+                    onDismissRequest = { create = false },
+                ) {
+                    DropdownMenuItem(
+                        onClick = {
+                            start.value=true
+                        }
+                    ) {
+                        val graphs=listOf("Undirected Graph", "Undirected Weighted Graph", "Directed Weighted Graph", "Directed Graph")
+                        val (selectedOption, onOptionSelected) = remember { mutableStateOf(graphs[0]) }
+                        if (start.value) {
+                            AlertDialog(
+                                onDismissRequest = { start.value=false },
+                                text = {
+                                    Column(Modifier.selectableGroup()) {
+                                        graphs.forEach { text ->
+                                            Row(
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .height(56.dp)
+                                                    .selectable(
+                                                        selected = (text == selectedOption),
+                                                        onClick = { onOptionSelected(text) },
+                                                        role = Role.RadioButton
+                                                    ),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = (text == selectedOption),
+                                                    onClick = null
+                                                )
+                                                Text(text = text)
+                                            }
+                                        }
+                                    }
+                                },
+                                confirmButton = {
+                                    Button(
+                                        onClick = {
+                                            val g =when(selectedOption) {
+                                                graphs[0] -> UndirectedGraph<K, V>()
+                                                graphs[1] -> UndirWeightGraph()
+                                                graphs[2] -> DirWeightGraph()
+                                                else -> DirectedGraph()
+                                            }
+                                            //viewModel= GraphViewModel(g)
+                                            start.value=false
+                                        }
+                                    ) {Text("OK")}
+
+                                }
+                            )
+                        }
+                        Text("New Graph...")
+                    }
+                }
 
                 //алгоритмы
                 Box{
@@ -228,10 +316,13 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                         //алгоритм Дейкстры
                         DropdownMenuItem(
                                 onClick = {
+                                    println(viewModel.graph::class.simpleName)
                                     clean()
                                     try {
+                                        if (viewModel.graph is EmptyGraph<*, *>)
+                                            throw IllegalStateException()
                                         val temp = Dijkstra.buildShortestPath(
-                                                viewModel.graph,
+                                            viewModel.graph,
                                                 selected[0].vertex,
                                                 selected[1].vertex
                                             )
@@ -264,6 +355,8 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                 onClick = {
                                     clean()
                                     try {
+                                        if (viewModel.graph is EmptyGraph<*, *>)
+                                            throw IllegalStateException()
                                         val temp =
                                             FordBellman.apply(viewModel.graph, selected[0].vertex, selected[1].vertex)
                                         path.value = temp.first
@@ -308,6 +401,8 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                             onClick = {
                                 clean()
                                 try {
+                                    if (viewModel.graph is EmptyGraph<*, *>)
+                                        throw IllegalStateException()
                                     val temp = Cycles.findCycles(viewModel.graph, selected.first().vertex)
                                     temp.forEach { cycle ->
                                         for (i in 0..cycle.size - 1) {
@@ -337,22 +432,29 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                         DropdownMenuItem(
                             onClick = {
                                 clean()
-                                val colors= ColorList().iterator()
-                                val temp= KosarujuSharir.apply(viewModel.graph)
-                                temp.forEach { component ->
-                                    colors.hasNext()
-                                    val color =colors.next().toInt(16)
-                                    val red=color/(16*16*16*16)
-                                    val green=(color-red)/(16*16)
-                                    val blue=color-green
-                                    component.forEach { v ->
-                                        viewModel.vertices[v]?.color?.value= Color(red, green, blue )
-                                        viewModel.edges.values.forEach { e ->
-                                            if (e.from.vertex===v)
-                                                e.color.value=Color(red, green, blue)
+                                try {
+                                    if (viewModel.graph is EmptyGraph<*, *>)
+                                        throw IllegalStateException()
+                                    val colors = ColorList().iterator()
+                                    val temp =
+                                        KosarujuSharir.apply(viewModel.graph)
+                                    temp.forEach { component ->
+                                        colors.hasNext()
+                                        val color = colors.next().toInt(16)
+                                        val red = color / (16 * 16 * 16 * 16)
+                                        val green = (color - red) / (16 * 16)
+                                        val blue = color - green
+                                        component.forEach { v ->
+                                            viewModel.vertices[v]?.color?.value = Color(red, green, blue)
+                                            viewModel.edges.values.forEach { e ->
+                                                if (e.from.vertex === v)
+                                                    e.color.value = Color(red, green, blue)
+                                            }
                                         }
-                                    }
 
+                                    }
+                                } catch (e: Exception) {
+                                    error.value=true
                                 }
                             },
                         ) {Text("Connected components search")}
@@ -360,14 +462,27 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                         //forseAtlas2
                         DropdownMenuItem(
                             onClick = {
-                                planarAlgos(ForceAtlas2())
+                                clean()
+                                try {
+                                    if (viewModel.graph is EmptyGraph<*, *>)
+                                        throw IllegalStateException()
+                                    planarAlgos(ForceAtlas2())
+                                } catch (e: Exception) {
+                                    error.value=true
+                                }
                             }
                         ) {Text("ForceAtlas2")}
                         //YuifanHu
                         DropdownMenuItem(
                             onClick = {
                                 clean()
-                                planarAlgos(YifanHu())
+                                try {
+                                    if (viewModel.graph is EmptyGraph<*, *>)
+                                        throw IllegalStateException()
+                                    planarAlgos(YifanHu())
+                                } catch (e: Exception) {
+                                    error.value=true
+                                }
                             }
                         ) {Text("YuifanHu")}
                     }
@@ -419,6 +534,5 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
         ) {
             graphView(viewModel)
         }
-
     }
 }
