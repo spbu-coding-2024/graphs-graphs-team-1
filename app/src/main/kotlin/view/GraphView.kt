@@ -33,7 +33,7 @@ fun <K, V>  graphView(graphViewModel: GraphViewModel<K, V>) {
         graphViewModel.edges.values.forEach {
             EdgeView(it, Modifier)
         }
-        graphViewModel.vertices.values.forEach { v ->
+        graphViewModel.vertices.values.onEach { v ->
             VertexView(v, Modifier)
         }
 

@@ -1,14 +1,16 @@
 package viewmodel
 
+import androidx.compose.runtime.mutableStateOf
 import model.Edge
 import model.graphs.Graph
 import java.util.Vector
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
-
-    var vertices=graph.vertices.associateWith { v ->
+    
+    var vertices= graph.vertices.associateWith { v ->
         VertexViewModel(v, 25.0)
     }.toMutableMap()
+
 
     private val temp = Vector<Edge<K, V>>()
     init {

@@ -36,9 +36,11 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -65,6 +67,7 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.DelicateCoroutinesApi
 import model.GraphFactory
 import model.InternalFormatFactory
+import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
@@ -72,6 +75,7 @@ import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import viewmodel.GraphViewModel
+import viewmodel.VertexViewModel
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -85,10 +89,9 @@ import kotlin.math.min
 @OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun <K, V> mainScreen() {
-    var viewModel=GraphViewModel<K, V>(graph() as Graph<K, V>)
+    var viewModel by remember { mutableStateOf(GraphViewModel<K, V>(EmptyGraph()))}
 
     var scale by remember { mutableStateOf(100) }
-
 
     var expandedSecondary by remember { mutableStateOf(false) }
     var expAlgo by remember { mutableStateOf(false) }
@@ -228,7 +231,7 @@ fun <K, V> mainScreen() {
                         set(1.1)
                     },
 
-                ) {
+                    ) {
                     Text("+")
                 }
                 Box(Modifier.padding(horizontal = 10.dp)) {
@@ -250,7 +253,7 @@ fun <K, V> mainScreen() {
                 //загрузка графа !!!как-то нужно доработать результат
                 Box{
                     IconButton(onClick = { downloader = !downloader }) {
-                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Download")
+                        Icon(Icons.Default.Create, contentDescription = "Download")
                     }
                     DropdownMenu(
                         expanded = downloader,
@@ -332,10 +335,10 @@ fun <K, V> mainScreen() {
 
                     }
                 }
-
+                //выгрузка графа
                 Box{
                     IconButton(onClick = { uploader = !uploader }) {
-                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Upload")
+                        Icon(Icons.Default.Send, contentDescription = "Upload")
                     }
                     DropdownMenu(
                         expanded = uploader,
@@ -395,7 +398,6 @@ fun <K, V> mainScreen() {
                     }
 
                 }
-
                 //выбор графа
                 Box {
                     val start=mutableStateOf(false)
@@ -526,38 +528,40 @@ fun <K, V> mainScreen() {
                                 )
                         }
 
+
+                        //переделать на selected
                         //алгоритм Дейкстры
                         DropdownMenuItem(
-                                onClick = {
-                                    println(viewModel.graph::class.simpleName)
-                                    clean()
-                                    try {
-                                        if (viewModel.graph is EmptyGraph<*, *>)
-                                            throw IllegalStateException()
-                                        val temp = Dijkstra.buildShortestPath(
-                                            viewModel.graph,
-                                                selected[0].vertex,
-                                                selected[1].vertex
-                                            )
-                                        path.value = temp.first
-                                        temp.second.forEach {
-                                            if (viewModel.vertices[it]?.color?.value != Color.Red)
-                                                viewModel.vertices[it]?.color?.value = Color.Green
-                                        }
-                                        for (i in 1..temp.second.size - 1)
-                                            viewModel.edges.forEach {
-                                                if (it.key.link.first === temp.second[i - 1] && it.key.link.second === temp.second[i] ||
-                                                    it.key.link.second === temp.second[i - 1] && it.key.link.first === temp.second[i])
-                                                    it.value.color.value = Color.Red
-                                            }
-                                        openDialog.value = true
-                                    } catch (e: IndexOutOfBoundsException) {
-                                        warning.value=true
-                                    } catch (e: Exception) {
-                                        error.value=true
+                            onClick = {
+                                println(viewModel.graph::class.simpleName)
+                                clean()
+                                try {
+                                    if (viewModel.graph is EmptyGraph<*, *>)
+                                        throw IllegalStateException()
+                                    val temp = Dijkstra.buildShortestPath(
+                                        viewModel.graph,
+                                        selected[0].vertex,
+                                        selected[1].vertex
+                                    )
+                                    path.value = temp.first
+                                    temp.second.forEach {
+                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                            viewModel.vertices[it]?.color?.value = Color.Green
                                     }
+                                    for (i in 1..temp.second.size - 1)
+                                        viewModel.edges.forEach {
+                                            if (it.key.link.first === temp.second[i - 1] && it.key.link.second === temp.second[i] ||
+                                                it.key.link.second === temp.second[i - 1] && it.key.link.first === temp.second[i])
+                                                it.value.color.value = Color.Red
+                                        }
+                                    openDialog.value = true
+                                } catch (e: IndexOutOfBoundsException) {
+                                    warning.value=true
+                                } catch (e: Exception) {
+                                    error.value=true
                                 }
-                            ) {
+                            }
+                        ) {
                             Text("Dijkstra")
                             indexErrorWindow()
                             windowPath()
@@ -565,43 +569,43 @@ fun <K, V> mainScreen() {
                         }
                         //алгоритм Форда-Беллмана
                         DropdownMenuItem(
-                                onClick = {
-                                    clean()
-                                    try {
-                                        if (viewModel.graph is EmptyGraph<*, *>)
-                                            throw IllegalStateException()
-                                        val temp =
-                                            FordBellman.apply(viewModel.graph, selected[0].vertex, selected[1].vertex)
-                                        path.value = temp.first
-                                        temp.second?.forEach {
-                                            if (viewModel.vertices[it]?.color?.value != Color.Red)
-                                                viewModel.vertices[it]?.color?.value = Color.Green
-                                        }
-                                        temp.third?.forEach {
-                                            if (viewModel.vertices[it]?.color?.value != Color.Red)
-                                                viewModel.vertices[it]?.color?.value = Color.Yellow
-                                        }
-                                        for (i in 1..(temp.second?.size?.minus(1) ?: 0))
-                                            viewModel.edges.forEach {
-                                                if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(i) ||
-                                                    it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(i))
-                                                    it.value.color.value = Color.Green
-                                            }
-                                        for (i in 1..(temp.third?.size?.minus(1) ?: 0))
-                                            viewModel.edges.forEach {
-                                                if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(i) ||
-                                                    it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(i))
-                                                    it.value.color.value = Color.Yellow
-                                            }
-                                        openDialog.value = true
-                                    } catch (e: IndexOutOfBoundsException) {
-                                        warning.value=true
-                                    } catch (e: Exception) {
-                                        error.value=true
+                            onClick = {
+                                clean()
+                                try {
+                                    if (viewModel.graph is EmptyGraph<*, *>)
+                                        throw IllegalStateException()
+                                    val temp =
+                                        FordBellman.apply(viewModel.graph, selected[0].vertex, selected[1].vertex)
+                                    path.value = temp.first
+                                    temp.second?.forEach {
+                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                            viewModel.vertices[it]?.color?.value = Color.Green
                                     }
+                                    temp.third?.forEach {
+                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                            viewModel.vertices[it]?.color?.value = Color.Yellow
+                                    }
+                                    for (i in 1..(temp.second?.size?.minus(1) ?: 0))
+                                        viewModel.edges.forEach {
+                                            if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(i) ||
+                                                it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(i))
+                                                it.value.color.value = Color.Green
+                                        }
+                                    for (i in 1..(temp.third?.size?.minus(1) ?: 0))
+                                        viewModel.edges.forEach {
+                                            if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(i) ||
+                                                it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(i))
+                                                it.value.color.value = Color.Yellow
+                                        }
+                                    openDialog.value = true
+                                } catch (e: IndexOutOfBoundsException) {
+                                    warning.value=true
+                                } catch (e: Exception) {
+                                    error.value=true
                                 }
+                            }
 
-                            ) {
+                        ) {
                             Text("Ford-Bellman")
                             indexErrorWindow()
                             windowPath()
@@ -729,10 +733,15 @@ fun <K, V> mainScreen() {
                                 true -> "Hide edge weights"
                             }
                         )}
+
+                        DropdownMenuItem(
+                            onClick = {
+                                var t= Vertex(5 as K, 7 as V)
+                                viewModel.vertices[t]= VertexViewModel(t, 25.0)
+                            }
+                        ) {Text("add")}
                     }
                 }
-
-                
             }
         }
     ) {
