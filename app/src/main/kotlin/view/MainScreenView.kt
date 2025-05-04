@@ -564,7 +564,7 @@ fun <K, V> mainScreen() {
                                     )
                                     path.value = temp.first
                                     temp.second.forEach {
-                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                        if (viewModel.vertices[it]?.selected?.value==false)
                                             viewModel.vertices[it]?.color?.value = Color.Green
                                     }
                                     for (i in 1..temp.second.size - 1)
@@ -601,11 +601,11 @@ fun <K, V> mainScreen() {
                                         FordBellman.apply(viewModel.graph, selected[0].vertex, selected[1].vertex)
                                     path.value = temp.first
                                     temp.second?.forEach {
-                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                        if (viewModel.vertices[it]?.selected?.value==false)
                                             viewModel.vertices[it]?.color?.value = Color.Green
                                     }
                                     temp.third?.forEach {
-                                        if (viewModel.vertices[it]?.color?.value != Color.Red)
+                                        if (viewModel.vertices[it]?.selected?.value==false)
                                             viewModel.vertices[it]?.color?.value = Color.Yellow
                                     }
                                     for (i in 1..(temp.second?.size?.minus(1) ?: 0))
