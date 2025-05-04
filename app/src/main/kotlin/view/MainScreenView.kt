@@ -34,13 +34,17 @@ import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,23 +69,40 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import model.GraphFactory
 import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
+import org.gephi.preview.api.PreviewMouseEvent
 import viewmodel.GraphViewModel
 import viewmodel.VertexViewModel
+import java.awt.Window
+import java.io.File
+import java.util.Timer
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import javax.swing.JFileChooser
+import javax.swing.UIManager
+import javax.swing.filechooser.FileFilter
+import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.reflect.full.primaryConstructor
 
 
-
-
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun <K, V> mainScreen() {
     val viewModel=GraphViewModel<K, V>(EmptyGraph())
@@ -91,6 +112,7 @@ fun <K, V> mainScreen() {
     var expandedSecondary by remember { mutableStateOf(false) }
     var expAlgo by remember { mutableStateOf(false) }
     var create by remember { mutableStateOf(false) }
+    var downloader by remember { mutableStateOf(false) }
 
     val buttonEdgeLabel=mutableStateOf(false)
     val selected = viewModel.vertices.values.filter { it.selected.value}.toMutableList()
@@ -190,68 +212,208 @@ fun <K, V> mainScreen() {
         },
         topBar = {
             TopAppBar(backgroundColor = Color.White, modifier = Modifier.height(40.dp)) {
-                val start=mutableStateOf(false)
-                IconButton(onClick = { create = !create }) {
-                    Icon(Icons.Default.Add, contentDescription = "More options")
-                }
-                DropdownMenu(
-                    expanded = create,
-                    onDismissRequest = { create = false },
-                ) {
-                    DropdownMenuItem(
-                        onClick = {
-                            start.value=true
-                        }
+
+                //загрузка графа !!!как-то нужно доработать результат
+                Box{
+                    IconButton(onClick = { downloader = !downloader }) {
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Download")
+                    }
+                    DropdownMenu(
+                        expanded = downloader,
+                        onDismissRequest = { downloader = false },
                     ) {
-                        val graphs=listOf("Undirected Graph", "Undirected Weighted Graph", "Directed Weighted Graph", "Directed Graph")
-                        val (selectedOption, onOptionSelected) = remember { mutableStateOf(graphs[0]) }
-                        if (start.value) {
-                            AlertDialog(
-                                onDismissRequest = { start.value=false },
-                                text = {
-                                    Column(Modifier.selectableGroup()) {
-                                        graphs.forEach { text ->
-                                            Row(
-                                                Modifier
-                                                    .fillMaxWidth()
-                                                    .height(56.dp)
-                                                    .selectable(
-                                                        selected = (text == selectedOption),
-                                                        onClick = { onOptionSelected(text) },
-                                                        role = Role.RadioButton
-                                                    ),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                RadioButton(
-                                                    selected = (text == selectedOption),
-                                                    onClick = null
-                                                )
-                                                Text(text = text)
-                                            }
+                        val openJson=mutableStateOf(false)
+                        val openNeo4j=mutableStateOf(false)
+                        val errorNeo4j=mutableStateOf(false)
+
+                        var errorText: String?=null
+                        DropdownMenuItem(
+                            onClick = {
+                                try {
+                                    var file: File?=null
+                                    val chooser= JFileChooser()
+                                    chooser.dialogTitle = "Choose json file"
+                                    chooser.fileSelectionMode = JFileChooser.FILES_ONLY
+                                    chooser.addChoosableFileFilter(FileNameExtensionFilter("JSON file", "json"))
+                                    if (chooser.showOpenDialog( null) == JFileChooser.APPROVE_OPTION)
+                                        file = chooser.selectedFile
+                                    val result= GraphFactory.fromJSON<K, V>(file!!.readText(), when(viewModel.graph::class.simpleName) {
+                                        "DirectedGraph" -> ::DirectedGraph
+                                        "DirWeightGraph" -> ::DirWeightGraph
+                                        "UndirectedGraph" -> ::UndirectedGraph
+                                        else -> ::UndirWeightGraph
+                                    }, object : TypeToken<K>() {}.type, object : TypeToken<V>() {}.type )
+                                } catch (e: Exception) {
+                                    errorText=e.message
+                                    openJson.value=true
+                                }
+                            }
+                        ) {
+                            Text("From JSON...")
+                            if (openJson.value)
+                                AlertDialog(
+                                    onDismissRequest = { openJson.value = false},
+                                    title = { Text(text = "Error") },
+                                    text = {Text("$errorText")},
+                                    properties = DialogProperties(dismissOnBackPress = false),
+                                    confirmButton = {
+                                        Button({ openJson.value = false}) {
+                                            Text("OK", fontSize = 22.sp)
                                         }
                                     }
-                                },
-                                confirmButton = {
-                                    Button(
-                                        onClick = {
-                                            val g =when(selectedOption) {
-                                                graphs[0] -> UndirectedGraph<K, V>()
-                                                graphs[1] -> UndirWeightGraph()
-                                                graphs[2] -> DirWeightGraph()
-                                                else -> DirectedGraph()
-                                            }
-                                            //viewModel= GraphViewModel(g)
-                                            start.value=false
-                                        }
-                                    ) {Text("OK")}
+                                )
+                        }
+
+                        var set= mutableStateOf(false)
+                        var uri= remember { mutableStateOf("") }
+                        var password = remember { mutableStateOf("") }
+                        var login = remember { mutableStateOf("") }
+                        DropdownMenuItem(
+                            onClick = {
+                                openNeo4j.value=true
+                            }
+                        ) {
+                            Text("From Neo4j...")
+                            if (set.value) {
+                                val executor= Executors.newScheduledThreadPool(2)
+                                val feature=executor.submit {
+                                    try {
+                                        val result = GraphFactory.fromNeo4j<K, V>(
+                                            when (viewModel.graph::class.simpleName) {
+                                                "DirectedGraph" -> ::DirectedGraph
+                                                "DirWeightGraph" -> ::DirWeightGraph
+                                                "UndirectedGraph" -> ::UndirectedGraph
+                                                else -> ::UndirWeightGraph
+                                            }, uri.value, login.value, password.value
+                                        )
+                                    } catch (e: Exception) {
+                                        openNeo4j.value = false
+                                        errorText = e.message
+                                        errorNeo4j.value = true
+                                    } finally {
+                                        set.value = false
+                                    }
 
                                 }
-                            )
+                                executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
+                                executor.shutdown()
+                            }
+                            if (openNeo4j.value) {
+                                AlertDialog(
+                                    onDismissRequest = { openNeo4j.value = false},
+                                    title = { Text(text = "Get graph from Neo4j database") },
+                                    text = {
+                                        Column {
+                                            Text("URI")
+                                            TextField(
+                                                value = uri.value,
+                                                onValueChange = { n -> uri.value = n }
+                                            )
+                                            Text("Login")
+                                            TextField(
+                                                value = login.value,
+                                                onValueChange = { n -> login.value = n }
+                                            )
+                                            Text("Password")
+                                            TextField(
+                                                value = password.value,
+                                                onValueChange = { n -> password.value = n }
+                                            )
+                                            Button({ openNeo4j.value = false; set.value=true }) {
+                                                Text("OK", fontSize = 22.sp)
+                                            }
+                                        }
+                                    },
+                                    properties = DialogProperties(dismissOnBackPress = false),
+                                    buttons = {}
+                                )
+                            }
+                            if (errorNeo4j.value)
+                                AlertDialog(
+                                    onDismissRequest = { errorNeo4j.value = false},
+                                    title = { Text(text = "Error Neo4j") },
+                                    text = {Text("$errorText")},
+                                    properties = DialogProperties(dismissOnBackPress = false),
+                                    confirmButton = {
+                                        Button({ errorNeo4j.value = false}) {
+                                            Text("OK", fontSize = 22.sp)
+                                        }
+                                    }
+                                )
                         }
-                        Text("New Graph...")
+
                     }
                 }
 
+                //выбор графа
+                Box {
+                    val start=mutableStateOf(false)
+                    IconButton(onClick = { create = !create }) {
+                        Icon(Icons.Default.Add, contentDescription = "More options")
+                    }
+                    DropdownMenu(
+                        expanded = create,
+                        onDismissRequest = { create = false },
+                    ) {
+                        DropdownMenuItem(
+                            onClick = {
+                                start.value = true
+                            }
+                        ) {
+                            val graphs = listOf(
+                                "Undirected Graph",
+                                "Undirected Weighted Graph",
+                                "Directed Weighted Graph",
+                                "Directed Graph"
+                            )
+                            val (selectedOption, onOptionSelected) = remember { mutableStateOf(graphs[0]) }
+                            if (start.value) {
+                                AlertDialog(
+                                    onDismissRequest = { start.value = false },
+                                    text = {
+                                        Column(Modifier.selectableGroup()) {
+                                            graphs.forEach { text ->
+                                                Row(
+                                                    Modifier
+                                                        .fillMaxWidth()
+                                                        .height(56.dp)
+                                                        .selectable(
+                                                            selected = (text == selectedOption),
+                                                            onClick = { onOptionSelected(text) },
+                                                            role = Role.RadioButton
+                                                        ),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    RadioButton(
+                                                        selected = (text == selectedOption),
+                                                        onClick = null
+                                                    )
+                                                    Text(text = text)
+                                                }
+                                            }
+                                        }
+                                    },
+                                    confirmButton = {
+                                        Button(
+                                            onClick = {
+                                                val g = when (selectedOption) {
+                                                    graphs[0] -> UndirectedGraph<K, V>()
+                                                    graphs[1] -> UndirWeightGraph()
+                                                    graphs[2] -> DirWeightGraph()
+                                                    else -> DirectedGraph()
+                                                }
+                                                //viewModel= GraphViewModel(g)
+                                                start.value = false
+                                            }
+                                        ) { Text("OK") }
+
+                                    }
+                                )
+                            }
+                            Text("New Graph...")
+                        }
+                    }
+                }
                 //алгоритмы
                 Box{
                     val openDialog = remember { mutableStateOf(false) }
@@ -288,7 +450,7 @@ fun <K, V> mainScreen() {
                                 AlertDialog(
                                     onDismissRequest = { error.value = false},
                                     title = { Text(text = "Error") },
-                                    text = {Text("Illegal state of graph")},
+                                    text = {Text("")},
                                     properties = DialogProperties(dismissOnBackPress = false),
                                     confirmButton = {
                                         Button({ error.value = false }) {
@@ -489,7 +651,7 @@ fun <K, V> mainScreen() {
                 }
 
                 //побочные функции
-                Box(modifier = Modifier.align(Alignment.Bottom)){
+                Box{
                     IconButton(onClick = { expandedSecondary = !expandedSecondary }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "More options")
                     }

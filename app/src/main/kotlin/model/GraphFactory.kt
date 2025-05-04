@@ -23,7 +23,7 @@ class GraphFactory {
             password: String
         ): Graph<K, V> {
             val graph = constructor.invoke()
-            try {
+
                 val driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password))
                 val session = driver.session()
                 session.executeRead { transaction ->
@@ -49,15 +49,7 @@ class GraphFactory {
                 }
                 session.close()
                 driver.close()
-            } catch (e: ClientException) {
-                println("Wrong password/login or uri!")
-            } catch (e: DatabaseException) {
-                println("Something wrong with database you are trying to reach!")
-            } catch (e: Exception) {
-                println("Something went wrong!")
-            } finally {
-                return graph
-            }
+            return graph
         }
 
         fun <K, V> fromSQLite(constructor: () -> AbstractGraph<K, V>): AbstractGraph<K, V> {
