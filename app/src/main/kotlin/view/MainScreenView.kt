@@ -132,49 +132,51 @@ fun <K, V> mainScreen() {
 
     @Composable
     fun errorWindow(errorText: String?, flag: MutableState<Boolean>) {
-        AlertDialog(
-            onDismissRequest = { flag.value = false},
-            title = { Text(text = "Error Neo4j") },
-            text = {Text("$errorText")},
-            properties = DialogProperties(dismissOnBackPress = false),
-            confirmButton = {
-                Button({ flag.value = false}) {
-                    Text("OK", fontSize = 22.sp)
+        if (flag.value)
+            AlertDialog(
+                onDismissRequest = { flag.value = false},
+                title = { Text(text = "Error Neo4j") },
+                text = {Text("$errorText")},
+                properties = DialogProperties(dismissOnBackPress = false),
+                confirmButton = {
+                    Button({ flag.value = false}) {
+                        Text("OK", fontSize = 22.sp)
+                    }
                 }
-            }
-        )
+            )
     }
 
     @Composable
     fun inputNeo4j(flag: MutableState<Boolean>, set: MutableState<Boolean>) {
-        AlertDialog(
-            onDismissRequest = { flag.value = false},
-            title = { Text(text = "Get graph from Neo4j database") },
-            text = {
-                Column {
-                    Text("URI")
-                    TextField(
-                        value = uriNeo4j.value,
-                        onValueChange = { n -> uriNeo4j.value = n }
-                    )
-                    Text("Login")
-                    TextField(
-                        value = loginNeo4j.value,
-                        onValueChange = { n -> loginNeo4j.value = n }
-                    )
-                    Text("Password")
-                    TextField(
-                        value = passwordNeo4j.value,
-                        onValueChange = { n -> passwordNeo4j.value = n }
-                    )
-                    Button({ flag.value = false; set.value=true }) {
-                        Text("OK", fontSize = 22.sp)
+        if (flag.value)
+            AlertDialog(
+                onDismissRequest = { flag.value = false},
+                title = { Text(text = "Get graph from Neo4j database") },
+                text = {
+                    Column {
+                        Text("URI")
+                        TextField(
+                            value = uriNeo4j.value,
+                            onValueChange = { n -> uriNeo4j.value = n }
+                        )
+                        Text("Login")
+                        TextField(
+                            value = loginNeo4j.value,
+                            onValueChange = { n -> loginNeo4j.value = n }
+                        )
+                        Text("Password")
+                        TextField(
+                            value = passwordNeo4j.value,
+                            onValueChange = { n -> passwordNeo4j.value = n }
+                        )
+                        Button({ flag.value = false; set.value=true }) {
+                            Text("OK", fontSize = 22.sp)
+                        }
                     }
-                }
-            },
-            properties = DialogProperties(dismissOnBackPress = false),
-            buttons = {}
-        )
+                },
+                properties = DialogProperties(dismissOnBackPress = false),
+                buttons = {}
+            )
     }
 
     Scaffold(
@@ -289,19 +291,18 @@ fun <K, V> mainScreen() {
                             }
                         ) {
                             Text("From JSON...")
-                            if (errorJson.value)
-                                errorWindow(errorText, errorJson)
+                            errorWindow(errorText, errorJson)
                         }
 
                         DropdownMenuItem(
                             onClick = {
                                 if (viewModel.graph !is EmptyGraph<*, *>)
                                     openNeo4j.value=true
+                                else
+                                    errorNeo4j.value=true
                             }
                         ) {
                             Text("From Neo4j...")
-                            if (viewModel.graph is EmptyGraph<*, *>)
-                                errorWindow("Choose graph type first", errorNeo4j)
                             if (set.value) {
                                 val executor= Executors.newScheduledThreadPool(2)
                                 val feature=executor.submit {
@@ -331,9 +332,11 @@ fun <K, V> mainScreen() {
                                 executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
                                 executor.shutdown()
                             }
-                            if (openNeo4j.value)
-                                inputNeo4j(openNeo4j, set)
-                            if (errorNeo4j.value)
+                            inputNeo4j(openNeo4j, set)
+
+                            if (viewModel.graph is EmptyGraph<*, *>)
+                                errorWindow("Choose graph type first", errorNeo4j)
+                            else
                                 errorWindow(errorText, errorNeo4j)
                         }
 
@@ -352,6 +355,7 @@ fun <K, V> mainScreen() {
                         val uploadJson = mutableStateOf(false)
                         val errorNeo4j=mutableStateOf(false)
                         val set=mutableStateOf(false)
+
                         DropdownMenuItem(
                             onClick = {
                                 try {
@@ -372,24 +376,23 @@ fun <K, V> mainScreen() {
                             }
                         ) {
                             Text("To JSON...")
-                            if (uploadJson.value)
-                                errorWindow(errorText, uploadJson)
+                            errorWindow(errorText, uploadJson)
                         }
 
                         DropdownMenuItem(
                             onClick = {
                                 if (viewModel.graph !is  EmptyGraph<*, *>)
                                     uploadNeo4j.value=true
+                                else
+                                    errorNeo4j.value=true
                             }
                         ){
+                            Text("To Neo4j...")
                             if (viewModel.graph is EmptyGraph<*, *>)
                                 errorWindow("Choose graph type first", errorNeo4j)
-
-                            Text("To Neo4j...")
-                            if (uploadNeo4j.value)
-                                inputNeo4j(uploadNeo4j, set)
-                            if (errorNeo4j.value)
+                            else
                                 errorWindow(errorText, errorNeo4j)
+                            inputNeo4j(uploadNeo4j, set)
                             if (set.value) {
                                 val executor= Executors.newScheduledThreadPool(2)
                                 val feature=executor.submit {
