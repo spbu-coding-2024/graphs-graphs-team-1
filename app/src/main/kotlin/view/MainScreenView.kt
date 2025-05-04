@@ -85,7 +85,7 @@ import kotlin.math.min
 @OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun <K, V> mainScreen() {
-    var viewModel=GraphViewModel<K, V>(EmptyGraph())
+    var viewModel=GraphViewModel<K, V>(graph() as Graph<K, V>)
 
     var scale by remember { mutableStateOf(100) }
 
@@ -123,6 +123,11 @@ fun <K, V> mainScreen() {
         }
     }
 
+    val uriNeo4j= remember { mutableStateOf("") }
+    val passwordNeo4j = remember { mutableStateOf("") }
+    val loginNeo4j = remember { mutableStateOf("") }
+
+
 
     LaunchedEffect(Unit) {
         requester.requestFocus()
@@ -140,6 +145,38 @@ fun <K, V> mainScreen() {
                     Text("OK", fontSize = 22.sp)
                 }
             }
+        )
+    }
+
+    @Composable
+    fun inputNeo4j(flag: MutableState<Boolean>, set: MutableState<Boolean>) {
+        AlertDialog(
+            onDismissRequest = { flag.value = false},
+            title = { Text(text = "Get graph from Neo4j database") },
+            text = {
+                Column {
+                    Text("URI")
+                    TextField(
+                        value = uriNeo4j.value,
+                        onValueChange = { n -> uriNeo4j.value = n }
+                    )
+                    Text("Login")
+                    TextField(
+                        value = loginNeo4j.value,
+                        onValueChange = { n -> loginNeo4j.value = n }
+                    )
+                    Text("Password")
+                    TextField(
+                        value = passwordNeo4j.value,
+                        onValueChange = { n -> passwordNeo4j.value = n }
+                    )
+                    Button({ flag.value = false; set.value=true }) {
+                        Text("OK", fontSize = 22.sp)
+                    }
+                }
+            },
+            properties = DialogProperties(dismissOnBackPress = false),
+            buttons = {}
         )
     }
 
@@ -219,9 +256,10 @@ fun <K, V> mainScreen() {
                         expanded = downloader,
                         onDismissRequest = { downloader = false },
                     ) {
-                        val openJson=mutableStateOf(false)
+                        val errorJson=mutableStateOf(false)
                         val openNeo4j=mutableStateOf(false)
                         val errorNeo4j=mutableStateOf(false)
+                        val set= mutableStateOf(false)
 
 
 
@@ -244,20 +282,18 @@ fun <K, V> mainScreen() {
                                     }, object : TypeToken<K>() {}.type, object : TypeToken<V>() {}.type )
                                 } catch (e: Exception) {
                                     errorText=e.message
-                                    openJson.value=true
+                                    errorJson.value=true
                                 }
                             }
                         ) {
                             Text("From JSON...")
-                            if (openJson.value)
-                                errorWindow(errorText, openJson)
+                            if (errorJson.value)
+                                errorWindow(errorText, errorJson)
                         }
 
 
-                        val set= mutableStateOf(false)
-                        val uri= remember { mutableStateOf("") }
-                        val password = remember { mutableStateOf("") }
-                        val login = remember { mutableStateOf("") }
+
+
                         DropdownMenuItem(
                             onClick = {
                                 openNeo4j.value=true
@@ -274,9 +310,8 @@ fun <K, V> mainScreen() {
                                                 "DirWeightGraph" -> ::DirWeightGraph
                                                 "UndirectedGraph" -> ::UndirectedGraph
                                                 else -> ::UndirWeightGraph
-                                            }, uri.value, login.value, password.value
+                                            }, uriNeo4j.value, loginNeo4j.value, passwordNeo4j.value
                                         )
-                                        print(result.vertices.size)
                                     } catch (e: Exception) {
                                         openNeo4j.value = false
                                         errorText = e.message
@@ -284,40 +319,12 @@ fun <K, V> mainScreen() {
                                     } finally {
                                         set.value = false
                                     }
-
                                 }
                                 executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
                                 executor.shutdown()
                             }
                             if (openNeo4j.value) {
-                                AlertDialog(
-                                    onDismissRequest = { openNeo4j.value = false},
-                                    title = { Text(text = "Get graph from Neo4j database") },
-                                    text = {
-                                        Column {
-                                            Text("URI")
-                                            TextField(
-                                                value = uri.value,
-                                                onValueChange = { n -> uri.value = n }
-                                            )
-                                            Text("Login")
-                                            TextField(
-                                                value = login.value,
-                                                onValueChange = { n -> login.value = n }
-                                            )
-                                            Text("Password")
-                                            TextField(
-                                                value = password.value,
-                                                onValueChange = { n -> password.value = n }
-                                            )
-                                            Button({ openNeo4j.value = false; set.value=true }) {
-                                                Text("OK", fontSize = 22.sp)
-                                            }
-                                        }
-                                    },
-                                    properties = DialogProperties(dismissOnBackPress = false),
-                                    buttons = {}
-                                )
+                                inputNeo4j(openNeo4j, set)
                             }
                             if (errorNeo4j.value)
                                 errorWindow(errorText, errorNeo4j)
@@ -334,7 +341,10 @@ fun <K, V> mainScreen() {
                         expanded = uploader,
                         onDismissRequest = { uploader = false },
                     ) {
+                        val uploadNeo4j = mutableStateOf(false)
                         val uploadJson = mutableStateOf(false)
+                        val errorNeo4j=mutableStateOf(false)
+                        val set=mutableStateOf(false)
                         DropdownMenuItem(
                             onClick = {
                                 try {
@@ -352,6 +362,35 @@ fun <K, V> mainScreen() {
                             Text("To JSON...")
                             if (uploadJson.value)
                                 errorWindow(errorText, uploadJson)
+                        }
+
+                        DropdownMenuItem(
+                            onClick = {
+                                uploadNeo4j.value=true
+                            }
+                        ){
+                            Text("To Neo4j...")
+                            if (uploadNeo4j.value)
+                                inputNeo4j(uploadNeo4j, set)
+                            if (errorNeo4j.value)
+                                errorWindow(errorText, errorNeo4j)
+                            if (set.value) {
+                                val executor= Executors.newScheduledThreadPool(2)
+                                val feature=executor.submit {
+                                    try {
+                                        InternalFormatFactory.toNeo4j(viewModel.graph, uriNeo4j.value,
+                                            loginNeo4j.value, passwordNeo4j.value)
+                                    } catch (e: Exception) {
+                                        uploadNeo4j.value = false
+                                        errorText = e.message
+                                        errorNeo4j.value = true
+                                    } finally {
+                                        set.value = false
+                                    }
+                                }
+                                executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
+                                executor.shutdown()
+                            }
                         }
                     }
 
