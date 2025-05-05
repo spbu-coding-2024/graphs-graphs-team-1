@@ -65,9 +65,11 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.DelicateCoroutinesApi
 import model.GraphFactory
 import model.InternalFormatFactory
+import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
+import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import viewmodel.GraphViewModel
@@ -80,9 +82,13 @@ import kotlin.collections.forEach
 import kotlin.math.max
 import kotlin.math.min
 
+
+
+
 @OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun <K, V> mainScreen() {
+
     var viewModel by remember { mutableStateOf(GraphViewModel<K, V>(EmptyGraph()))}
 
     var scale by remember { mutableStateOf(100) }
@@ -274,7 +280,7 @@ fun <K, V> mainScreen() {
                                         file = chooser.selectedFile
                                     val result =
                                         GraphFactory.fromJSON<K, V>(
-                                            file!!.readText(), when (viewModel.graph::class.simpleName) {
+                                            file?.readText() ?: throw IllegalStateException(), when (viewModel.graph::class.simpleName) {
                                                 "DirectedGraph" -> ::DirectedGraph
                                                 "DirWeightGraph" -> ::DirWeightGraph
                                                 "UndirectedGraph" -> ::UndirectedGraph

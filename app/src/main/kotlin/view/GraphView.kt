@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import model.Vertex
+import model.graphs.DirWeightGraph
 import model.graphs.Graph
 import viewmodel.GraphViewModel
 import viewmodel.VertexViewModel
@@ -31,7 +32,10 @@ fun <K, V>  graphView(graphViewModel: GraphViewModel<K, V>) {
     ) {
 
         graphViewModel.edges.values.forEach {
-            EdgeView(it, Modifier)
+            if (graphViewModel.graph is DirWeightGraph<*, *>)
+                EdgeViewDirected(it)
+            else
+                EdgeViewUndirected(it)
         }
         graphViewModel.vertices.values.onEach { v ->
             VertexView(v, Modifier)
