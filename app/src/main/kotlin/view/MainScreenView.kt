@@ -11,6 +11,11 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material.TextField
+import androidx.compose.material.RadioButton
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,6 +35,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -69,6 +75,18 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
     val selected = viewModel.vertices.values.filter { it.selected.value}.toMutableList()
     val requester = remember { FocusRequester() }
 
+    val showAddVertexDialog = remember { mutableStateOf(false) }
+    val newVertexKey = remember { mutableStateOf("") }
+    val newVertexValue = remember { mutableStateOf("") }
+    val addVertexError = remember { mutableStateOf<String?>(null) }
+
+    var showAddEdgesDialog by remember { mutableStateOf(false) }
+    var edgeWeightInput by remember { mutableStateOf("1") }
+    var isAllToAllMode by remember { mutableStateOf(true) }
+    val edgeWeight = remember(edgeWeightInput) { edgeWeightInput.toIntOrNull() }
+    val isWeightValid = remember(edgeWeightInput) { edgeWeightInput.toIntOrNull() != null }
+    val edgeError = remember { mutableStateOf(false) }
+
     val clean= {
         viewModel.vertices.values.forEach {
             if (it.color.value!=Color.Red)
@@ -97,45 +115,75 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
         requester.requestFocus()
     }
 
+    @Composable
+    fun edgeErrorWindow() {
+        if (edgeError.value) {
+            AlertDialog(
+                onDismissRequest = { edgeError.value = false },
+                title = { Text("Invalid selection") },
+                text = { Text("To add edges select at least 2 vertices") },
+                properties = DialogProperties(dismissOnBackPress = false),
+                confirmButton = {
+                    Button({ edgeError.value = false }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
+    }
+
     Scaffold(
         modifier = Modifier.focusRequester(requester).focusable().onKeyEvent { keyEvent ->
-            when {
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Minus -> {
-                    set(0.9)
-                    scale-=10
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Equals -> {
-                    set(1.1)
-                    scale+=10
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionRight -> {
-                    viewModel.vertices.values.forEach {
-                        it.onDrag(Offset(25f, 0f))
+                when {
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.V -> {
+                        showAddVertexDialog.value = true
+                        true
                     }
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionLeft -> {
-                    viewModel.vertices.values.forEach {
-                        it.onDrag(Offset(-25f, 0f))
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.E -> {
+                        if (selected.size >= 2) {
+                            showAddEdgesDialog = true
+                            edgeError.value = false
+                        } else {
+                            edgeError.value = true
+                        }
+                        true
                     }
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionUp -> {
-                    viewModel.vertices.values.forEach {
-                        it.onDrag(Offset(0f,-25f,))
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Minus -> {
+                        set(0.9)
+                        scale -= 10
+                        true
                     }
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionDown -> {
-                    viewModel.vertices.values.forEach {
-                        it.onDrag(Offset(0f, 25f))
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Equals -> {
+                        set(1.1)
+                        scale += 10
+                        true
                     }
-                    true
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionRight -> {
+                        viewModel.vertices.values.forEach {
+                            it.onDrag(Offset(25f, 0f))
+                        }
+                        true
+                    }
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionLeft -> {
+                        viewModel.vertices.values.forEach {
+                            it.onDrag(Offset(-25f, 0f))
+                        }
+                        true
+                    }
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionUp -> {
+                        viewModel.vertices.values.forEach {
+                            it.onDrag(Offset(0f, -25f,))
+                        }
+                        true
+                    }
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionDown -> {
+                        viewModel.vertices.values.forEach {
+                            it.onDrag(Offset(0f, 25f))
+                        }
+                        true
+                    }
+                    else -> false
                 }
-                else -> false
-            }
         },
         bottomBar = {
             BottomAppBar(backgroundColor = Color.White, modifier = Modifier.height(40.dp)) {
@@ -222,7 +270,7 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                                             Text("OK", fontSize = 22.sp)
                                         }
                                     }
-                                )
+                                                        )
                         }
 
                         //алгоритм Дейкстры
@@ -405,7 +453,38 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                     }
                 }
 
-                
+                Box(modifier = Modifier.align(Alignment.Bottom)) {
+                    var expanded by remember { mutableStateOf(false) }
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Vertex and edge operations")
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            onClick = {
+                                showAddVertexDialog.value = true
+                                expanded = false
+                            }
+                        ) {
+                            Text("Add vertex")
+                        }
+                        DropdownMenuItem(
+                            onClick = {
+                                if (selected.size >= 2) {
+                                    showAddEdgesDialog = true
+                                    edgeError.value = false
+                                } else {
+                                    edgeError.value = true
+                                }
+                                expanded = false
+                            }
+                        ) {
+                            Text("Add edges between selected vertices")
+                        }
+                    }
+                }
             }
         }
     ) {
@@ -418,6 +497,125 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
             )
         ) {
             graphView(viewModel)
+
+            edgeErrorWindow()
+
+            if (showAddVertexDialog.value) {
+                AlertDialog(
+                    onDismissRequest = {
+                        showAddVertexDialog.value = false
+                        addVertexError.value = null
+                    },
+                    title = { Text("Add new vertex") },
+                    text = {
+                        Column {
+                            TextField(
+                                value = newVertexKey.value,
+                                onValueChange = { newVertexKey.value = it },
+                                label = { Text("Key") }
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            TextField(
+                                value = newVertexValue.value,
+                                onValueChange = { newVertexValue.value = it },
+                                label = { Text("Value") }
+                            )
+                            addVertexError.value?.let {
+                                Spacer(Modifier.height(8.dp))
+                                Text(it, color = Color.Red)
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Button({
+                            addVertexError.value = viewModel.addVertex(
+                                newVertexKey.value,
+                                newVertexValue.value
+                            )
+                            if (addVertexError.value == null) {
+                                showAddVertexDialog.value = false
+                                newVertexKey.value = ""
+                                newVertexValue.value = ""
+                            }
+                        }) { Text("Add") }
+                    },
+                    dismissButton = {
+                        Button({
+                            showAddVertexDialog.value = false
+                            addVertexError.value = null
+                        }) { Text("Cancel") }
+                    }
+                )
+            }
+        }
+
+        if (showAddEdgesDialog) {
+            AlertDialog(
+                onDismissRequest = { showAddEdgesDialog = false },
+                title = { Text("Add Edges") },
+                text = {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(
+                                selected = isAllToAllMode,
+                                onClick = { isAllToAllMode = true }
+                            )
+                            Text("All to all", Modifier.padding(start = 4.dp))
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(
+                                selected = !isAllToAllMode,
+                                onClick = { isAllToAllMode = false }
+                            )
+                            Text("Sequentially", Modifier.padding(start = 4.dp))
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        TextField(
+                            value = edgeWeightInput,
+                            onValueChange = { edgeWeightInput = it },
+                            label = { Text("Edge weight") },
+                            isError = !isWeightValid
+                        )
+                        if (!isWeightValid) {
+                            Text("Enter valid number", color = Color.Red)
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            edgeWeight?.let { weight ->
+                                val selectedVertices = selected.map { it.vertex }
+                                if (isAllToAllMode) {
+                                    for (i in selectedVertices.indices) {
+                                        for (j in i + 1 until selectedVertices.size) {
+                                            viewModel.graph.addEdge(
+                                                selectedVertices[i],
+                                                selectedVertices[j],
+                                                weight
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    for (i in 0 until selectedVertices.size - 1) {
+                                        viewModel.graph.addEdge(
+                                            selectedVertices[i],
+                                            selectedVertices[i + 1],
+                                            weight
+                                        )
+                                    }
+                                }
+                                viewModel.updateEdgesView()
+                                showAddEdgesDialog = false
+                            }
+                        },
+                        enabled = isWeightValid
+                    ) { Text("Add") }
+                },
+                dismissButton = {
+                    Button({ showAddEdgesDialog = false }) { Text("Cancel") }
+                }
+            )
         }
 
     }

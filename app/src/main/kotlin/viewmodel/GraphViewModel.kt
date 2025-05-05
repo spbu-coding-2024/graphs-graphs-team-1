@@ -3,7 +3,6 @@ package viewmodel
 import model.Vertex
 import model.Edge
 import model.graphs.Graph
-import viewmodel.VertexViewModel
 import java.util.Vector
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
@@ -37,16 +36,33 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         EdgeViewModel(fst, snd, e)
     }.toMutableMap()
 
+    fun addVertex(key: String, value: String): String? {
+        return try {
+            val tempVM = VertexViewModel<Any?, Any?>(Vertex(null, null), 25.0, 0)
+            val parsedKey = tempVM.parseKey(key)
+            val parsedValue = tempVM.parseValue(value)
+            val newVertex = Vertex<K, V>(parsedKey as K, parsedValue as V)
+            graph.addVertex(newVertex)
+            vertices[newVertex] = VertexViewModel(
+                newVertex,
+                25.0,
+                degree = graph.getOutDegreeOfVertex(newVertex)
+            )
+
+            null
+        } catch (e: IllegalArgumentException) {
+            e.message
+        } catch (e: Exception) {
+            "Invalid input format"
+        }
+    }
+
     fun updateVertex(vertex: Vertex<K, V>, newKey: String, newValue: String): String? {
         val vertexViewModel = vertices[vertex] ?: return "Vertex not found"
 
         return try {
             val parsedKey = vertexViewModel.parseKey(newKey)
             val parsedValue = vertexViewModel.parseValue(newValue)
-
-            if (vertices.keys.any { it != vertex && it.key == parsedKey }) {
-                return "Key must be unique"
-            }
 
             vertex.key = parsedKey
             vertex.value = parsedValue
@@ -57,5 +73,19 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         } catch (e: Exception) {
             "Invalid input format"
         }
+    }
+
+    fun updateEdgesView() {
+        edges = graph.edges.values
+            .flatten()
+            .mapNotNull { edge ->
+                vertices[edge.link.first]?.let { fromViewModel ->
+                    vertices[edge.link.second]?.let { toViewModel ->
+                        edge to EdgeViewModel(fromViewModel, toViewModel, edge)
+                    }
+                }
+            }
+            .toMap()
+            .toMutableMap()
     }
 }
