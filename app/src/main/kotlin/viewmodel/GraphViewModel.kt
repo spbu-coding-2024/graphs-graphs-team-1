@@ -1,17 +1,18 @@
 package viewmodel
 
+import algo.bellmanford.FordBellman
+import algo.cycles.Cycles
+import algo.dijkstra.Dijkstra
+import algo.planar.ForceAtlas2
+import algo.planar.YifanHu
+import algo.strconnect.KosarujuSharir
 import androidx.compose.runtime.mutableStateOf
 import model.Edge
+import model.Vertex
 import model.graphs.Graph
 import java.util.Vector
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
-
-    var vertices= graph.vertices.associateWith { v ->
-        VertexViewModel(v)
-    }.toMutableMap()
-
-
     private val temp = Vector<Edge<K, V>>()
     init {
         graph.edges.values.forEach { it ->
@@ -25,6 +26,10 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         print(temp.size)
     }
 
+    var vertices= graph.vertices.associateWith { v ->
+        VertexViewModel(v)
+    }.toMutableMap()
+
     var edges = temp.associateWith { e ->
         val fst = vertices[e.link.first]
             ?: throw IllegalStateException("VertexView for ${e.link.first} not found")
@@ -32,4 +37,22 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             ?: throw IllegalStateException("VertexView for ${e.link.second} not found")
         EdgeViewModel(fst, snd, e)
     }.toMutableMap()
+
+    fun dijkstra(start: VertexViewModel<K, V>, end: VertexViewModel<K, V>):  Pair<Int, Vector<Vertex<K, V>>> {
+        return Dijkstra.buildShortestPath(graph, start.vertex, end.vertex)
+    }
+
+    fun fordBellman(start: VertexViewModel<K, V>, end: VertexViewModel<K, V>):
+            Triple<Int, Vector<Vertex<K, V>>?, Vector<Vertex<K, V>>?> {
+        return FordBellman.apply(graph, start.vertex, end.vertex)
+    }
+
+    fun kosarujuSharir(): ArrayDeque<ArrayDeque<Vertex<K, V>>> {
+        return KosarujuSharir.apply(graph)
+    }
+
+    fun cycles(vertex: VertexViewModel<K, V>): Set<List<Vertex<K, V>>> {
+        return Cycles.findCycles(graph, vertex.vertex)
+    }
+
 }

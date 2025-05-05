@@ -1,12 +1,8 @@
 package view
 
-import algo.bellmanford.FordBellman
-import algo.cycles.Cycles
-import algo.dijkstra.Dijkstra
 import algo.planar.ForceAtlas2
 import algo.planar.Planar
 import algo.planar.YifanHu
-import algo.strconnect.KosarujuSharir
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.onDrag
@@ -47,6 +43,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.DragData
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -65,14 +62,16 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.DelicateCoroutinesApi
 import model.GraphFactory
 import model.InternalFormatFactory
-import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
-import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
+import view.windows.errorWindow
+import view.windows.indexErrorWindow
+import view.windows.windowPath
 import viewmodel.GraphViewModel
+import viewmodel.MainScreenViewModel
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -89,7 +88,7 @@ import kotlin.math.min
 @Composable
 fun <K, V> mainScreen() {
 
-    var viewModel by remember { mutableStateOf(GraphViewModel<K, V>(EmptyGraph()))}
+    var sceenViewModel= MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
 
     var scale by remember { mutableStateOf(100) }
 
@@ -100,57 +99,20 @@ fun <K, V> mainScreen() {
     var uploader by remember { mutableStateOf(false) }
 
     val buttonEdgeLabel=mutableStateOf(false)
-    val selected = viewModel.vertices.values.filter { it.selected.value}.toMutableList()
+
     val requester = remember { FocusRequester() }
 
-    val clean= {
-        viewModel.vertices.values.forEach {
-            if (it.color.value!=Color.Red)
-                it.color.value=Color.Cyan
-        }
-        viewModel.edges.values.forEach {
-            it.color.value=Color.Black
-        }
-    }
+
     val set: (Double) -> Unit = { n -> viewModel.vertices.values.forEach {
         it.radius.value=min(max(it.radius.value*n, 10.0), 35.0)
         it.x.value *= n
         it.y.value *= n
     }}
-    val planarAlgos: (Planar) -> Unit = {
-        clean()
-        val temp= it.apply(viewModel.graph)
-        temp.forEach { v, c ->
-            viewModel.vertices[v]?.x?.value=c.first.toDouble()
-            viewModel.vertices[v]?.y?.value=c.second.toDouble()
-        }
-    }
+
 
     val uriNeo4j= remember { mutableStateOf("") }
     val passwordNeo4j = remember { mutableStateOf("") }
     val loginNeo4j = remember { mutableStateOf("") }
-
-
-
-    LaunchedEffect(Unit) {
-        requester.requestFocus()
-    }
-
-    @Composable
-    fun errorWindow(errorText: String?, flag: MutableState<Boolean>) {
-        if (flag.value)
-            AlertDialog(
-                onDismissRequest = { flag.value = false},
-                title = { Text(text = "Error Neo4j") },
-                text = {Text("$errorText")},
-                properties = DialogProperties(dismissOnBackPress = false),
-                confirmButton = {
-                    Button({ flag.value = false}) {
-                        Text("OK", fontSize = 22.sp)
-                    }
-                }
-            )
-    }
 
     @Composable
     fun inputNeo4j(flag: MutableState<Boolean>, set: MutableState<Boolean>) {
@@ -184,6 +146,12 @@ fun <K, V> mainScreen() {
                 buttons = {}
             )
     }
+
+    LaunchedEffect(Unit) {
+        requester.requestFocus()
+    }
+
+
 
     Scaffold(
         modifier = Modifier.focusRequester(requester).focusable().onKeyEvent { keyEvent ->
@@ -251,7 +219,7 @@ fun <K, V> mainScreen() {
         },
         topBar = {
             TopAppBar(backgroundColor = Color.White, modifier = Modifier.height(40.dp)) {
-                var errorText: String?=null
+
                 //загрузка графа !!!как-то нужно доработать результат
                 Box{
                     IconButton(onClick = { downloader = !downloader }) {
@@ -491,270 +459,79 @@ fun <K, V> mainScreen() {
                 }
                 //алгоритмы
                 Box{
-                    val openDialog = remember { mutableStateOf(false) }
-                    val warning = remember { mutableStateOf(false) }
-                    val error = remember { mutableStateOf(false) }
-
-                    val path= remember { mutableStateOf(0) }
                     IconButton(onClick = { expAlgo = !expAlgo }) {
-                        Icon(Icons.Default.List, contentDescription = "More options")
+                        Text("Algorithms")
                     }
                     DropdownMenu(
                         expanded = expAlgo,
                         onDismissRequest = { expAlgo = false }
                     ) {
-
-                        @Composable
-                        fun indexErrorWindow()  {
-                            if (warning.value)
-                                AlertDialog(
-                                    onDismissRequest = { warning.value = false},
-                                    title = { Text(text = "Invalid selected amount") },
-                                    text = {Text("2 elements required for algorithm")},
-                                    properties = DialogProperties(dismissOnBackPress = false),
-                                    confirmButton = {
-                                        Button({ warning.value = false }) {
-                                            Text("OK", fontSize = 22.sp)
-                                        }
-                                    }
-                                )
-                        }
-                        @Composable
-                        fun errorWindow(text: String)  {
-                            if (error.value)
-                                AlertDialog(
-                                    onDismissRequest = { error.value = false},
-                                    title = { Text(text = "Error") },
-                                    text = {Text(text)},
-                                    properties = DialogProperties(dismissOnBackPress = false),
-                                    confirmButton = {
-                                        Button({ error.value = false }) {
-                                            Text("OK", fontSize = 22.sp)
-                                        }
-                                    }
-                                )
-                        }
-                        @Composable
-                        fun windowPath()  {
-                            if (openDialog.value)
-                                AlertDialog(
-                                    onDismissRequest = { openDialog.value = false},
-                                    title = { Text(text = "Path between Vertex ${selected[0].vertex.hashCode()} and ${selected[1].vertex.hashCode()}") },
-                                    text = { Text("Path length: ${if (path.value < Int.MAX_VALUE) path.value else "No path exists"}") },
-                                    properties = DialogProperties(dismissOnBackPress = false),
-                                    confirmButton = {
-                                        Button({ openDialog.value = false }) {
-                                            Text("OK", fontSize = 22.sp)
-                                        }
-                                    }
-                                )
-                        }
-
-                        //переделать на selected
                         //алгоритм Дейкстры
                         DropdownMenuItem(
                             onClick = {
-                                println(viewModel.graph::class.simpleName)
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    val temp = Dijkstra.buildShortestPath(
-                                        viewModel.graph,
-                                        selected[0].vertex,
-                                        selected[1].vertex
-                                    )
-                                    path.value = temp.first
-                                    temp.second.forEach {
-                                        if (viewModel.vertices[it]?.selected?.value==false)
-                                            viewModel.vertices[it]?.color?.value = Color.Green
-                                    }
-                                    for (i in 1..temp.second.size - 1)
-                                        viewModel.edges.forEach {
-                                            if (it.key.link.first === temp.second[i - 1] && it.key.link.second === temp.second[i] ||
-                                                it.key.link.second === temp.second[i - 1] && it.key.link.first === temp.second[i])
-                                                it.value.color.value = Color.Red
-                                        }
-                                    openDialog.value = true
-                                } catch (e: IndexOutOfBoundsException) {
-                                    warning.value=true
-                                } catch (e: IllegalStateException) {
-                                    errorText="Choose graph type first"
-                                    error.value=true
-                                } catch (e: Exception) {
-                                    errorText=e.message
-                                    error.value=true
-                                }
+                                sceenViewModel.dijkstra()
                             }
                         ) {
                             Text("Dijkstra")
-                            indexErrorWindow()
-                            windowPath()
-                            errorWindow(errorText.toString())
+                            indexErrorWindow(sceenViewModel.warning)
+                            windowPath(sceenViewModel.selected[0], sceenViewModel.selected[1],
+                                sceenViewModel.path,sceenViewModel.pathDialog)
+                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
                         //алгоритм Форда-Беллмана
                         DropdownMenuItem(
                             onClick = {
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    val temp =
-                                        FordBellman.apply(viewModel.graph, selected[0].vertex, selected[1].vertex)
-                                    path.value = temp.first
-                                    temp.second?.forEach {
-                                        if (viewModel.vertices[it]?.selected?.value==false)
-                                            viewModel.vertices[it]?.color?.value = Color.Green
-                                    }
-                                    temp.third?.forEach {
-                                        if (viewModel.vertices[it]?.selected?.value==false)
-                                            viewModel.vertices[it]?.color?.value = Color.Yellow
-                                    }
-                                    for (i in 1..(temp.second?.size?.minus(1) ?: 0))
-                                        viewModel.edges.forEach {
-                                            if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(i) ||
-                                                it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(i))
-                                                it.value.color.value = Color.Green
-                                        }
-                                    for (i in 1..(temp.third?.size?.minus(1) ?: 0))
-                                        viewModel.edges.forEach {
-                                            if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(i) ||
-                                                it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(i))
-                                                it.value.color.value = Color.Yellow
-                                        }
-                                    openDialog.value = true
-                                } catch (e: IllegalStateException) {
-                                    errorText="Choose graph type first"
-                                    error.value=true
-                                } catch (e: IndexOutOfBoundsException) {
-                                    warning.value=true
-                                } catch (e: Exception) {
-                                    errorText=e.message
-                                    error.value=true
-                                }
+                                sceenViewModel.fordBellman()
                             }
 
                         ) {
                             Text("Ford-Bellman")
-                            indexErrorWindow()
-                            windowPath()
-                            errorWindow(errorText.toString())
+                            indexErrorWindow(sceenViewModel.warning)
+                            windowPath(sceenViewModel.selected[0], sceenViewModel.selected[1],
+                                sceenViewModel.path,sceenViewModel.pathDialog)
+                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
 
                         Divider()
                         //алгоритм поиска циклов
                         DropdownMenuItem(
                             onClick = {
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    val temp = Cycles.findCycles(viewModel.graph, selected.first().vertex)
-                                    temp.forEach { cycle ->
-                                        for (i in 0..cycle.size - 1) {
-                                            viewModel.vertices[cycle[i]]?.color?.value = Color.Magenta
-                                            if (i > 0) {
-                                                viewModel.edges.forEach { p0, p1 ->
-                                                    if (p0.link.first === cycle[i - 1] && p0.link.second === cycle[i] ||
-                                                        p0.link.second === cycle[i - 1] && p0.link.first === cycle[i])
-                                                        p1.color.value = Color.Magenta
-                                                }
-                                            }
-                                        }
-                                    }
-                                }  catch (e: NoSuchElementException) {
-                                    warning.value=true
-                                } catch (e: IllegalStateException) {
-                                    errorText="Choose graph type first"
-                                    error.value=true
-                                } catch (e: Exception) {
-                                    errorText=e.message
-                                    error.value=true
-                                }
+                                sceenViewModel.cycles()
                             },
                         ) {
                             Text("Cycles search")
-                            indexErrorWindow()
-                            errorWindow(errorText.toString())
+                            indexErrorWindow(sceenViewModel.warning)
+                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
+
                         Divider()
                         //компоненты сильной связанности
                         DropdownMenuItem(
                             onClick = {
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    val colors = ColorList().iterator()
-                                    val temp =
-                                        KosarujuSharir.apply(viewModel.graph)
-                                    temp.forEach { component ->
-                                        colors.hasNext()
-                                        val color = colors.next().toInt(16)
-                                        val red = color / (16 * 16 * 16 * 16)
-                                        val green = (color - red) / (16 * 16)
-                                        val blue = color - green
-                                        component.forEach { v ->
-                                            viewModel.vertices[v]?.color?.value = Color(red, green, blue)
-                                            viewModel.edges.values.forEach { e ->
-                                                if (e.from.vertex === v)
-                                                    e.color.value = Color(red, green, blue)
-                                            }
-                                        }
-
-                                    }
-                                } catch (e: IllegalStateException) {
-                                    errorText="Choose graph type first"
-                                    error.value=true
-                                } catch (e: Exception) {
-                                    errorText=e.message
-                                    error.value=true
-                                }
+                                sceenViewModel.kosajuruSharir()
                             },
                         ) {
                             Text("Connected components search")
-                            errorWindow(errorText.toString())
+                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
                         Divider()
                         //forseAtlas2
                         DropdownMenuItem(
                             onClick = {
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    planarAlgos(ForceAtlas2())
-                                } catch (e: IllegalStateException) {
-                                    errorText="Choose graph type first"
-                                    error.value=true
-                                } catch (e: Exception) {
-                                    errorText=e.message
-                                    error.value=true
-                                }
+                                sceenViewModel.forceAtlas2()
                             }
                         ) {
                             Text("ForceAtlas2")
-                            errorWindow(errorText.toString())
+                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
                         //YuifanHu
                         DropdownMenuItem(
                             onClick = {
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    planarAlgos(YifanHu())
-                                } catch (e: IllegalStateException) {
-                                    errorText="Choose graph type first"
-                                    error.value=true
-                                } catch (e: Exception) {
-                                    errorText=e.message
-                                    error.value=true
-                                }
+                                sceenViewModel.yuifanHu()
                             }
                         ) {
                             Text("YuifanHu")
-                            errorWindow(errorText.toString())
+                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
                     }
                 }
