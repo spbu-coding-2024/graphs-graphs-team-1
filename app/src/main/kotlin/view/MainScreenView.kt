@@ -64,6 +64,7 @@ import model.graphs.UndirectedGraph
 import view.windows.errorWindow
 import view.windows.indexErrorWindow
 import view.windows.inputNeo4j
+import view.windows.processNeo4j
 import view.windows.windowPath
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
@@ -184,7 +185,7 @@ fun <K, V> mainScreen() {
                 //загрузка графа !!!как-то нужно доработать результат
                 Box{
                     IconButton(onClick = { downloader = !downloader }) {
-                        Icon(Icons.Default.Create, contentDescription = "Download")
+                        Text("Download")
                     }
                     DropdownMenu(
                         expanded = downloader,
@@ -215,6 +216,7 @@ fun <K, V> mainScreen() {
                             inputNeo4j(sceenViewModel.openNeo4j, sceenViewModel.set,
                                 sceenViewModel.uriNeo4j, sceenViewModel.loginNeo4j,
                                 sceenViewModel.passwordNeo4j)
+                            processNeo4j(sceenViewModel.readyNeo4j)
                             if (sceenViewModel.viewModel.graph !is EmptyGraph<*, *>)
                                 errorWindow("Choose graph type first", sceenViewModel.errorNeo4j)
                             else
@@ -227,7 +229,7 @@ fun <K, V> mainScreen() {
                 //выгрузка графа
                 Box{
                     IconButton(onClick = { uploader = !uploader }) {
-                        Icon(Icons.Default.Send, contentDescription = "Upload")
+                        Text("Upload")
                     }
                     DropdownMenu(
                         expanded = uploader,
@@ -236,62 +238,37 @@ fun <K, V> mainScreen() {
 
                         DropdownMenuItem(
                             onClick = {
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    val chooser = JFileChooser()
-                                    chooser.dialogTitle = "Choose path to save"
-                                    chooser.showSaveDialog(null)
-                                    val file = File(chooser.selectedFile.toString())
-                                    file.writeText(InternalFormatFactory.toJSON(viewModel.graph))
-                                } catch (e: IllegalStateException) {
-                                    errorText="Choose graph type first"
-                                    errorJson.value=true
-                                } catch (e: Exception) {
-                                    errorText=e.message
-                                    errorJson.value=true
-                                }
+                                sceenViewModel.uploadJson()
                             }
                         ) {
                             Text("To JSON...")
-                            errorWindow(errorText, errorJson)
+                            errorWindow(sceenViewModel.errorText, sceenViewModel.errorJson)
                         }
 
                         DropdownMenuItem(
                             onClick = {
-                                if (viewModel.graph !is  EmptyGraph<*, *>)
-                                    openNeo4j.value=true
+                                if (sceenViewModel.viewModel.graph !is  EmptyGraph<*, *>)
+                                    sceenViewModel.openNeo4j.value=true
                                 else
-                                    errorNeo4j.value=true
+                                    sceenViewModel.errorNeo4j.value=true
+                                sceenViewModel.uploadNeo4j()
                             }
                         ){
                             Text("To Neo4j...")
-                            if (viewModel.graph is EmptyGraph<*, *>)
-                                errorWindow("Choose graph type first", errorNeo4j)
+                            if (sceenViewModel.viewModel.graph is EmptyGraph<*, *>)
+                                errorWindow("Choose graph type first", sceenViewModel.errorNeo4j)
                             else
-                                errorWindow(errorText, errorNeo4j)
-                            inputNeo4j(openNeo4j, set)
-                            if (set.value) {
-                                val executor= Executors.newScheduledThreadPool(2)
-                                val feature=executor.submit {
-                                    try {
-                                        InternalFormatFactory.toNeo4j(viewModel.graph, uriNeo4j.value,
-                                            loginNeo4j.value, passwordNeo4j.value)
-                                    } catch (e: Exception) {
-                                        openNeo4j.value = false
-                                        errorText = e.message
-                                        errorNeo4j.value = true
-                                    } finally {
-                                        set.value = false
-                                    }
-                                }
-                                executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
-                                executor.shutdown()
-                            }
+                                errorWindow(sceenViewModel.errorText, sceenViewModel.errorNeo4j)
+                            inputNeo4j(sceenViewModel.openNeo4j, sceenViewModel.set,
+                                sceenViewModel.uriNeo4j, sceenViewModel.loginNeo4j,
+                                sceenViewModel.passwordNeo4j)
+                            processNeo4j(sceenViewModel.readyNeo4j)
+
                         }
                     }
 
                 }
+
                 //выбор графа
                 Box {
                     val start=mutableStateOf(false)

@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import com.google.gson.reflect.TypeToken
 import model.GraphFactory
+import model.InternalFormatFactory
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
@@ -39,7 +40,9 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     val errorJson=mutableStateOf(false)
     val openNeo4j=mutableStateOf(false)
     val errorNeo4j=mutableStateOf(false)
+    val readyNeo4j=mutableStateOf(true)
     val set= mutableStateOf(false)
+
 
     val uriNeo4j = mutableStateOf("")
     val passwordNeo4j = mutableStateOf("")
@@ -260,7 +263,6 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         }
     }
 
-
     fun downloadNeo4j() {
         if (set.value) {
             val executor = Executors.newScheduledThreadPool(2)
@@ -289,6 +291,47 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                 }
             }
             executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
+            executor.shutdown()
+        }
+    }
+
+    fun uploadJson() {
+        try {
+            if (viewModel.graph is EmptyGraph<*, *>)
+                throw IllegalStateException()
+            val chooser = JFileChooser()
+            chooser.dialogTitle = "Choose path to save"
+            chooser.showSaveDialog(null)
+            val file = File(chooser.selectedFile.toString())
+            file.writeText(InternalFormatFactory.toJSON(viewModel.graph))
+        } catch (e: IllegalStateException) {
+            errorText="Choose graph type first"
+            errorJson.value=true
+        } catch (e: Exception) {
+            errorText=e.message
+            errorJson.value=true
+        }
+    }
+
+    //новое окно загрузки?
+    fun uploadNeo4j() {
+        if (set.value) {
+            readyNeo4j.value=false
+            val executor= Executors.newScheduledThreadPool(2)
+            val feature=executor.submit {
+                try {
+                    InternalFormatFactory.toNeo4j(viewModel.graph, uriNeo4j.value,
+                        loginNeo4j.value, passwordNeo4j.value)
+                } catch (e: Exception) {
+                    openNeo4j.value = false
+                    errorText = e.message
+                    errorNeo4j.value = true
+                } finally {
+                    set.value = false
+                }
+            }
+            if (feature.isDone)
+                readyNeo4j.value=true
             executor.shutdown()
         }
     }
