@@ -27,6 +27,7 @@ import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
 import kotlin.collections.get
+import kotlin.text.clear
 
 class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
@@ -48,6 +49,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     val passwordNeo4j = mutableStateOf("")
     val loginNeo4j = mutableStateOf("")
 
+    val buttonEdgeLabel=mutableStateOf(false)
     val selected = viewModel.vertices.values.filter { it.selected.value}.toMutableList()
     val path=mutableStateOf(0)
 
@@ -333,6 +335,23 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             if (feature.isDone)
                 readyNeo4j.value=true
             executor.shutdown()
+        }
+    }
+
+    fun resetSelected() {
+        viewModel.vertices.values.forEach {
+            it.color.value=Color.Cyan
+        }
+        viewModel.edges.values.forEach {
+            it.color.value=Color.Black
+        }
+        selected.clear()
+    }
+
+    fun visibleEdges() {
+        viewModel.edges.values.forEach {
+            it.isVisible.value=!it.isVisible.value
+            buttonEdgeLabel.value=!buttonEdgeLabel.value
         }
     }
 }

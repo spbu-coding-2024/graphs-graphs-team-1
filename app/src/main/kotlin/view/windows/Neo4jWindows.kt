@@ -44,3 +44,13 @@ fun inputNeo4j(flag: MutableState<Boolean>, set: MutableState<Boolean>,
             buttons = {}
         )
 }
+
+@Composable
+fun processNeo4j(flag: MutableState<Boolean>) {
+    if (!flag.value)
+        AlertDialog(
+            onDismissRequest = {},
+            buttons = {},
+            text = {Text("Processing...", fontSize = 50.sp)}
+        )
+}

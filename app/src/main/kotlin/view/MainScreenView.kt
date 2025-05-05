@@ -50,6 +50,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.platform.Typeface
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
@@ -83,7 +84,7 @@ import kotlin.math.min
 @Composable
 fun <K, V> mainScreen() {
 
-    var sceenViewModel= MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
+    val sceenViewModel= MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
 
     var scale by remember { mutableStateOf(100) }
 
@@ -93,12 +94,12 @@ fun <K, V> mainScreen() {
     var downloader by remember { mutableStateOf(false) }
     var uploader by remember { mutableStateOf(false) }
 
-    val buttonEdgeLabel=mutableStateOf(false)
+
 
     val requester = remember { FocusRequester() }
 
 
-    val set: (Double) -> Unit = { n -> viewModel.vertices.values.forEach {
+    val set: (Double) -> Unit = { n -> sceenViewModel.viewModel.vertices.values.forEach {
         it.radius.value=min(max(it.radius.value*n, 10.0), 35.0)
         it.x.value *= n
         it.y.value *= n
@@ -129,25 +130,25 @@ fun <K, V> mainScreen() {
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionRight -> {
-                    viewModel.vertices.values.forEach {
+                    sceenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(25f, 0f))
                     }
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionLeft -> {
-                    viewModel.vertices.values.forEach {
+                    sceenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(-25f, 0f))
                     }
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionUp -> {
-                    viewModel.vertices.values.forEach {
+                    sceenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(0f,-25f))
                     }
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionDown -> {
-                    viewModel.vertices.values.forEach {
+                    sceenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(0f, 25f))
                     }
                     true
@@ -184,7 +185,7 @@ fun <K, V> mainScreen() {
 
                 //загрузка графа !!!как-то нужно доработать результат
                 Box{
-                    IconButton(onClick = { downloader = !downloader }) {
+                    IconButton(onClick = { downloader = !downloader }, Modifier.padding(8.dp, 2.dp)) {
                         Text("Download")
                     }
                     DropdownMenu(
@@ -225,10 +226,9 @@ fun <K, V> mainScreen() {
 
                     }
                 }
-
                 //выгрузка графа
                 Box{
-                    IconButton(onClick = { uploader = !uploader }) {
+                    IconButton(onClick = { uploader = !uploader }, Modifier.padding(8.dp, 2.dp)) {
                         Text("Upload")
                     }
                     DropdownMenu(
@@ -268,12 +268,11 @@ fun <K, V> mainScreen() {
                     }
 
                 }
-
                 //выбор графа
                 Box {
                     val start=mutableStateOf(false)
-                    IconButton(onClick = { create = !create }) {
-                        Icon(Icons.Default.Add, contentDescription = "Graph types")
+                    IconButton(onClick = { create = !create }, Modifier.padding(8.dp, 2.dp)) {
+                        Text("Graphs")
                     }
                     DropdownMenu(
                         expanded = create,
@@ -326,7 +325,7 @@ fun <K, V> mainScreen() {
                                                     graphs[2] -> DirWeightGraph()
                                                     else -> DirectedGraph()
                                                 }
-                                                viewModel= GraphViewModel(graph)
+                                                sceenViewModel.viewModel= GraphViewModel(graph)
                                                 start.value = false
                                             }
                                         ) { Text("OK") }
@@ -340,7 +339,7 @@ fun <K, V> mainScreen() {
                 }
                 //алгоритмы
                 Box{
-                    IconButton(onClick = { expAlgo = !expAlgo }) {
+                    IconButton(onClick = { expAlgo = !expAlgo }, Modifier.padding(8.dp, 2.dp)) {
                         Text("Algorithms")
                     }
                     DropdownMenu(
@@ -355,7 +354,7 @@ fun <K, V> mainScreen() {
                         ) {
                             Text("Dijkstra")
                             indexErrorWindow(sceenViewModel.warning)
-                            windowPath(sceenViewModel.selected[0], sceenViewModel.selected[1],
+                            windowPath(sceenViewModel.selected,
                                 sceenViewModel.path,sceenViewModel.pathDialog)
                             errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
@@ -368,7 +367,7 @@ fun <K, V> mainScreen() {
                         ) {
                             Text("Ford-Bellman")
                             indexErrorWindow(sceenViewModel.warning)
-                            windowPath(sceenViewModel.selected[0], sceenViewModel.selected[1],
+                            windowPath(sceenViewModel.selected,
                                 sceenViewModel.path,sceenViewModel.pathDialog)
                             errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
@@ -418,29 +417,22 @@ fun <K, V> mainScreen() {
                 }
                 //побочные функции
                 Box{
-                    IconButton(onClick = { expandedSecondary = !expandedSecondary }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                    IconButton(onClick = { expandedSecondary = !expandedSecondary }, Modifier.padding(8.dp, 2.dp)) {
+                        Text("Other")
                     }
                     DropdownMenu(
                         expanded = expandedSecondary,
                         onDismissRequest = { expandedSecondary = false }
                     ) {
                         DropdownMenuItem(onClick = {
-                            viewModel.vertices.values.forEach {
-                                it.color.value=Color.Cyan
-                            }
-                            viewModel.edges.values.forEach {
-                                it.color.value=Color.Black
-                            }
-                            selected.clear()
+                           sceenViewModel.resetSelected()
                         }) {Text("Reset")}
 
-                        DropdownMenuItem(onClick =
-                            {viewModel.edges.values.forEach {
-                                it.isVisible.value=!it.isVisible.value
-                                buttonEdgeLabel.value=!buttonEdgeLabel.value }})
+                        DropdownMenuItem(onClick = {
+                            sceenViewModel.visibleEdges()
+                        })
                         {Text(
-                            when(buttonEdgeLabel.value) {
+                            when(sceenViewModel.buttonEdgeLabel.value) {
                                 false -> "Show edge weights"
                                 true -> "Hide edge weights"
                             }
@@ -452,12 +444,12 @@ fun <K, V> mainScreen() {
     ) {
         Surface(
             Modifier.fillMaxSize().onDrag(onDrag = { offset ->
-                viewModel.vertices.values.forEach {
+                sceenViewModel.viewModel.vertices.values.forEach {
                     it.onDrag(offset)
                 }
             })
         ) {
-            graphView(viewModel)
+            graphView(sceenViewModel.viewModel)
         }
     }
 }
