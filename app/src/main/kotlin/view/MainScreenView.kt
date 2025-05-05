@@ -69,12 +69,15 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.DelicateCoroutinesApi
 import model.GraphFactory
 import model.InternalFormatFactory
+import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
+import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import viewmodel.GraphViewModel
+import viewmodel.MainScreenViewModel
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -84,10 +87,13 @@ import kotlin.collections.forEach
 import kotlin.math.max
 import kotlin.math.min
 
+
+
+
 @OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun <K, V> mainScreen() {
-    var viewModel by remember { mutableStateOf(GraphViewModel<K, V>(EmptyGraph())) }
+    val screenViewModel =MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
 
     var scale by remember { mutableStateOf(100) }
 
@@ -97,8 +103,6 @@ fun <K, V> mainScreen() {
     var downloader by remember { mutableStateOf(false) }
     var uploader by remember { mutableStateOf(false) }
 
-    val buttonEdgeLabel = mutableStateOf(false)
-    val selected = viewModel.vertices.values.filter { it.selected.value }.toMutableList()
     val requester = remember { FocusRequester() }
 
     val showAddVertexDialog = remember { mutableStateOf(false) }
@@ -117,112 +121,25 @@ fun <K, V> mainScreen() {
     val showNoSelectionWarning = remember { mutableStateOf(false) }
 
 
-    val clean = {
-        viewModel.vertices.values.forEach {
-            if (it.color.value != Color.Red)
-                it.color.value = Color.Cyan
-        }
-        viewModel.edges.values.forEach {
-            it.color.value = Color.Black
-        }
-    }
     val set: (Double) -> Unit = { n ->
-        viewModel.vertices.values.forEach {
+        screenViewModel.viewModel.vertices.values.forEach {
             it.radius.value = min(max(it.radius.value * n, 10.0), 35.0)
             it.x.value *= n
             it.y.value *= n
         }
     }
-    val planarAlgos: (Planar) -> Unit = {
-        clean()
-        val temp = it.apply(viewModel.graph)
-        temp.forEach { v, c ->
-            viewModel.vertices[v]?.x?.value = c.first.toDouble()
-            viewModel.vertices[v]?.y?.value = c.second.toDouble()
-        }
-    }
-
-    val uriNeo4j = remember { mutableStateOf("") }
-    val passwordNeo4j = remember { mutableStateOf("") }
-    val loginNeo4j = remember { mutableStateOf("") }
-
 
 
     LaunchedEffect(Unit) {
         requester.requestFocus()
     }
 
-    @Composable
-    fun edgeErrorWindow() {
-        if (edgeError.value) {
-            AlertDialog(
-                onDismissRequest = { edgeError.value = false },
-                title = { Text("Invalid selection") },
-                text = { Text("To add edges select at least 2 vertices") },
-                properties = DialogProperties(dismissOnBackPress = false),
-                confirmButton = {
-                    Button({ edgeError.value = false }) {
-                        Text("OK")
-                    }
-                }
-            )
-        }
-    }
-
-    @Composable
-    fun errorWindow(errorText: String?, flag: MutableState<Boolean>) {
-        if (flag.value)
-            AlertDialog(
-                onDismissRequest = { flag.value = false },
-                title = { Text(text = "Error Neo4j") },
-                text = { Text("$errorText") },
-                properties = DialogProperties(dismissOnBackPress = false),
-                confirmButton = {
-                    Button({ flag.value = false }) {
-                        Text("OK", fontSize = 22.sp)
-                    }
-                }
-            )
-    }
-
-    @Composable
-    fun inputNeo4j(flag: MutableState<Boolean>, set: MutableState<Boolean>) {
-        if (flag.value)
-            AlertDialog(
-                onDismissRequest = { flag.value = false },
-                title = { Text(text = "Get graph from Neo4j database") },
-                text = {
-                    Column {
-                        Text("URI")
-                        TextField(
-                            value = uriNeo4j.value,
-                            onValueChange = { n -> uriNeo4j.value = n }
-                        )
-                        Text("Login")
-                        TextField(
-                            value = loginNeo4j.value,
-                            onValueChange = { n -> loginNeo4j.value = n }
-                        )
-                        Text("Password")
-                        TextField(
-                            value = passwordNeo4j.value,
-                            onValueChange = { n -> passwordNeo4j.value = n }
-                        )
-                        Button({ flag.value = false; set.value = true }) {
-                            Text("OK", fontSize = 22.sp)
-                        }
-                    }
-                },
-                properties = DialogProperties(dismissOnBackPress = false),
-                buttons = {}
-            )
-    }
 
     Scaffold(
         modifier = Modifier.focusRequester(requester).focusable().onKeyEvent { keyEvent ->
             when {
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Delete -> {
-                    if (selected.isNotEmpty()) {
+                    if (screenViewModel.viewModel.selected.isNotEmpty()) {
                         showDeleteConfirmation.value = true
                     } else {
                         showNoSelectionWarning.value = true
@@ -234,7 +151,7 @@ fun <K, V> mainScreen() {
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.E -> {
-                    if (selected.size >= 2) {
+                    if (screenViewModel.viewModel.selected.size >= 2) {
                         showAddEdgesDialog = true
                         edgeError.value = false
                     } else {
@@ -243,7 +160,7 @@ fun <K, V> mainScreen() {
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionUp -> {
-                    viewModel.vertices.values.forEach {
+                    screenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(0f, -25f))
                     }
                     true
@@ -259,25 +176,25 @@ fun <K, V> mainScreen() {
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionRight -> {
-                    viewModel.vertices.values.forEach {
+                    screenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(25f, 0f))
                     }
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionLeft -> {
-                    viewModel.vertices.values.forEach {
+                    screenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(-25f, 0f))
                     }
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionUp -> {
-                    viewModel.vertices.values.forEach {
+                    screenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(0f, -25f,))
                     }
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionDown -> {
-                    viewModel.vertices.values.forEach {
+                    screenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(0f, 25f))
                     }
                     true
@@ -311,173 +228,61 @@ fun <K, V> mainScreen() {
         },
         topBar = {
             TopAppBar(backgroundColor = Color.White, modifier = Modifier.height(40.dp)) {
-                var errorText: String? = null
                 //загрузка графа !!!как-то нужно доработать результат
                 Box {
-                    IconButton(onClick = { downloader = !downloader }) {
-                        Icon(Icons.Default.Create, contentDescription = "Download")
+                    IconButton(onClick = { downloader = !downloader }, Modifier.padding(8.dp, 2.dp)) {
+                        Text("Download")
                     }
                     DropdownMenu(
                         expanded = downloader,
                         onDismissRequest = { downloader = false },
                     ) {
-                        val errorJson = mutableStateOf(false)
-                        val openNeo4j = mutableStateOf(false)
-                        val errorNeo4j = mutableStateOf(false)
-                        val set = mutableStateOf(false)
-
                         DropdownMenuItem(
                             onClick = {
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    var file: File? = null
-                                    val chooser = JFileChooser()
-                                    chooser.dialogTitle = "Choose json file"
-                                    chooser.fileSelectionMode = JFileChooser.FILES_ONLY
-                                    chooser.addChoosableFileFilter(FileNameExtensionFilter("JSON file", "json"))
-                                    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
-                                        file = chooser.selectedFile
-                                    val result =
-                                        GraphFactory.fromJSON<K, V>(
-                                            file!!.readText(), when (viewModel.graph::class.simpleName) {
-                                                "DirectedGraph" -> ::DirectedGraph
-                                                "DirWeightGraph" -> ::DirWeightGraph
-                                                "UndirectedGraph" -> ::UndirectedGraph
-                                                else -> ::UndirWeightGraph
-                                            }, object : TypeToken<K>() {}.type, object : TypeToken<V>() {}.type
-                                        )
-                                } catch (e: IllegalStateException) {
-                                    errorText = "Choose graph type first"
-                                    errorJson.value = true
-                                } catch (e: Exception) {
-                                    errorText = e.message
-                                    errorJson.value = true
-                                }
+                                screenViewModel.downloadJson()
                             }
                         ) {
                             Text("From JSON...")
-                            errorWindow(errorText, errorJson)
                         }
 
                         DropdownMenuItem(
                             onClick = {
-                                if (viewModel.graph !is EmptyGraph<*, *>)
-                                    openNeo4j.value = true
-                                else
-                                    errorNeo4j.value = true
+                                screenViewModel.downloadNeo4j()
                             }
                         ) {
                             Text("From Neo4j...")
-                            if (set.value) {
-                                val executor = Executors.newScheduledThreadPool(2)
-                                val feature = executor.submit {
-                                    try {
-                                        if (viewModel.graph is EmptyGraph<*, *>)
-                                            throw IllegalStateException()
-                                        val result = GraphFactory.fromNeo4j<K, V>(
-                                            when (viewModel.graph::class.simpleName) {
-                                                "DirectedGraph" -> ::DirectedGraph
-                                                "DirWeightGraph" -> ::DirWeightGraph
-                                                "UndirectedGraph" -> ::UndirectedGraph
-                                                else -> ::UndirWeightGraph
-                                            }, uriNeo4j.value, loginNeo4j.value, passwordNeo4j.value
-                                        )
-                                    } catch (e: IllegalStateException) {
-                                        openNeo4j.value = false
-                                        errorText = "Choose graph type first"
-                                        errorNeo4j.value = true
-                                    } catch (e: Exception) {
-                                        openNeo4j.value = false
-                                        errorText = e.message
-                                        errorNeo4j.value = true
-                                    } finally {
-                                        set.value = false
-                                    }
-                                }
-                                executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
-                                executor.shutdown()
-                            }
-                            inputNeo4j(openNeo4j, set)
-
-                            if (viewModel.graph is EmptyGraph<*, *>)
-                                errorWindow("Choose graph type first", errorNeo4j)
-                            else
-                                errorWindow(errorText, errorNeo4j)
+                            if (screenViewModel.set.value)
+                                screenViewModel.downloadNeo4jBasic()
                         }
 
                     }
                 }
                 //выгрузка графа
                 Box {
-                    IconButton(onClick = { uploader = !uploader }) {
-                        Icon(Icons.Default.Send, contentDescription = "Upload")
+                    IconButton(onClick = { uploader = !uploader }, Modifier.padding(8.dp, 2.dp)) {
+                        Text("Upload")
                     }
                     DropdownMenu(
                         expanded = uploader,
                         onDismissRequest = { uploader = false },
                     ) {
-                        val uploadNeo4j = mutableStateOf(false)
-                        val uploadJson = mutableStateOf(false)
-                        val errorNeo4j = mutableStateOf(false)
-                        val set = mutableStateOf(false)
-
                         DropdownMenuItem(
                             onClick = {
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    val chooser = JFileChooser()
-                                    chooser.dialogTitle = "Choose path to save"
-                                    chooser.showSaveDialog(null)
-                                    val file = File(chooser.selectedFile.toString())
-                                    file.writeText(InternalFormatFactory.toJSON(viewModel.graph))
-                                } catch (e: IllegalStateException) {
-                                    errorText = "Choose graph type first"
-                                    uploadJson.value = true
-                                } catch (e: Exception) {
-                                    errorText = e.message
-                                    uploadJson.value = true
-                                }
+                                screenViewModel.uploadJson()
                             }
                         ) {
                             Text("To JSON...")
-                            errorWindow(errorText, uploadJson)
                         }
 
                         DropdownMenuItem(
                             onClick = {
-                                if (viewModel.graph !is EmptyGraph<*, *>)
-                                    uploadNeo4j.value = true
-                                else
-                                    errorNeo4j.value = true
+                                screenViewModel.uploadNeo4j()
                             }
                         ) {
                             Text("To Neo4j...")
-                            if (viewModel.graph is EmptyGraph<*, *>)
-                                errorWindow("Choose graph type first", errorNeo4j)
-                            else
-                                errorWindow(errorText, errorNeo4j)
-                            inputNeo4j(uploadNeo4j, set)
-                            if (set.value) {
-                                val executor = Executors.newScheduledThreadPool(2)
-                                val feature = executor.submit {
-                                    try {
-                                        InternalFormatFactory.toNeo4j(
-                                            viewModel.graph, uriNeo4j.value,
-                                            loginNeo4j.value, passwordNeo4j.value
-                                        )
-                                    } catch (e: Exception) {
-                                        uploadNeo4j.value = false
-                                        errorText = e.message
-                                        errorNeo4j.value = true
-                                    } finally {
-                                        set.value = false
-                                    }
-                                }
-                                executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
-                                executor.shutdown()
-                            }
+                            if (screenViewModel.set.value)
+                                screenViewModel.uploadNeo4jBasic()
+
                         }
                     }
 
@@ -485,8 +290,8 @@ fun <K, V> mainScreen() {
                 //выбор графа
                 Box {
                     val start = mutableStateOf(false)
-                    IconButton(onClick = { create = !create }) {
-                        Icon(Icons.Default.Add, contentDescription = "Graph types")
+                    IconButton(onClick = { create = !create }, Modifier.padding(8.dp, 2.dp)) {
+                        Text("Graphs")
                     }
                     DropdownMenu(
                         expanded = create,
@@ -539,7 +344,7 @@ fun <K, V> mainScreen() {
                                                     graphs[2] -> DirWeightGraph()
                                                     else -> DirectedGraph()
                                                 }
-                                                viewModel = GraphViewModel(graph)
+                                                screenViewModel.viewModel = GraphViewModel(graph)
                                                 start.value = false
                                             }
                                         ) { Text("OK") }
@@ -553,317 +358,88 @@ fun <K, V> mainScreen() {
                 }
                 //алгоритмы
                 Box {
-                    val openDialog = remember { mutableStateOf(false) }
-                    val warning = remember { mutableStateOf(false) }
-                    val error = remember { mutableStateOf(false) }
-
-                    val path = remember { mutableStateOf(0) }
-                    IconButton(onClick = { expAlgo = !expAlgo }) {
-                        Icon(Icons.Default.List, contentDescription = "More options")
+                    IconButton(onClick = { expAlgo = !expAlgo }, Modifier.padding(8.dp, 2.dp)) {
+                        Text("Algorithms")
                     }
                     DropdownMenu(
                         expanded = expAlgo,
                         onDismissRequest = { expAlgo = false }
                     ) {
-
-                        @Composable
-                        fun indexErrorWindow() {
-                            if (warning.value)
-                                AlertDialog(
-                                    onDismissRequest = { warning.value = false },
-                                    title = { Text(text = "Invalid selected amount") },
-                                    text = { Text("2 elements required for algorithm") },
-                                    properties = DialogProperties(dismissOnBackPress = false),
-                                    confirmButton = {
-                                        Button({ warning.value = false }) {
-                                            Text("OK", fontSize = 22.sp)
-                                        }
-                                    }
-                                )
-                        }
-
-                        @Composable
-                        fun errorWindow(text: String) {
-                            if (error.value)
-                                AlertDialog(
-                                    onDismissRequest = { error.value = false },
-                                    title = { Text(text = "Error") },
-                                    text = { Text(text) },
-                                    properties = DialogProperties(dismissOnBackPress = false),
-                                    confirmButton = {
-                                        Button({ error.value = false }) {
-                                            Text("OK", fontSize = 22.sp)
-                                        }
-                                    }
-                                )
-                        }
-
-                        @Composable
-                        fun windowPath() {
-                            if (openDialog.value)
-                                AlertDialog(
-                                    onDismissRequest = { openDialog.value = false },
-                                    title = { Text(text = "Path between Vertex ${selected[0].vertex.hashCode()} and ${selected[1].vertex.hashCode()}") },
-                                    text = { Text("Path length: ${if (path.value < Int.MAX_VALUE) path.value else "No path exists"}") },
-                                    properties = DialogProperties(dismissOnBackPress = false),
-                                    confirmButton = {
-                                        Button({ openDialog.value = false }) {
-                                            Text("OK", fontSize = 22.sp)
-                                        }
-                                    }
-                                )
-                        }
-
-                        //переделать на selected
                         //алгоритм Дейкстры
                         DropdownMenuItem(
                             onClick = {
-                                println(viewModel.graph::class.simpleName)
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    val temp = Dijkstra.buildShortestPath(
-                                        viewModel.graph,
-                                        selected[0].vertex,
-                                        selected[1].vertex
-                                    )
-                                    path.value = temp.first
-                                    temp.second.forEach {
-                                        if (viewModel.vertices[it]?.selected?.value == false)
-                                            viewModel.vertices[it]?.color?.value = Color.Green
-                                    }
-                                    for (i in 1..temp.second.size - 1)
-                                        viewModel.edges.forEach {
-                                            if (it.key.link.first === temp.second[i - 1] && it.key.link.second === temp.second[i] ||
-                                                it.key.link.second === temp.second[i - 1] && it.key.link.first === temp.second[i]
-                                            )
-                                                it.value.color.value = Color.Red
-                                        }
-                                    openDialog.value = true
-                                } catch (e: IndexOutOfBoundsException) {
-                                    warning.value = true
-                                } catch (e: IllegalStateException) {
-                                    errorText = "Choose graph type first"
-                                    error.value = true
-                                } catch (e: Exception) {
-                                    errorText = e.message
-                                    error.value = true
-                                }
+                                screenViewModel.dijkstra()
                             }
                         ) {
                             Text("Dijkstra")
-                            indexErrorWindow()
-                            windowPath()
-                            errorWindow(errorText.toString())
                         }
                         //алгоритм Форда-Беллмана
                         DropdownMenuItem(
                             onClick = {
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    val temp =
-                                        FordBellman.apply(viewModel.graph, selected[0].vertex, selected[1].vertex)
-                                    path.value = temp.first
-                                    temp.second?.forEach {
-                                        if (viewModel.vertices[it]?.selected?.value == false)
-                                            viewModel.vertices[it]?.color?.value = Color.Green
-                                    }
-                                    temp.third?.forEach {
-                                        if (viewModel.vertices[it]?.selected?.value == false)
-                                            viewModel.vertices[it]?.color?.value = Color.Yellow
-                                    }
-                                    for (i in 1..(temp.second?.size?.minus(1) ?: 0))
-                                        viewModel.edges.forEach {
-                                            if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(
-                                                    i
-                                                ) ||
-                                                it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(
-                                                    i
-                                                )
-                                            )
-                                                it.value.color.value = Color.Green
-                                        }
-                                    for (i in 1..(temp.third?.size?.minus(1) ?: 0))
-                                        viewModel.edges.forEach {
-                                            if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(
-                                                    i
-                                                ) ||
-                                                it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(
-                                                    i
-                                                )
-                                            )
-                                                it.value.color.value = Color.Yellow
-                                        }
-                                    openDialog.value = true
-                                } catch (e: IllegalStateException) {
-                                    errorText = "Choose graph type first"
-                                    error.value = true
-                                } catch (e: IndexOutOfBoundsException) {
-                                    warning.value = true
-                                } catch (e: Exception) {
-                                    errorText = e.message
-                                    error.value = true
-                                }
+                                screenViewModel.fordBellman()
                             }
 
                         ) {
                             Text("Ford-Bellman")
-                            indexErrorWindow()
-                            windowPath()
-                            errorWindow(errorText.toString())
                         }
 
                         Divider()
                         //алгоритм поиска циклов
                         DropdownMenuItem(
                             onClick = {
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    val temp = Cycles.findCycles(viewModel.graph, selected.first().vertex)
-                                    temp.forEach { cycle ->
-                                        for (i in 0..cycle.size - 1) {
-                                            viewModel.vertices[cycle[i]]?.color?.value = Color.Magenta
-                                            if (i > 0) {
-                                                viewModel.edges.forEach { p0, p1 ->
-                                                    if (p0.link.first === cycle[i - 1] && p0.link.second === cycle[i] ||
-                                                        p0.link.second === cycle[i - 1] && p0.link.first === cycle[i]
-                                                    )
-                                                        p1.color.value = Color.Magenta
-                                                }
-                                            }
-                                        }
-                                    }
-                                } catch (e: NoSuchElementException) {
-                                    warning.value = true
-                                } catch (e: IllegalStateException) {
-                                    errorText = "Choose graph type first"
-                                    error.value = true
-                                } catch (e: Exception) {
-                                    errorText = e.message
-                                    error.value = true
-                                }
+                                screenViewModel.cycles()
                             },
                         ) {
                             Text("Cycles search")
-                            indexErrorWindow()
-                            errorWindow(errorText.toString())
                         }
+
                         Divider()
                         //компоненты сильной связанности
                         DropdownMenuItem(
                             onClick = {
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    val colors = ColorList().iterator()
-                                    val temp =
-                                        KosarujuSharir.apply(viewModel.graph)
-                                    temp.forEach { component ->
-                                        colors.hasNext()
-                                        val color = colors.next().toInt(16)
-                                        val red = color / (16 * 16 * 16 * 16)
-                                        val green = (color - red) / (16 * 16)
-                                        val blue = color - green
-                                        component.forEach { v ->
-                                            viewModel.vertices[v]?.color?.value = Color(red, green, blue)
-                                            viewModel.edges.values.forEach { e ->
-                                                if (e.from.vertex === v)
-                                                    e.color.value = Color(red, green, blue)
-                                            }
-                                        }
-
-                                    }
-                                } catch (e: IllegalStateException) {
-                                    errorText = "Choose graph type first"
-                                    error.value = true
-                                } catch (e: Exception) {
-                                    errorText = e.message
-                                    error.value = true
-                                }
+                                screenViewModel.kosajuruSharir()
                             },
                         ) {
                             Text("Connected components search")
-                            errorWindow(errorText.toString())
                         }
                         Divider()
                         //forseAtlas2
                         DropdownMenuItem(
                             onClick = {
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    planarAlgos(ForceAtlas2())
-                                } catch (e: IllegalStateException) {
-                                    errorText = "Choose graph type first"
-                                    error.value = true
-                                } catch (e: Exception) {
-                                    errorText = e.message
-                                    error.value = true
-                                }
+                                screenViewModel.forceAtlas2()
                             }
                         ) {
                             Text("ForceAtlas2")
-                            errorWindow(errorText.toString())
                         }
                         //YuifanHu
                         DropdownMenuItem(
                             onClick = {
-                                clean()
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    planarAlgos(YifanHu())
-                                } catch (e: IllegalStateException) {
-                                    errorText = "Choose graph type first"
-                                    error.value = true
-                                } catch (e: Exception) {
-                                    errorText = e.message
-                                    error.value = true
-                                }
+                                screenViewModel.yuifanHu()
                             }
                         ) {
                             Text("YuifanHu")
-                            errorWindow(errorText.toString())
                         }
                     }
                 }
                 //побочные функции
                 Box {
-                    IconButton(onClick = { expandedSecondary = !expandedSecondary }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                    IconButton(onClick = { expandedSecondary = !expandedSecondary }, Modifier.padding(8.dp, 2.dp)) {
+                        Text("Other")
                     }
                     DropdownMenu(
                         expanded = expandedSecondary,
                         onDismissRequest = { expandedSecondary = false }
                     ) {
                         DropdownMenuItem(onClick = {
-                            viewModel.vertices.values.forEach {
-                                it.color.value = Color.Cyan
-                            }
-                            viewModel.edges.values.forEach {
-                                it.color.value = Color.Black
-                            }
-                            selected.clear()
+                            screenViewModel.resetSelected()
                         }) { Text("Reset") }
 
-                        DropdownMenuItem(
-                            onClick =
-                                {
-                                    viewModel.edges.values.forEach {
-                                        it.isVisible.value = !it.isVisible.value
-                                        buttonEdgeLabel.value = !buttonEdgeLabel.value
-                                    }
-                                })
+                        DropdownMenuItem(onClick = {
+                            screenViewModel.visibleEdges()
+                        })
                         {
                             Text(
-                                when (buttonEdgeLabel.value) {
+                                when (screenViewModel.buttonEdgeLabel.value) {
                                     false -> "Show edge weights"
                                     true -> "Hide edge weights"
                                 }
@@ -871,6 +447,7 @@ fun <K, V> mainScreen() {
                         }
                     }
                 }
+
 
                 Box(modifier = Modifier.align(Alignment.Bottom)) {
                     var expanded by remember { mutableStateOf(false) }
@@ -891,7 +468,7 @@ fun <K, V> mainScreen() {
                         }
                         DropdownMenuItem(
                             onClick = {
-                                if (selected.size >= 2) {
+                                if (screenViewModel.viewModel.selected.size >= 2) {
                                     showAddEdgesDialog = true
                                     edgeError.value = false
                                 } else {
@@ -904,7 +481,7 @@ fun <K, V> mainScreen() {
                         }
                         DropdownMenuItem(
                             onClick = {
-                                if (selected.isNotEmpty()) {
+                                if (screenViewModel.viewModel.selected.isNotEmpty()) {
                                     showDeleteConfirmation.value = true
                                 } else {
                                     showNoSelectionWarning.value = true
@@ -919,14 +496,32 @@ fun <K, V> mainScreen() {
             }
         }
     ) {
+        @Composable
+        fun edgeErrorWindow() {
+            if (edgeError.value) {
+                AlertDialog(
+                    onDismissRequest = { edgeError.value = false },
+                    title = { Text("Invalid selection") },
+                    text = { Text("To add edges select at least 2 vertices") },
+                    properties = DialogProperties(dismissOnBackPress = false),
+                    confirmButton = {
+                        Button({ edgeError.value = false }) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
+        }
+
+
         Surface(
             Modifier.fillMaxSize().onDrag(onDrag = { offset ->
-                viewModel.vertices.values.forEach {
+                screenViewModel.viewModel.vertices.values.forEach {
                     it.onDrag(offset)
                 }
             })
         ) {
-            graphView(viewModel)
+            graphView(screenViewModel.viewModel)
 
             edgeErrorWindow()
 
@@ -958,7 +553,7 @@ fun <K, V> mainScreen() {
                     },
                     confirmButton = {
                         Button({
-                            addVertexError.value = viewModel.addVertex(
+                            addVertexError.value = screenViewModel.viewModel.addVertex(
                                 newVertexKey.value,
                                 newVertexValue.value
                             )
@@ -1015,11 +610,11 @@ fun <K, V> mainScreen() {
                     Button(
                         onClick = {
                             edgeWeight?.let { weight ->
-                                val selectedVertices = selected.map { it.vertex }
+                                val selectedVertices = screenViewModel.viewModel.selected.map { it.vertex }
                                 if (isAllToAllMode) {
                                     for (i in selectedVertices.indices) {
                                         for (j in i + 1 until selectedVertices.size) {
-                                            viewModel.graph.addEdge(
+                                            screenViewModel.viewModel.graph.addEdge(
                                                 selectedVertices[i],
                                                 selectedVertices[j],
                                                 weight
@@ -1028,14 +623,14 @@ fun <K, V> mainScreen() {
                                     }
                                 } else {
                                     for (i in 0 until selectedVertices.size - 1) {
-                                        viewModel.graph.addEdge(
+                                        screenViewModel.viewModel.graph.addEdge(
                                             selectedVertices[i],
                                             selectedVertices[i + 1],
                                             weight
                                         )
                                     }
                                 }
-                                viewModel.updateEdgesView()
+                                screenViewModel.viewModel.updateEdgesView()
                                 showAddEdgesDialog = false
                             }
                         },
@@ -1051,10 +646,10 @@ fun <K, V> mainScreen() {
             AlertDialog(
                 onDismissRequest = { showDeleteConfirmation.value = false },
                 title = { Text("Confirm deletion") },
-                text = { Text("Delete ${selected.size} selected vertices?") },
+                text = { Text("Delete ${screenViewModel.viewModel.selected.size} selected vertices?") },
                 confirmButton = {
                     Button({
-                        viewModel.deleteSelectedVertices()
+                        screenViewModel.viewModel.deleteSelectedVertices()
                         showDeleteConfirmation.value = false
                     }) { Text("Delete") }
                 },
