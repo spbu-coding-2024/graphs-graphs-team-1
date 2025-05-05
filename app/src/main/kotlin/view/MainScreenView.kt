@@ -1,8 +1,5 @@
 package view
 
-import algo.planar.ForceAtlas2
-import algo.planar.Planar
-import algo.planar.YifanHu
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.onDrag
@@ -32,7 +29,6 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.Composable
@@ -43,7 +39,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.DragData
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -58,7 +53,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.DelicateCoroutinesApi
 import model.GraphFactory
 import model.InternalFormatFactory
@@ -69,6 +63,7 @@ import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import view.windows.errorWindow
 import view.windows.indexErrorWindow
+import view.windows.inputNeo4j
 import view.windows.windowPath
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
@@ -76,7 +71,6 @@ import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.swing.JFileChooser
-import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
 import kotlin.math.max
 import kotlin.math.min
@@ -110,42 +104,9 @@ fun <K, V> mainScreen() {
     }}
 
 
-    val uriNeo4j= remember { mutableStateOf("") }
-    val passwordNeo4j = remember { mutableStateOf("") }
-    val loginNeo4j = remember { mutableStateOf("") }
 
-    @Composable
-    fun inputNeo4j(flag: MutableState<Boolean>, set: MutableState<Boolean>) {
-        if (flag.value)
-            AlertDialog(
-                onDismissRequest = { flag.value = false},
-                title = { Text(text = "Get graph from Neo4j database") },
-                text = {
-                    Column {
-                        Text("URI")
-                        TextField(
-                            value = uriNeo4j.value,
-                            onValueChange = { n -> uriNeo4j.value = n }
-                        )
-                        Text("Login")
-                        TextField(
-                            value = loginNeo4j.value,
-                            onValueChange = { n -> loginNeo4j.value = n }
-                        )
-                        Text("Password")
-                        TextField(
-                            value = passwordNeo4j.value,
-                            onValueChange = { n -> passwordNeo4j.value = n }
-                        )
-                        Button({ flag.value = false; set.value=true }) {
-                            Text("OK", fontSize = 22.sp)
-                        }
-                    }
-                },
-                properties = DialogProperties(dismissOnBackPress = false),
-                buttons = {}
-            )
-    }
+
+
 
     LaunchedEffect(Unit) {
         requester.requestFocus()
@@ -229,93 +190,40 @@ fun <K, V> mainScreen() {
                         expanded = downloader,
                         onDismissRequest = { downloader = false },
                     ) {
-                        val errorJson=mutableStateOf(false)
-                        val openNeo4j=mutableStateOf(false)
-                        val errorNeo4j=mutableStateOf(false)
-                        val set= mutableStateOf(false)
+
 
                         DropdownMenuItem(
                             onClick = {
-                                try {
-                                    if (viewModel.graph is EmptyGraph<*, *>)
-                                        throw IllegalStateException()
-                                    var file: File? = null
-                                    val chooser = JFileChooser()
-                                    chooser.dialogTitle = "Choose json file"
-                                    chooser.fileSelectionMode = JFileChooser.FILES_ONLY
-                                    chooser.addChoosableFileFilter(FileNameExtensionFilter("JSON file", "json"))
-                                    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
-                                        file = chooser.selectedFile
-                                    val result =
-                                        GraphFactory.fromJSON<K, V>(
-                                            file?.readText() ?: throw IllegalStateException(), when (viewModel.graph::class.simpleName) {
-                                                "DirectedGraph" -> ::DirectedGraph
-                                                "DirWeightGraph" -> ::DirWeightGraph
-                                                "UndirectedGraph" -> ::UndirectedGraph
-                                                else -> ::UndirWeightGraph
-                                            }, object : TypeToken<K>() {}.type, object : TypeToken<V>() {}.type
-                                        )
-                                } catch (e: IllegalStateException) {
-                                    errorText="Choose graph type first"
-                                    errorJson.value=true
-                                } catch (e: Exception) {
-                                    errorText=e.message
-                                    errorJson.value=true
-                                }
+                                sceenViewModel.downloadJson()
                             }
                         ) {
                             Text("From JSON...")
-                            errorWindow(errorText, errorJson)
+                            errorWindow(sceenViewModel.errorText, sceenViewModel.errorJson)
                         }
 
                         DropdownMenuItem(
                             onClick = {
-                                if (viewModel.graph !is EmptyGraph<*, *>)
-                                    openNeo4j.value=true
+                                if (sceenViewModel.viewModel.graph !is EmptyGraph<*, *>)
+                                    sceenViewModel.openNeo4j.value=true
                                 else
-                                    errorNeo4j.value=true
+                                    sceenViewModel.errorNeo4j.value=true
+                                //проверить, где держать set
+                                sceenViewModel.downloadNeo4j()
                             }
                         ) {
                             Text("From Neo4j...")
-                            if (set.value) {
-                                val executor= Executors.newScheduledThreadPool(2)
-                                val feature=executor.submit {
-                                    try {
-                                        if (viewModel.graph is EmptyGraph<*, *>)
-                                            throw IllegalStateException()
-                                        val result = GraphFactory.fromNeo4j<K, V>(
-                                            when (viewModel.graph::class.simpleName) {
-                                                "DirectedGraph" -> ::DirectedGraph
-                                                "DirWeightGraph" -> ::DirWeightGraph
-                                                "UndirectedGraph" -> ::UndirectedGraph
-                                                else -> ::UndirWeightGraph
-                                            }, uriNeo4j.value, loginNeo4j.value, passwordNeo4j.value
-                                        )
-                                    } catch (e: IllegalStateException) {
-                                        openNeo4j.value = false
-                                        errorText="Choose graph type first"
-                                        errorNeo4j.value = true
-                                    } catch (e: Exception) {
-                                        openNeo4j.value = false
-                                        errorText = e.message
-                                        errorNeo4j.value = true
-                                    } finally {
-                                        set.value = false
-                                    }
-                                }
-                                executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
-                                executor.shutdown()
-                            }
-                            inputNeo4j(openNeo4j, set)
-
-                            if (viewModel.graph is EmptyGraph<*, *>)
-                                errorWindow("Choose graph type first", errorNeo4j)
+                            inputNeo4j(sceenViewModel.openNeo4j, sceenViewModel.set,
+                                sceenViewModel.uriNeo4j, sceenViewModel.loginNeo4j,
+                                sceenViewModel.passwordNeo4j)
+                            if (sceenViewModel.viewModel.graph !is EmptyGraph<*, *>)
+                                errorWindow("Choose graph type first", sceenViewModel.errorNeo4j)
                             else
-                                errorWindow(errorText, errorNeo4j)
+                                errorWindow(sceenViewModel.errorText, sceenViewModel.errorNeo4j)
                         }
 
                     }
                 }
+
                 //выгрузка графа
                 Box{
                     IconButton(onClick = { uploader = !uploader }) {
@@ -325,10 +233,6 @@ fun <K, V> mainScreen() {
                         expanded = uploader,
                         onDismissRequest = { uploader = false },
                     ) {
-                        val uploadNeo4j = mutableStateOf(false)
-                        val uploadJson = mutableStateOf(false)
-                        val errorNeo4j=mutableStateOf(false)
-                        val set=mutableStateOf(false)
 
                         DropdownMenuItem(
                             onClick = {
@@ -342,21 +246,21 @@ fun <K, V> mainScreen() {
                                     file.writeText(InternalFormatFactory.toJSON(viewModel.graph))
                                 } catch (e: IllegalStateException) {
                                     errorText="Choose graph type first"
-                                    uploadJson.value=true
+                                    errorJson.value=true
                                 } catch (e: Exception) {
                                     errorText=e.message
-                                    uploadJson.value=true
+                                    errorJson.value=true
                                 }
                             }
                         ) {
                             Text("To JSON...")
-                            errorWindow(errorText, uploadJson)
+                            errorWindow(errorText, errorJson)
                         }
 
                         DropdownMenuItem(
                             onClick = {
                                 if (viewModel.graph !is  EmptyGraph<*, *>)
-                                    uploadNeo4j.value=true
+                                    openNeo4j.value=true
                                 else
                                     errorNeo4j.value=true
                             }
@@ -366,7 +270,7 @@ fun <K, V> mainScreen() {
                                 errorWindow("Choose graph type first", errorNeo4j)
                             else
                                 errorWindow(errorText, errorNeo4j)
-                            inputNeo4j(uploadNeo4j, set)
+                            inputNeo4j(openNeo4j, set)
                             if (set.value) {
                                 val executor= Executors.newScheduledThreadPool(2)
                                 val feature=executor.submit {
@@ -374,7 +278,7 @@ fun <K, V> mainScreen() {
                                         InternalFormatFactory.toNeo4j(viewModel.graph, uriNeo4j.value,
                                             loginNeo4j.value, passwordNeo4j.value)
                                     } catch (e: Exception) {
-                                        uploadNeo4j.value = false
+                                        openNeo4j.value = false
                                         errorText = e.message
                                         errorNeo4j.value = true
                                     } finally {

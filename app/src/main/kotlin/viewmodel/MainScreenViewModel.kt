@@ -8,10 +8,22 @@ import algo.planar.YifanHu
 import algo.strconnect.KosarujuSharir
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import com.google.gson.reflect.TypeToken
+import model.GraphFactory
+import model.graphs.DirWeightGraph
+import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
+import model.graphs.UndirWeightGraph
+import model.graphs.UndirectedGraph
 import view.ColorList
+import java.io.File
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import javax.swing.JFileChooser
+import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
 import kotlin.collections.get
 
@@ -23,6 +35,15 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     var warning = mutableStateOf(false)
     var error = mutableStateOf(false)
     var errorText: String?=null
+
+    val errorJson=mutableStateOf(false)
+    val openNeo4j=mutableStateOf(false)
+    val errorNeo4j=mutableStateOf(false)
+    val set= mutableStateOf(false)
+
+    val uriNeo4j = mutableStateOf("")
+    val passwordNeo4j = mutableStateOf("")
+    val loginNeo4j = mutableStateOf("")
 
     val selected = viewModel.vertices.values.filter { it.selected.value}.toMutableList()
     val path=mutableStateOf(0)
@@ -45,7 +66,6 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             it.color.value=Color.Black
         }
     }
-
 
 
     fun dijkstra() {
@@ -210,4 +230,67 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             error.value=true
         }
     }
+
+    fun downloadJson() {
+        try {
+            if (viewModel.graph is EmptyGraph<*, *>)
+                throw IllegalStateException()
+            var file: File? = null
+            val chooser = JFileChooser()
+            chooser.dialogTitle = "Choose json file"
+            chooser.fileSelectionMode = JFileChooser.FILES_ONLY
+            chooser.addChoosableFileFilter(FileNameExtensionFilter("JSON file", "json"))
+            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
+                file = chooser.selectedFile
+            val result =
+                GraphFactory.fromJSON<K, V>(
+                    file?.readText() ?: throw IllegalStateException(), when (viewModel.graph::class.simpleName) {
+                        "DirectedGraph" -> ::DirectedGraph
+                        "DirWeightGraph" -> ::DirWeightGraph
+                        "UndirectedGraph" -> ::UndirectedGraph
+                        else -> ::UndirWeightGraph
+                    }, object : TypeToken<K>() {}.type, object : TypeToken<V>() {}.type
+                )
+        } catch (e: IllegalStateException) {
+            errorText="Choose graph type first"
+            errorJson.value=true
+        } catch (e: Exception) {
+            errorText=e.message
+            errorJson.value=true
+        }
+    }
+
+
+    fun downloadNeo4j() {
+        if (set.value) {
+            val executor = Executors.newScheduledThreadPool(2)
+            val feature = executor.submit {
+                try {
+                    if (viewModel.graph is EmptyGraph<*, *>)
+                        throw IllegalStateException()
+                    val result = GraphFactory.fromNeo4j<K, V>(
+                        when (viewModel.graph::class.simpleName) {
+                            "DirectedGraph" -> ::DirectedGraph
+                            "DirWeightGraph" -> ::DirWeightGraph
+                            "UndirectedGraph" -> ::UndirectedGraph
+                            else -> ::UndirWeightGraph
+                        }, uriNeo4j.value, loginNeo4j.value, passwordNeo4j.value
+                    )
+                } catch (e: IllegalStateException) {
+                    openNeo4j.value = false
+                    errorText = "Choose graph type first"
+                    errorNeo4j.value = true
+                } catch (e: Exception) {
+                    openNeo4j.value = false
+                    errorText = e.message
+                    errorNeo4j.value = true
+                } finally {
+                    set.value = false
+                }
+            }
+            executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
+            executor.shutdown()
+        }
+    }
 }
+
