@@ -52,7 +52,6 @@ fun inputNeo4j(flag: MutableState<Boolean>, set: MutableState<Boolean>,
 fun processNeo4j(flag: MutableState<Boolean>) {
     if (!flag.value)
         AlertDialog(
-            title = { Text("Neo4j request") },
             onDismissRequest = {},
             buttons = {},
             text = {Text("Processing...", fontSize = 50.sp) },

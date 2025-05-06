@@ -21,6 +21,7 @@ java {
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     testRuntimeOnly("org.junit.platform:junit-platform-suite-engine:1.8.2")
     testImplementation("org.junit.platform:junit-platform-suite:1.13.0-M2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.2")

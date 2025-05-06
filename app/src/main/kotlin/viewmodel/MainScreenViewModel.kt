@@ -6,6 +6,10 @@ import algo.planar.YifanHu
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import model.GraphFactory
 import model.InternalFormatFactory
 import model.graphs.DirWeightGraph
@@ -26,11 +30,10 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
     var pathDialog = mutableStateOf(false)
     var warning = mutableStateOf(false)
     var error = mutableStateOf(false)
-    var errorText: String?=null
+    var errorText = mutableStateOf("")
 
-    val errorJson=mutableStateOf(false)
+
     val openNeo4j=mutableStateOf(false)
-    val errorNeo4j=mutableStateOf(false)
     val readyNeo4j=mutableStateOf(true)
     val set= mutableStateOf(false)
 
@@ -84,10 +87,10 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
         } catch (e: IndexOutOfBoundsException) {
             warning.value =true
         } catch (e: IllegalStateException) {
-            errorText="Choose graph type first"
+            errorText.value="Choose graph type first"
             error.value =true
         } catch (e: Exception) {
-            errorText=e.message
+            errorText.value=e.message.toString()
             error.value=true
         }
     }
@@ -122,12 +125,12 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
                 }
             pathDialog.value = true
         } catch (e: IllegalStateException) {
-            errorText="Choose graph type first"
+            errorText.value="Choose graph type first"
             error.value=true
         } catch (e: IndexOutOfBoundsException) {
             warning.value=true
         } catch (e: Exception) {
-            errorText=e.message
+            errorText.value=e.message.toString()
             error.value=true
         }
     }
@@ -153,10 +156,10 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
         }  catch (e: NoSuchElementException) {
             warning.value=true
         } catch (e: IllegalStateException) {
-            errorText="Choose graph type first"
+            errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
-            errorText=e.message
+            errorText.value=e.message.toString()
             error.value=true
         }
     }
@@ -185,10 +188,10 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
 
             }
         } catch (e: IllegalStateException) {
-            errorText="Choose graph type first"
+            errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
-            errorText=e.message
+            errorText.value=e.message.toString()
             error.value=true
         }
     }
@@ -200,10 +203,10 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
                 throw IllegalStateException()
             planarAlgos(ForceAtlas2())
         } catch (e: IllegalStateException) {
-            errorText="Choose graph type first"
+            errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
-            errorText=e.message
+            errorText.value=e.message.toString()
             error.value=true
         }
     }
@@ -215,10 +218,10 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
                 throw IllegalStateException()
             planarAlgos(YifanHu())
         } catch (e: IllegalStateException) {
-            errorText="Choose graph type first"
+            errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
-            errorText=e.message
+            errorText.value=e.message.toString()
             error.value=true
         }
     }
@@ -244,40 +247,54 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
                     }, object : TypeToken<K>() {}.type, object : TypeToken<V>() {}.type
                 )
         } catch (e: IllegalStateException) {
-            errorText="Choose graph type first"
-            errorJson.value=true
+            errorText.value="Choose graph type first"
+            error.value=true
         } catch (e: Exception) {
-            errorText=e.message
-            errorJson.value=true
+            errorText.value=e.message.toString()
+            error.value=true
         }
     }
 
     fun downloadNeo4j() {
-                try {
-                    readyNeo4j.value=false
-                    if (viewModel.graph is EmptyGraph<*, *>)
-                        throw IllegalStateException()
-                    val result = GraphFactory.fromNeo4j<K, V>(
-                        when (viewModel.graph::class.simpleName) {
-                            "DirectedGraph" -> ::DirectedGraph
-                            "DirWeightGraph" -> ::DirWeightGraph
-                            "UndirectedGraph" -> ::UndirectedGraph
-                            else -> ::UndirWeightGraph
-                        }, uriNeo4j.value, loginNeo4j.value, passwordNeo4j.value
-                    )
-                } catch (e: IllegalStateException) {
-                    openNeo4j.value = false
-                    errorText = "Choose graph type first"
-                    errorNeo4j.value = true
-                } catch (e: Exception) {
-                    println("llllllll")
-                    openNeo4j.value = false
-                    errorText = e.message
-                    errorNeo4j.value = true
-                } finally {
-                    set.value = false
-                    readyNeo4j.value=true
-                }
+        try {
+            if (viewModel.graph is EmptyGraph<*, *>)
+                throw IllegalStateException()
+            openNeo4j.value=true
+        } catch (e: IllegalStateException) {
+            openNeo4j.value = false
+            errorText.value = "Choose graph type first"
+            error.value = true
+        }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    fun downloadNeo4jBasic() {
+        GlobalScope.launch(
+            block = {
+                    try {
+                        readyNeo4j.value = false
+
+                            val result = GraphFactory.fromNeo4j<K, V>(
+                                when (viewModel.graph::class.simpleName) {
+                                    "DirectedGraph" -> ::DirectedGraph
+                                    "DirWeightGraph" -> ::DirWeightGraph
+                                    "UndirectedGraph" -> ::UndirectedGraph
+                                    else -> ::UndirWeightGraph
+                                }, uriNeo4j.value,
+                                loginNeo4j.value, passwordNeo4j.value
+                            )
+
+                    } catch (e: Exception) {
+                        openNeo4j.value = false
+                        errorText.value = e.message.toString()
+                        error.value = true
+                    } finally {
+                        set.value = false
+                        readyNeo4j.value = true
+                    }
+
+            }
+        )
     }
 
     fun uploadJson() {
@@ -290,36 +307,50 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
             val file = File(chooser.selectedFile.toString())
             file.writeText(InternalFormatFactory.toJSON(viewModel.graph))
         } catch (e: IllegalStateException) {
-            errorText="Choose graph type first"
-            errorJson.value=true
+            errorText.value="Choose graph type first"
+            error.value=true
         } catch (e: Exception) {
-            errorText=e.message
-            errorJson.value=true
+            errorText.value= e.message.toString()
+            error.value=true
         }
     }
 
-    //новое окно загрузки?
-    fun uploadNeo4j() {
-        if (set.value) {
-            readyNeo4j.value=false
-            val executor= Executors.newScheduledThreadPool(2)
-            val feature=executor.submit {
+    @OptIn(DelicateCoroutinesApi::class)
+    fun uploadNeo4jBasic() {
+        GlobalScope.launch(
+            block = {
                 try {
-                    InternalFormatFactory.toNeo4j(viewModel.graph, uriNeo4j.value,
-                        loginNeo4j.value, passwordNeo4j.value)
+                    readyNeo4j.value = false
+                    InternalFormatFactory.toNeo4j(
+                        viewModel.graph, uriNeo4j.value,
+                        loginNeo4j.value, passwordNeo4j.value
+                    )
                 } catch (e: Exception) {
                     openNeo4j.value = false
-                    errorText = e.message
-                    errorNeo4j.value = true
+                    errorText.value = e.message.toString()
+                    error.value = true
                 } finally {
+                    readyNeo4j.value = true
                     set.value = false
                 }
             }
-            if (feature.isDone)
-                readyNeo4j.value=true
-            executor.shutdown()
+        )
+    }
+
+    fun uploadNeo4j() {
+        try {
+            if (viewModel.graph is EmptyGraph<*, *>)
+                throw IllegalStateException()
+            openNeo4j.value=true
+        } catch (e: IllegalStateException) {
+            openNeo4j.value = false
+            errorText.value = "Choose graph type first"
+            error.value = true
         }
     }
+
+
+
 
     fun resetSelected() {
         viewModel.vertices.values.forEach {

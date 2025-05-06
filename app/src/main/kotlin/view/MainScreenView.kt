@@ -54,7 +54,11 @@ import androidx.compose.ui.text.platform.Typeface
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import model.GraphFactory
 import model.InternalFormatFactory
 import model.Vertex
@@ -112,7 +116,7 @@ fun <K, V> mainScreen() {
         return graph
 
     }
-    val sceenViewModel= MainScreenViewModel<K, V>(GraphViewModel(graph()))
+    val sceenViewModel= MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
 
     var scale by remember { mutableStateOf(100) }
 
@@ -220,37 +224,26 @@ fun <K, V> mainScreen() {
                         expanded = downloader,
                         onDismissRequest = { downloader = false },
                     ) {
-
-
                         DropdownMenuItem(
                             onClick = {
                                 sceenViewModel.downloadJson()
                             }
                         ) {
                             Text("From JSON...")
-                            errorWindow(sceenViewModel.errorText, sceenViewModel.errorJson)
                         }
 
                         DropdownMenuItem(
                             onClick = {
-                                if (sceenViewModel.viewModel.graph !is EmptyGraph<*, *>)
-                                    sceenViewModel.openNeo4j.value=true
-                                else
-                                    sceenViewModel.errorNeo4j.value=true
-                                //проверить, где держать set
-                                if (sceenViewModel.set.value)
-                                    sceenViewModel.downloadNeo4j()
+                                sceenViewModel.downloadNeo4j()
                             }
                         ) {
                             Text("From Neo4j...")
                             inputNeo4j(sceenViewModel.openNeo4j, sceenViewModel.set,
                                 sceenViewModel.uriNeo4j, sceenViewModel.loginNeo4j,
                                 sceenViewModel.passwordNeo4j)
+                            if (sceenViewModel.set.value)
+                                sceenViewModel.downloadNeo4jBasic()
                             processNeo4j(sceenViewModel.readyNeo4j)
-                            if (sceenViewModel.viewModel.graph !is EmptyGraph<*, *>)
-                                errorWindow("Choose graph type first", sceenViewModel.errorNeo4j)
-                            else
-                                errorWindow(sceenViewModel.errorText, sceenViewModel.errorNeo4j)
                         }
 
                     }
@@ -271,26 +264,21 @@ fun <K, V> mainScreen() {
                             }
                         ) {
                             Text("To JSON...")
-                            errorWindow(sceenViewModel.errorText, sceenViewModel.errorJson)
                         }
 
                         DropdownMenuItem(
                             onClick = {
-                                if (sceenViewModel.viewModel.graph !is  EmptyGraph<*, *>)
-                                    sceenViewModel.openNeo4j.value=true
-                                else
-                                    sceenViewModel.errorNeo4j.value=true
                                 sceenViewModel.uploadNeo4j()
                             }
                         ){
                             Text("To Neo4j...")
-                            if (sceenViewModel.viewModel.graph is EmptyGraph<*, *>)
-                                errorWindow("Choose graph type first", sceenViewModel.errorNeo4j)
-                            else
-                                errorWindow(sceenViewModel.errorText, sceenViewModel.errorNeo4j)
-                            inputNeo4j(sceenViewModel.openNeo4j, sceenViewModel.set,
+                            inputNeo4j(
+                                sceenViewModel.openNeo4j, sceenViewModel.set,
                                 sceenViewModel.uriNeo4j, sceenViewModel.loginNeo4j,
-                                sceenViewModel.passwordNeo4j)
+                                sceenViewModel.passwordNeo4j
+                            )
+                            if (sceenViewModel.set.value)
+                                sceenViewModel.uploadNeo4jBasic()
                             processNeo4j(sceenViewModel.readyNeo4j)
 
                         }
@@ -382,10 +370,8 @@ fun <K, V> mainScreen() {
                             }
                         ) {
                             Text("Dijkstra")
-                            indexErrorWindow(sceenViewModel.warning)
                             windowPath(sceenViewModel.viewModel.selected,
                                 sceenViewModel.path,sceenViewModel.pathDialog)
-                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
                         //алгоритм Форда-Беллмана
                         DropdownMenuItem(
@@ -395,10 +381,8 @@ fun <K, V> mainScreen() {
 
                         ) {
                             Text("Ford-Bellman")
-                            indexErrorWindow(sceenViewModel.warning)
                             windowPath(sceenViewModel.viewModel.selected,
                                 sceenViewModel.path,sceenViewModel.pathDialog)
-                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
 
                         Divider()
@@ -409,8 +393,6 @@ fun <K, V> mainScreen() {
                             },
                         ) {
                             Text("Cycles search")
-                            indexErrorWindow(sceenViewModel.warning)
-                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
 
                         Divider()
@@ -421,7 +403,6 @@ fun <K, V> mainScreen() {
                             },
                         ) {
                             Text("Connected components search")
-                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
                         Divider()
                         //forseAtlas2
@@ -431,7 +412,6 @@ fun <K, V> mainScreen() {
                             }
                         ) {
                             Text("ForceAtlas2")
-                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
                         //YuifanHu
                         DropdownMenuItem(
@@ -440,7 +420,6 @@ fun <K, V> mainScreen() {
                             }
                         ) {
                             Text("YuifanHu")
-                            errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
                     }
                 }
@@ -479,6 +458,8 @@ fun <K, V> mainScreen() {
             })
         ) {
             graphView(sceenViewModel.viewModel)
+            errorWindow(sceenViewModel.errorText.value, sceenViewModel.error)
+            indexErrorWindow(sceenViewModel.warning)
         }
     }
 }
