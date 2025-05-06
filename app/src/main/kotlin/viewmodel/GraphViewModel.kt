@@ -7,9 +7,17 @@ import algo.planar.ForceAtlas2
 import algo.planar.YifanHu
 import algo.strconnect.KosarujuSharir
 import androidx.compose.runtime.mutableStateOf
+import com.google.gson.reflect.TypeToken
 import model.Edge
+import model.GraphFactory
+import model.InternalFormatFactory
 import model.Vertex
+import model.graphs.DirWeightGraph
+import model.graphs.DirectedGraph
 import model.graphs.Graph
+import model.graphs.UndirWeightGraph
+import model.graphs.UndirectedGraph
+import java.io.File
 import java.util.Vector
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
@@ -57,4 +65,38 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         return Cycles.findCycles(graph, selected.first().vertex)
     }
 
+    fun downloadJson(file: File?): Graph<K, V> {
+        return GraphFactory.fromJSON(
+            file?.readText() ?: throw IllegalStateException(),
+            when (graph::class.simpleName) {
+                "DirectedGraph" -> ::DirectedGraph
+                "DirWeightGraph" -> ::DirWeightGraph
+                "UndirectedGraph" -> ::UndirectedGraph
+                else -> ::UndirWeightGraph
+            }, object : TypeToken<K>() {}.type, object : TypeToken<V>() {}.type
+        )
+    }
+
+    fun uploadJson(): String {
+        return InternalFormatFactory.toJSON(graph)
+    }
+
+    fun downloadNeo4j(uriNeo4j: String, loginNeo4j: String, passwordNeo4j: String): Graph<K, V> {
+        return GraphFactory.fromNeo4j<K, V>(
+            when (graph::class.simpleName) {
+                "DirectedGraph" -> ::DirectedGraph
+                "DirWeightGraph" -> ::DirWeightGraph
+                "UndirectedGraph" -> ::UndirectedGraph
+                else -> ::UndirWeightGraph
+            }, uriNeo4j,
+            loginNeo4j, passwordNeo4j
+        )
+    }
+
+    fun uploadNeo4j(uriNeo4j: String, loginNeo4j: String, passwordNeo4j: String) {
+        InternalFormatFactory.toNeo4j(
+            graph, uriNeo4j,
+            loginNeo4j, passwordNeo4j
+        )
+    }
 }

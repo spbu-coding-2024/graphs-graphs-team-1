@@ -237,15 +237,7 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
             chooser.addChoosableFileFilter(FileNameExtensionFilter("JSON file", "json"))
             if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
                 file = chooser.selectedFile
-            val result =
-                GraphFactory.fromJSON<K, V>(
-                    file?.readText() ?: throw IllegalStateException(), when (viewModel.graph::class.simpleName) {
-                        "DirectedGraph" -> ::DirectedGraph
-                        "DirWeightGraph" -> ::DirWeightGraph
-                        "UndirectedGraph" -> ::UndirectedGraph
-                        else -> ::UndirWeightGraph
-                    }, object : TypeToken<K>() {}.type, object : TypeToken<V>() {}.type
-                )
+            val result = viewModel.downloadJson(file)
         } catch (e: IllegalStateException) {
             errorText.value="Choose graph type first"
             error.value=true
@@ -273,17 +265,8 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
             block = {
                     try {
                         readyNeo4j.value = false
-
-                            val result = GraphFactory.fromNeo4j<K, V>(
-                                when (viewModel.graph::class.simpleName) {
-                                    "DirectedGraph" -> ::DirectedGraph
-                                    "DirWeightGraph" -> ::DirWeightGraph
-                                    "UndirectedGraph" -> ::UndirectedGraph
-                                    else -> ::UndirWeightGraph
-                                }, uriNeo4j.value,
-                                loginNeo4j.value, passwordNeo4j.value
-                            )
-
+                        val result = viewModel.downloadNeo4j(uriNeo4j.value,
+                            loginNeo4j.value, passwordNeo4j.value)
                     } catch (e: Exception) {
                         openNeo4j.value = false
                         errorText.value = e.message.toString()
@@ -305,7 +288,7 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
             chooser.dialogTitle = "Choose path to save"
             chooser.showSaveDialog(null)
             val file = File(chooser.selectedFile.toString())
-            file.writeText(InternalFormatFactory.toJSON(viewModel.graph))
+            file.writeText(viewModel.uploadJson())
         } catch (e: IllegalStateException) {
             errorText.value="Choose graph type first"
             error.value=true
@@ -321,10 +304,8 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
             block = {
                 try {
                     readyNeo4j.value = false
-                    InternalFormatFactory.toNeo4j(
-                        viewModel.graph, uriNeo4j.value,
-                        loginNeo4j.value, passwordNeo4j.value
-                    )
+                    viewModel.uploadNeo4j(uriNeo4j.value,
+                        loginNeo4j.value, passwordNeo4j.value)
                 } catch (e: Exception) {
                     openNeo4j.value = false
                     errorText.value = e.message.toString()
