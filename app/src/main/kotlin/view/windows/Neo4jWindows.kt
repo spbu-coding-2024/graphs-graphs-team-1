@@ -20,7 +20,7 @@ fun inputNeo4j(flag: MutableState<Boolean>, set: MutableState<Boolean>,
     if (flag.value)
         AlertDialog(
             onDismissRequest = { flag.value = false},
-            title = { Text(text = "Get graph from Neo4j database") },
+            title = { Text(text = "Neo4j database") },
             text = {
                 Column {
                     Text("URI")

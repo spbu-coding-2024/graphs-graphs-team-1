@@ -126,10 +126,7 @@ fun <K, V> mainScreen() {
     var downloader by remember { mutableStateOf(false) }
     var uploader by remember { mutableStateOf(false) }
 
-
-
     val requester = remember { FocusRequester() }
-
 
     val set: (Double) -> Unit = { n -> sceenViewModel.viewModel.vertices.values.forEach {
         it.radius.value=min(max(it.radius.value*n, 10.0), 35.0)
@@ -137,16 +134,9 @@ fun <K, V> mainScreen() {
         it.y.value *= n
     }}
 
-
-
-
-
-
     LaunchedEffect(Unit) {
         requester.requestFocus()
     }
-
-
 
     Scaffold(
         modifier = Modifier.focusRequester(requester).focusable().onKeyEvent { keyEvent ->
@@ -238,12 +228,8 @@ fun <K, V> mainScreen() {
                             }
                         ) {
                             Text("From Neo4j...")
-                            inputNeo4j(sceenViewModel.openNeo4j, sceenViewModel.set,
-                                sceenViewModel.uriNeo4j, sceenViewModel.loginNeo4j,
-                                sceenViewModel.passwordNeo4j)
                             if (sceenViewModel.set.value)
                                 sceenViewModel.downloadNeo4jBasic()
-                            processNeo4j(sceenViewModel.readyNeo4j)
                         }
 
                     }
@@ -257,7 +243,6 @@ fun <K, V> mainScreen() {
                         expanded = uploader,
                         onDismissRequest = { uploader = false },
                     ) {
-
                         DropdownMenuItem(
                             onClick = {
                                 sceenViewModel.uploadJson()
@@ -272,14 +257,8 @@ fun <K, V> mainScreen() {
                             }
                         ){
                             Text("To Neo4j...")
-                            inputNeo4j(
-                                sceenViewModel.openNeo4j, sceenViewModel.set,
-                                sceenViewModel.uriNeo4j, sceenViewModel.loginNeo4j,
-                                sceenViewModel.passwordNeo4j
-                            )
                             if (sceenViewModel.set.value)
                                 sceenViewModel.uploadNeo4jBasic()
-                            processNeo4j(sceenViewModel.readyNeo4j)
 
                         }
                     }
@@ -370,8 +349,6 @@ fun <K, V> mainScreen() {
                             }
                         ) {
                             Text("Dijkstra")
-                            windowPath(sceenViewModel.viewModel.selected,
-                                sceenViewModel.path,sceenViewModel.pathDialog)
                         }
                         //алгоритм Форда-Беллмана
                         DropdownMenuItem(
@@ -381,8 +358,6 @@ fun <K, V> mainScreen() {
 
                         ) {
                             Text("Ford-Bellman")
-                            windowPath(sceenViewModel.viewModel.selected,
-                                sceenViewModel.path,sceenViewModel.pathDialog)
                         }
 
                         Divider()
@@ -460,6 +435,14 @@ fun <K, V> mainScreen() {
             graphView(sceenViewModel.viewModel)
             errorWindow(sceenViewModel.errorText.value, sceenViewModel.error)
             indexErrorWindow(sceenViewModel.warning)
+            inputNeo4j(
+                sceenViewModel.openNeo4j, sceenViewModel.set,
+                sceenViewModel.uriNeo4j, sceenViewModel.loginNeo4j,
+                sceenViewModel.passwordNeo4j
+            )
+            processNeo4j(sceenViewModel.readyNeo4j)
+            windowPath(sceenViewModel.viewModel.selected,
+                sceenViewModel.path,sceenViewModel.pathDialog)
         }
     }
 }

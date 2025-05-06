@@ -349,9 +349,6 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
         }
     }
 
-
-
-
     fun resetSelected() {
         viewModel.vertices.values.forEach {
             it.color.value=Color.Cyan
