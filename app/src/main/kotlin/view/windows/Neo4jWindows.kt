@@ -1,12 +1,15 @@
 package view.windows
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 
@@ -49,8 +52,10 @@ fun inputNeo4j(flag: MutableState<Boolean>, set: MutableState<Boolean>,
 fun processNeo4j(flag: MutableState<Boolean>) {
     if (!flag.value)
         AlertDialog(
+            title = { Text("Neo4j request") },
             onDismissRequest = {},
             buttons = {},
-            text = {Text("Processing...", fontSize = 50.sp)}
+            text = {Text("Processing...", fontSize = 50.sp) },
+            modifier = Modifier.padding(25.dp)
         )
 }

@@ -23,8 +23,10 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                 temp.add(i)
             }
         }
-        print(temp.size)
     }
+
+
+    val selected = mutableListOf<VertexViewModel<K, V>>()
 
     var vertices= graph.vertices.associateWith { v ->
         VertexViewModel(v)
@@ -38,21 +40,21 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         EdgeViewModel(fst, snd, e)
     }.toMutableMap()
 
-    fun dijkstra(start: VertexViewModel<K, V>, end: VertexViewModel<K, V>):  Pair<Int, Vector<Vertex<K, V>>> {
-        return Dijkstra.buildShortestPath(graph, start.vertex, end.vertex)
+    fun dijkstra():  Pair<Int, Vector<Vertex<K, V>>> {
+        return Dijkstra.buildShortestPath(graph, selected[0].vertex, selected[1].vertex)
     }
 
-    fun fordBellman(start: VertexViewModel<K, V>, end: VertexViewModel<K, V>):
+    fun fordBellman():
             Triple<Int, Vector<Vertex<K, V>>?, Vector<Vertex<K, V>>?> {
-        return FordBellman.apply(graph, start.vertex, end.vertex)
+        return FordBellman.apply(graph, selected[0].vertex, selected[1].vertex)
     }
 
     fun kosarujuSharir(): ArrayDeque<ArrayDeque<Vertex<K, V>>> {
         return KosarujuSharir.apply(graph)
     }
 
-    fun cycles(vertex: VertexViewModel<K, V>): Set<List<Vertex<K, V>>> {
-        return Cycles.findCycles(graph, vertex.vertex)
+    fun cycles(): Set<List<Vertex<K, V>>> {
+        return Cycles.findCycles(graph, selected.first().vertex)
     }
 
 }

@@ -1,15 +1,9 @@
 package viewmodel
 
-import algo.bellmanford.FordBellman
-import algo.cycles.Cycles
 import algo.planar.ForceAtlas2
 import algo.planar.Planar
 import algo.planar.YifanHu
-import algo.strconnect.KosarujuSharir
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import com.google.gson.reflect.TypeToken
 import model.GraphFactory
@@ -26,12 +20,8 @@ import java.util.concurrent.TimeUnit
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
-import kotlin.collections.get
-import kotlin.text.clear
 
-class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
-
-    var viewModel by mutableStateOf(graphViewModel)
+class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
 
     var pathDialog = mutableStateOf(false)
     var warning = mutableStateOf(false)
@@ -50,7 +40,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     val loginNeo4j = mutableStateOf("")
 
     val buttonEdgeLabel=mutableStateOf(false)
-    val selected = viewModel.vertices.values.filter { it.selected.value}.toMutableList()
+
     val path=mutableStateOf(0)
 
 
@@ -78,10 +68,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw IllegalStateException()
-            val temp = viewModel.dijkstra(
-                selected[0],
-                selected[1]
-            )
+            val temp = viewModel.dijkstra()
             path.value = temp.first
             temp.second.forEach {
                 if (viewModel.vertices[it]?.selected?.value==false)
@@ -111,7 +98,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw IllegalStateException()
             val temp =
-                viewModel.fordBellman(selected[0], selected[1])
+                viewModel.fordBellman()
             path.value = temp.first
             temp.second?.forEach {
                 if (viewModel.vertices[it]?.selected?.value==false)
@@ -150,7 +137,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw IllegalStateException()
-            val temp = viewModel.cycles(selected.first())
+            val temp = viewModel.cycles()
             temp.forEach { cycle ->
                 for (i in 0..cycle.size - 1) {
                     viewModel.vertices[cycle[i]]?.color?.value = Color.Magenta
@@ -266,10 +253,8 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     }
 
     fun downloadNeo4j() {
-        if (set.value) {
-            val executor = Executors.newScheduledThreadPool(2)
-            val feature = executor.submit {
                 try {
+                    readyNeo4j.value=false
                     if (viewModel.graph is EmptyGraph<*, *>)
                         throw IllegalStateException()
                     val result = GraphFactory.fromNeo4j<K, V>(
@@ -285,16 +270,14 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                     errorText = "Choose graph type first"
                     errorNeo4j.value = true
                 } catch (e: Exception) {
+                    println("llllllll")
                     openNeo4j.value = false
                     errorText = e.message
                     errorNeo4j.value = true
                 } finally {
                     set.value = false
+                    readyNeo4j.value=true
                 }
-            }
-            executor.schedule({ feature.cancel(true) }, 10, TimeUnit.SECONDS)
-            executor.shutdown()
-        }
     }
 
     fun uploadJson() {
@@ -345,7 +328,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         viewModel.edges.values.forEach {
             it.color.value=Color.Black
         }
-        selected.clear()
+        viewModel.selected.clear()
     }
 
     fun visibleEdges() {

@@ -34,12 +34,12 @@ import kotlin.reflect.full.staticProperties
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Modifier,) {
+fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, selected:  MutableList<VertexViewModel<K, V>>) {
     val openDialog = remember { mutableStateOf(false) }
     val width = Toolkit.getDefaultToolkit().screenSize.width
     val height = Toolkit.getDefaultToolkit().screenSize.height
 
-    Box(modifier = modifier
+    Box(modifier = Modifier
         .size(viewModel.radius.value.dp*2, viewModel.radius.value.dp*2)
         .offset(viewModel.x.value.dp+width.dp/2, viewModel.y.value.dp+height.dp/2)
         .background(
@@ -54,7 +54,12 @@ fun <K, V> VertexView(viewModel: VertexViewModel<K, V>, modifier: Modifier = Mod
         .onClick(
             onClick = {
                 viewModel.selected.value=!viewModel.selected.value
-                viewModel.color.value=if (!viewModel.selected.value) Color.Cyan else Color.Red},
+                viewModel.color.value=if (viewModel.selected.value) Color.Red else Color.Cyan
+                if (viewModel.selected.value)
+                    selected.add(viewModel)
+                else
+                    selected.remove(viewModel)
+                      },
             onDoubleClick = {openDialog.value=true}
         )
     ) {}

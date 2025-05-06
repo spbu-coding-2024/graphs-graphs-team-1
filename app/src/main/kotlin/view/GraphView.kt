@@ -38,7 +38,7 @@ fun <K, V>  graphView(graphViewModel: GraphViewModel<K, V>) {
                 EdgeViewUndirected(it)
         }
         graphViewModel.vertices.values.onEach { v ->
-            VertexView(v, Modifier)
+            VertexView(v, graphViewModel.selected)
         }
 
 

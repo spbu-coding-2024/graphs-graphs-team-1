@@ -57,9 +57,11 @@ import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.DelicateCoroutinesApi
 import model.GraphFactory
 import model.InternalFormatFactory
+import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
+import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import view.windows.errorWindow
@@ -84,7 +86,33 @@ import kotlin.math.min
 @Composable
 fun <K, V> mainScreen() {
 
-    val sceenViewModel= MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
+    fun graph(): Graph<K, V> {
+
+        var graph = DirectedGraph<K, V>()
+
+        var r1= Vertex(4 as K, 5 as V)
+
+        var r2=Vertex(5 as K, 5 as V)
+
+        var r3=Vertex(6 as K, 5 as V)
+
+        var r4=Vertex(7 as K, 5 as V)
+
+        var r5=Vertex(8 as K, 5 as V)
+
+        graph.addEdge(r1, r2, 78)
+
+        graph.addEdge(r2, r3, 64)
+
+
+        graph.addVertex(r4)
+
+        graph.addVertex(r5)
+
+        return graph
+
+    }
+    val sceenViewModel= MainScreenViewModel<K, V>(GraphViewModel(graph()))
 
     var scale by remember { mutableStateOf(100) }
 
@@ -210,7 +238,8 @@ fun <K, V> mainScreen() {
                                 else
                                     sceenViewModel.errorNeo4j.value=true
                                 //проверить, где держать set
-                                sceenViewModel.downloadNeo4j()
+                                if (sceenViewModel.set.value)
+                                    sceenViewModel.downloadNeo4j()
                             }
                         ) {
                             Text("From Neo4j...")
@@ -354,7 +383,7 @@ fun <K, V> mainScreen() {
                         ) {
                             Text("Dijkstra")
                             indexErrorWindow(sceenViewModel.warning)
-                            windowPath(sceenViewModel.selected,
+                            windowPath(sceenViewModel.viewModel.selected,
                                 sceenViewModel.path,sceenViewModel.pathDialog)
                             errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
@@ -367,7 +396,7 @@ fun <K, V> mainScreen() {
                         ) {
                             Text("Ford-Bellman")
                             indexErrorWindow(sceenViewModel.warning)
-                            windowPath(sceenViewModel.selected,
+                            windowPath(sceenViewModel.viewModel.selected,
                                 sceenViewModel.path,sceenViewModel.pathDialog)
                             errorWindow(sceenViewModel.errorText, sceenViewModel.error)
                         }
