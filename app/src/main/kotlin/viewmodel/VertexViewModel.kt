@@ -20,7 +20,7 @@ class VertexViewModel<K, V> (
     var radius = mutableStateOf(radius)
     val width = Toolkit.getDefaultToolkit().screenSize.width
     val height = Toolkit.getDefaultToolkit().screenSize.height
-    private var _x = Random.nextDouble(-width.toDouble() / 2, width.toDouble() / 2)
+    private var _x = Random.nextDouble(60.0 - width.toDouble() / 2, width.toDouble() / 2 - 60.0)
     private var _y = Random.nextDouble(100.0 - height.toDouble() / 2, height.toDouble() / 2 - 100.0)
 
     var x = mutableStateOf(_x)
