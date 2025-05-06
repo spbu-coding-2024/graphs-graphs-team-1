@@ -76,6 +76,12 @@ import model.graphs.EmptyGraph
 import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
+import view.windows.edgeErrorWindow
+import view.windows.errorWindow
+import view.windows.indexErrorWindow
+import view.windows.inputNeo4j
+import view.windows.processNeo4j
+import view.windows.windowPath
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
 import java.io.File
@@ -156,12 +162,6 @@ fun <K, V> mainScreen() {
                         edgeError.value = false
                     } else {
                         edgeError.value = true
-                    }
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionUp -> {
-                    screenViewModel.viewModel.vertices.values.forEach {
-                        it.onDrag(Offset(0f, -25f))
                     }
                     true
                 }
@@ -496,22 +496,7 @@ fun <K, V> mainScreen() {
             }
         }
     ) {
-        @Composable
-        fun edgeErrorWindow() {
-            if (edgeError.value) {
-                AlertDialog(
-                    onDismissRequest = { edgeError.value = false },
-                    title = { Text("Invalid selection") },
-                    text = { Text("To add edges select at least 2 vertices") },
-                    properties = DialogProperties(dismissOnBackPress = false),
-                    confirmButton = {
-                        Button({ edgeError.value = false }) {
-                            Text("OK")
-                        }
-                    }
-                )
-            }
-        }
+
 
 
         Surface(
@@ -522,8 +507,17 @@ fun <K, V> mainScreen() {
             })
         ) {
             graphView(screenViewModel.viewModel)
-
-            edgeErrorWindow()
+            errorWindow(screenViewModel.errorText.value, screenViewModel.error)
+            indexErrorWindow(screenViewModel.warning)
+            inputNeo4j(
+                screenViewModel.openNeo4j, screenViewModel.set,
+                screenViewModel.uriNeo4j, screenViewModel.loginNeo4j,
+                screenViewModel.passwordNeo4j
+            )
+            processNeo4j(screenViewModel.readyNeo4j)
+            windowPath(screenViewModel.viewModel.selected,
+                screenViewModel.path,screenViewModel.pathDialog)
+            edgeErrorWindow(edgeError)
 
             if (showAddVertexDialog.value) {
                 AlertDialog(
@@ -572,102 +566,100 @@ fun <K, V> mainScreen() {
                     }
                 )
             }
-        }
-
-        if (showAddEdgesDialog) {
-            AlertDialog(
-                onDismissRequest = { showAddEdgesDialog = false },
-                title = { Text("Add Edges") },
-                text = {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(
-                                selected = isAllToAllMode,
-                                onClick = { isAllToAllMode = true }
+            if (showAddEdgesDialog) {
+                AlertDialog(
+                    onDismissRequest = { showAddEdgesDialog = false },
+                    title = { Text("Add Edges") },
+                    text = {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = isAllToAllMode,
+                                    onClick = { isAllToAllMode = true }
+                                )
+                                Text("All to all", Modifier.padding(start = 4.dp))
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = !isAllToAllMode,
+                                    onClick = { isAllToAllMode = false }
+                                )
+                                Text("Sequentially", Modifier.padding(start = 4.dp))
+                            }
+                            Spacer(Modifier.height(16.dp))
+                            TextField(
+                                value = edgeWeightInput,
+                                onValueChange = { edgeWeightInput = it },
+                                label = { Text("Edge weight") },
+                                isError = !isWeightValid
                             )
-                            Text("All to all", Modifier.padding(start = 4.dp))
+                            if (!isWeightValid) {
+                                Text("Enter valid number", color = Color.Red)
+                            }
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(
-                                selected = !isAllToAllMode,
-                                onClick = { isAllToAllMode = false }
-                            )
-                            Text("Sequentially", Modifier.padding(start = 4.dp))
-                        }
-                        Spacer(Modifier.height(16.dp))
-                        TextField(
-                            value = edgeWeightInput,
-                            onValueChange = { edgeWeightInput = it },
-                            label = { Text("Edge weight") },
-                            isError = !isWeightValid
-                        )
-                        if (!isWeightValid) {
-                            Text("Enter valid number", color = Color.Red)
-                        }
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            edgeWeight?.let { weight ->
-                                val selectedVertices = screenViewModel.viewModel.selected.map { it.vertex }
-                                if (isAllToAllMode) {
-                                    for (i in selectedVertices.indices) {
-                                        for (j in i + 1 until selectedVertices.size) {
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                edgeWeight?.let { weight ->
+                                    val selectedVertices = screenViewModel.viewModel.selected.map { it.vertex }
+                                    if (isAllToAllMode) {
+                                        for (i in selectedVertices.indices) {
+                                            for (j in i + 1 until selectedVertices.size) {
+                                                screenViewModel.viewModel.graph.addEdge(
+                                                    selectedVertices[i],
+                                                    selectedVertices[j],
+                                                    weight
+                                                )
+                                            }
+                                        }
+                                    } else {
+                                        for (i in 0 until selectedVertices.size - 1) {
                                             screenViewModel.viewModel.graph.addEdge(
                                                 selectedVertices[i],
-                                                selectedVertices[j],
+                                                selectedVertices[i + 1],
                                                 weight
                                             )
                                         }
                                     }
-                                } else {
-                                    for (i in 0 until selectedVertices.size - 1) {
-                                        screenViewModel.viewModel.graph.addEdge(
-                                            selectedVertices[i],
-                                            selectedVertices[i + 1],
-                                            weight
-                                        )
-                                    }
+                                    screenViewModel.viewModel.updateEdgesView()
+                                    showAddEdgesDialog = false
                                 }
-                                screenViewModel.viewModel.updateEdgesView()
-                                showAddEdgesDialog = false
-                            }
-                        },
-                        enabled = isWeightValid
-                    ) { Text("Add") }
-                },
-                dismissButton = {
-                    Button({ showAddEdgesDialog = false }) { Text("Cancel") }
-                }
-            )
-        }
-        if (showDeleteConfirmation.value) {
-            AlertDialog(
-                onDismissRequest = { showDeleteConfirmation.value = false },
-                title = { Text("Confirm deletion") },
-                text = { Text("Delete ${screenViewModel.viewModel.selected.size} selected vertices?") },
-                confirmButton = {
-                    Button({
-                        screenViewModel.viewModel.deleteSelectedVertices()
-                        showDeleteConfirmation.value = false
-                    }) { Text("Delete") }
-                },
-                dismissButton = {
-                    Button({ showDeleteConfirmation.value = false }) { Text("Cancel") }
-                }
-            )
-        }
-
-        if (showNoSelectionWarning.value) {
-            AlertDialog(
-                onDismissRequest = { showNoSelectionWarning.value = false },
-                title = { Text("No selection") },
-                text = { Text("Please select vertices to delete") },
-                confirmButton = {
-                    Button({ showNoSelectionWarning.value = false }) { Text("OK") }
-                }
-            )
+                            },
+                            enabled = isWeightValid
+                        ) { Text("Add") }
+                    },
+                    dismissButton = {
+                        Button({ showAddEdgesDialog = false }) { Text("Cancel") }
+                    }
+                )
+            }
+            if (showDeleteConfirmation.value) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteConfirmation.value = false },
+                    title = { Text("Confirm deletion") },
+                    text = { Text("Delete ${screenViewModel.viewModel.selected.size} selected vertices?") },
+                    confirmButton = {
+                        Button({
+                            screenViewModel.viewModel.deleteSelectedVertices()
+                            showDeleteConfirmation.value = false
+                        }) { Text("Delete") }
+                    },
+                    dismissButton = {
+                        Button({ showDeleteConfirmation.value = false }) { Text("Cancel") }
+                    }
+                )
+            }
+            if (showNoSelectionWarning.value) {
+                AlertDialog(
+                    onDismissRequest = { showNoSelectionWarning.value = false },
+                    title = { Text("No selection") },
+                    text = { Text("Please select vertices to delete") },
+                    confirmButton = {
+                        Button({ showNoSelectionWarning.value = false }) { Text("OK") }
+                    }
+                )
+            }
         }
     }
 }
