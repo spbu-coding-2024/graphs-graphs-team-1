@@ -1,18 +1,23 @@
 package viewmodel
 
+import model.Vertex
 import androidx.compose.runtime.mutableStateOf
 import model.Edge
 import model.graphs.Graph
 import java.util.Vector
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
-
-    var vertices= graph.vertices.associateWith { v ->
-        VertexViewModel(v)
+    var vertices = graph.vertices.associateWith { v ->
+        VertexViewModel(
+            v,
+            25.0,
+            degree = graph.getOutDegreeOfVertex(v)
+        )
     }.toMutableMap()
 
 
     private val temp = Vector<Edge<K, V>>()
+
     init {
         graph.edges.values.forEach { it ->
             for (i in it) {
@@ -32,4 +37,73 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             ?: throw IllegalStateException("VertexView for ${e.link.second} not found")
         EdgeViewModel(fst, snd, e)
     }.toMutableMap()
+
+    fun addVertex(key: String, value: String): String? {
+        return try {
+            val tempVM = VertexViewModel<Any?, Any?>(Vertex(null, null), 25.0, 0)
+            val parsedKey = tempVM.parseKey(key)
+            val parsedValue = tempVM.parseValue(value)
+            val newVertex = Vertex<K, V>(parsedKey as K, parsedValue as V)
+            graph.addVertex(newVertex)
+            vertices[newVertex] = VertexViewModel(
+                newVertex,
+                25.0,
+                degree = graph.getOutDegreeOfVertex(newVertex)
+            )
+
+            null
+        } catch (e: IllegalArgumentException) {
+            e.message
+        } catch (e: Exception) {
+            "Invalid input format"
+        }
+    }
+
+    fun updateVertex(vertex: Vertex<K, V>, newKey: String, newValue: String): String? {
+        val vertexViewModel = vertices[vertex] ?: return "Vertex not found"
+
+        return try {
+            val parsedKey = vertexViewModel.parseKey(newKey)
+            val parsedValue = vertexViewModel.parseValue(newValue)
+
+            vertex.key = parsedKey
+            vertex.value = parsedValue
+            vertices[vertex]?.degree = graph.getOutDegreeOfVertex(vertex)
+            null
+        } catch (e: IllegalArgumentException) {
+            e.message
+        } catch (e: Exception) {
+            "Invalid input format"
+        }
+    }
+
+    fun updateEdgesView() {
+        edges = graph.edges.values
+            .flatten()
+            .mapNotNull { edge ->
+                vertices[edge.link.first]?.let { fromViewModel ->
+                    vertices[edge.link.second]?.let { toViewModel ->
+                        edge to EdgeViewModel(fromViewModel, toViewModel, edge)
+                    }
+                }
+            }
+            .toMap()
+            .toMutableMap()
+    }
+
+    fun deleteSelectedVertices(): Boolean {
+        val selectedVertices = vertices.values.filter { it.selected.value }.map { it.vertex }
+        if (selectedVertices.isEmpty()) return false
+        selectedVertices.forEach { vertex ->
+            graph.deleteVertex(vertex)
+            vertices.remove(vertex)
+            edges.keys.removeAll { edge ->
+                edge.link.first == vertex || edge.link.second == vertex
+            }
+        }
+        vertices.values.forEach { vertexVM ->
+            vertexVM.degree = graph.getOutDegreeOfVertex(vertexVM.vertex)
+        }
+        return true
+    }
 }
