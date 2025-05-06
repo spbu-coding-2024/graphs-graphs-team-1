@@ -88,4 +88,20 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             .toMap()
             .toMutableMap()
     }
+
+    fun deleteSelectedVertices(): Boolean {
+        val selectedVertices = vertices.values.filter { it.selected.value }.map { it.vertex }
+        if (selectedVertices.isEmpty()) return false
+        selectedVertices.forEach { vertex ->
+            graph.deleteVertex(vertex)
+            vertices.remove(vertex)
+            edges.keys.removeAll { edge ->
+                edge.link.first == vertex || edge.link.second == vertex
+            }
+        }
+        vertices.values.forEach { vertexVM ->
+            vertexVM.degree = graph.getOutDegreeOfVertex(vertexVM.vertex)
+        }
+        return true
+    }
 }

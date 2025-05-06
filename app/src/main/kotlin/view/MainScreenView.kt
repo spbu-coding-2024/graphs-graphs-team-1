@@ -19,7 +19,6 @@ import androidx.compose.material.RadioButton
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomAppBar
 import androidx.compose.material.Button
@@ -53,11 +52,9 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
-import kotlinx.coroutines.flow.flow
 import viewmodel.GraphViewModel
 import kotlin.collections.forEach
 import kotlin.math.max
@@ -86,6 +83,10 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
     val edgeWeight = remember(edgeWeightInput) { edgeWeightInput.toIntOrNull() }
     val isWeightValid = remember(edgeWeightInput) { edgeWeightInput.toIntOrNull() != null }
     val edgeError = remember { mutableStateOf(false) }
+
+    val showDeleteConfirmation = remember { mutableStateOf(false) }
+    val showNoSelectionWarning = remember { mutableStateOf(false) }
+
 
     val clean= {
         viewModel.vertices.values.forEach {
@@ -135,6 +136,14 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
     Scaffold(
         modifier = Modifier.focusRequester(requester).focusable().onKeyEvent { keyEvent ->
                 when {
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Delete -> {
+                        if (selected.isNotEmpty()) {
+                            showDeleteConfirmation.value = true
+                        } else {
+                            showNoSelectionWarning.value = true
+                        }
+                        true
+                    }
                     keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.V -> {
                         showAddVertexDialog.value = true
                         true
@@ -483,6 +492,18 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                         ) {
                             Text("Add edges between selected vertices")
                         }
+                        DropdownMenuItem(
+                            onClick = {
+                                if (selected.isNotEmpty()) {
+                                    showDeleteConfirmation.value = true
+                                } else {
+                                    showNoSelectionWarning.value = true
+                                }
+                                expanded = false
+                            }
+                        ) {
+                            Text("Delete selected vertices")
+                        }
                     }
                 }
             }
@@ -614,6 +635,33 @@ fun <K, V> mainScreen(viewModel: GraphViewModel<K, V>) {
                 },
                 dismissButton = {
                     Button({ showAddEdgesDialog = false }) { Text("Cancel") }
+                }
+            )
+        }
+        if (showDeleteConfirmation.value) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirmation.value = false },
+                title = { Text("Confirm deletion") },
+                text = { Text("Delete ${selected.size} selected vertices?") },
+                confirmButton = {
+                    Button({
+                        viewModel.deleteSelectedVertices()
+                        showDeleteConfirmation.value = false
+                    }) { Text("Delete") }
+                },
+                dismissButton = {
+                    Button({ showDeleteConfirmation.value = false }) { Text("Cancel") }
+                }
+            )
+        }
+
+        if (showNoSelectionWarning.value) {
+            AlertDialog(
+                onDismissRequest = { showNoSelectionWarning.value = false },
+                title = { Text("No selection") },
+                text = { Text("Please select vertices to delete") },
+                confirmButton = {
+                    Button({ showNoSelectionWarning.value = false }) { Text("OK") }
                 }
             )
         }

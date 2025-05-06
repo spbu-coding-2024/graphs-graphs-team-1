@@ -77,16 +77,16 @@ fun <K, V> VertexView(
             title = { Text("Vertex ${viewModel.vertex.hashCode()}") },
             text = {
                 Column {
-                    Text("Current key ${viewModel.vertex.key}")
+                    Text("Current key: ${viewModel.vertex.key}")
                     TextField(
                         value = tempKey.value,
                         onValueChange = { tempKey.value = it },
-                        label = { Text("New key")}
+                        label = { Text("New key") }
                     )
 
                     Spacer(Modifier.height(8.dp))
 
-                    Text("Current value ${viewModel.vertex.value}")
+                    Text("Current value: ${viewModel.vertex.value}")
                     TextField(
                         value = tempValue.value,
                         onValueChange = { tempValue.value = it },
