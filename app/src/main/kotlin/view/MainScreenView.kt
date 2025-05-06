@@ -18,22 +18,14 @@ import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,22 +42,11 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.platform.Typeface
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import model.GraphFactory
-import model.InternalFormatFactory
-import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
-import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import view.windows.errorWindow
@@ -75,10 +56,6 @@ import view.windows.processNeo4j
 import view.windows.windowPath
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
-import java.io.File
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import javax.swing.JFileChooser
 import kotlin.collections.forEach
 import kotlin.math.max
 import kotlin.math.min
@@ -89,34 +66,7 @@ import kotlin.math.min
 @OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun <K, V> mainScreen() {
-
-    fun graph(): Graph<K, V> {
-
-        var graph = DirectedGraph<K, V>()
-
-        var r1= Vertex(4 as K, 5 as V)
-
-        var r2=Vertex(5 as K, 5 as V)
-
-        var r3=Vertex(6 as K, 5 as V)
-
-        var r4=Vertex(7 as K, 5 as V)
-
-        var r5=Vertex(8 as K, 5 as V)
-
-        graph.addEdge(r1, r2, 78)
-
-        graph.addEdge(r2, r3, 64)
-
-
-        graph.addVertex(r4)
-
-        graph.addVertex(r5)
-
-        return graph
-
-    }
-    val sceenViewModel= MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
+    val screenViewModel =MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
 
     var scale by remember { mutableStateOf(100) }
 
@@ -128,7 +78,7 @@ fun <K, V> mainScreen() {
 
     val requester = remember { FocusRequester() }
 
-    val set: (Double) -> Unit = { n -> sceenViewModel.viewModel.vertices.values.forEach {
+    val set: (Double) -> Unit = { n -> screenViewModel.viewModel.vertices.values.forEach {
         it.radius.value=min(max(it.radius.value*n, 10.0), 35.0)
         it.x.value *= n
         it.y.value *= n
@@ -152,25 +102,25 @@ fun <K, V> mainScreen() {
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionRight -> {
-                    sceenViewModel.viewModel.vertices.values.forEach {
+                    screenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(25f, 0f))
                     }
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionLeft -> {
-                    sceenViewModel.viewModel.vertices.values.forEach {
+                    screenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(-25f, 0f))
                     }
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionUp -> {
-                    sceenViewModel.viewModel.vertices.values.forEach {
+                    screenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(0f,-25f))
                     }
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionDown -> {
-                    sceenViewModel.viewModel.vertices.values.forEach {
+                    screenViewModel.viewModel.vertices.values.forEach {
                         it.onDrag(Offset(0f, 25f))
                     }
                     true
@@ -216,7 +166,7 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(
                             onClick = {
-                                sceenViewModel.downloadJson()
+                                screenViewModel.downloadJson()
                             }
                         ) {
                             Text("From JSON...")
@@ -224,12 +174,12 @@ fun <K, V> mainScreen() {
 
                         DropdownMenuItem(
                             onClick = {
-                                sceenViewModel.downloadNeo4j()
+                                screenViewModel.downloadNeo4j()
                             }
                         ) {
                             Text("From Neo4j...")
-                            if (sceenViewModel.set.value)
-                                sceenViewModel.downloadNeo4jBasic()
+                            if (screenViewModel.set.value)
+                                screenViewModel.downloadNeo4jBasic()
                         }
 
                     }
@@ -245,7 +195,7 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(
                             onClick = {
-                                sceenViewModel.uploadJson()
+                                screenViewModel.uploadJson()
                             }
                         ) {
                             Text("To JSON...")
@@ -253,12 +203,12 @@ fun <K, V> mainScreen() {
 
                         DropdownMenuItem(
                             onClick = {
-                                sceenViewModel.uploadNeo4j()
+                                screenViewModel.uploadNeo4j()
                             }
                         ){
                             Text("To Neo4j...")
-                            if (sceenViewModel.set.value)
-                                sceenViewModel.uploadNeo4jBasic()
+                            if (screenViewModel.set.value)
+                                screenViewModel.uploadNeo4jBasic()
 
                         }
                     }
@@ -321,7 +271,7 @@ fun <K, V> mainScreen() {
                                                     graphs[2] -> DirWeightGraph()
                                                     else -> DirectedGraph()
                                                 }
-                                                sceenViewModel.viewModel= GraphViewModel(graph)
+                                                screenViewModel.viewModel= GraphViewModel(graph)
                                                 start.value = false
                                             }
                                         ) { Text("OK") }
@@ -345,7 +295,7 @@ fun <K, V> mainScreen() {
                         //алгоритм Дейкстры
                         DropdownMenuItem(
                             onClick = {
-                                sceenViewModel.dijkstra()
+                                screenViewModel.dijkstra()
                             }
                         ) {
                             Text("Dijkstra")
@@ -353,7 +303,7 @@ fun <K, V> mainScreen() {
                         //алгоритм Форда-Беллмана
                         DropdownMenuItem(
                             onClick = {
-                                sceenViewModel.fordBellman()
+                                screenViewModel.fordBellman()
                             }
 
                         ) {
@@ -364,7 +314,7 @@ fun <K, V> mainScreen() {
                         //алгоритм поиска циклов
                         DropdownMenuItem(
                             onClick = {
-                                sceenViewModel.cycles()
+                                screenViewModel.cycles()
                             },
                         ) {
                             Text("Cycles search")
@@ -374,7 +324,7 @@ fun <K, V> mainScreen() {
                         //компоненты сильной связанности
                         DropdownMenuItem(
                             onClick = {
-                                sceenViewModel.kosajuruSharir()
+                                screenViewModel.kosajuruSharir()
                             },
                         ) {
                             Text("Connected components search")
@@ -383,7 +333,7 @@ fun <K, V> mainScreen() {
                         //forseAtlas2
                         DropdownMenuItem(
                             onClick = {
-                                sceenViewModel.forceAtlas2()
+                                screenViewModel.forceAtlas2()
                             }
                         ) {
                             Text("ForceAtlas2")
@@ -391,7 +341,7 @@ fun <K, V> mainScreen() {
                         //YuifanHu
                         DropdownMenuItem(
                             onClick = {
-                                sceenViewModel.yuifanHu()
+                                screenViewModel.yuifanHu()
                             }
                         ) {
                             Text("YuifanHu")
@@ -408,14 +358,14 @@ fun <K, V> mainScreen() {
                         onDismissRequest = { expandedSecondary = false }
                     ) {
                         DropdownMenuItem(onClick = {
-                           sceenViewModel.resetSelected()
+                           screenViewModel.resetSelected()
                         }) {Text("Reset")}
 
                         DropdownMenuItem(onClick = {
-                            sceenViewModel.visibleEdges()
+                            screenViewModel.visibleEdges()
                         })
                         {Text(
-                            when(sceenViewModel.buttonEdgeLabel.value) {
+                            when(screenViewModel.buttonEdgeLabel.value) {
                                 false -> "Show edge weights"
                                 true -> "Hide edge weights"
                             }
@@ -427,22 +377,22 @@ fun <K, V> mainScreen() {
     ) {
         Surface(
             Modifier.fillMaxSize().onDrag(onDrag = { offset ->
-                sceenViewModel.viewModel.vertices.values.forEach {
+                screenViewModel.viewModel.vertices.values.forEach {
                     it.onDrag(offset)
                 }
             })
         ) {
-            graphView(sceenViewModel.viewModel)
-            errorWindow(sceenViewModel.errorText.value, sceenViewModel.error)
-            indexErrorWindow(sceenViewModel.warning)
+            graphView(screenViewModel.viewModel)
+            errorWindow(screenViewModel.errorText.value, screenViewModel.error)
+            indexErrorWindow(screenViewModel.warning)
             inputNeo4j(
-                sceenViewModel.openNeo4j, sceenViewModel.set,
-                sceenViewModel.uriNeo4j, sceenViewModel.loginNeo4j,
-                sceenViewModel.passwordNeo4j
+                screenViewModel.openNeo4j, screenViewModel.set,
+                screenViewModel.uriNeo4j, screenViewModel.loginNeo4j,
+                screenViewModel.passwordNeo4j
             )
-            processNeo4j(sceenViewModel.readyNeo4j)
-            windowPath(sceenViewModel.viewModel.selected,
-                sceenViewModel.path,sceenViewModel.pathDialog)
+            processNeo4j(screenViewModel.readyNeo4j)
+            windowPath(screenViewModel.viewModel.selected,
+                screenViewModel.path,screenViewModel.pathDialog)
         }
     }
 }

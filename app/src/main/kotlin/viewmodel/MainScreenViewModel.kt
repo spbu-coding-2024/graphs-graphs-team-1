@@ -3,29 +3,23 @@ package viewmodel
 import algo.planar.ForceAtlas2
 import algo.planar.Planar
 import algo.planar.YifanHu
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
-import model.GraphFactory
-import model.InternalFormatFactory
-import model.graphs.DirWeightGraph
-import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
-import model.graphs.UndirWeightGraph
-import model.graphs.UndirectedGraph
 import view.ColorList
 import java.io.File
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
 
-class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
+class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
+
+    var viewModel by mutableStateOf(graphViewModel)
 
     var pathDialog = mutableStateOf(false)
     var warning = mutableStateOf(false)
@@ -45,7 +39,6 @@ class MainScreenViewModel<K, V>(var viewModel: GraphViewModel<K, V>) {
     val buttonEdgeLabel=mutableStateOf(false)
 
     val path=mutableStateOf(0)
-
 
     val planarAlgos: (Planar) -> Unit = {
         clean()
