@@ -5,6 +5,7 @@ import algo.planar.Planar
 import algo.planar.YifanHu
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -35,6 +36,22 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     val uriNeo4j = mutableStateOf("")
     val passwordNeo4j = mutableStateOf("")
     val loginNeo4j = mutableStateOf("")
+
+    val showAddVertexDialog = mutableStateOf(false) 
+    val newVertexKey = mutableStateOf("") 
+    val newVertexValue =  mutableStateOf("") 
+    val addVertexError = mutableStateOf<String?>(null)
+
+    var showAddEdgesDialog = mutableStateOf(false)
+    var edgeWeightInput = "1"
+    var isAllToAllMode = mutableStateOf(true)
+    val edgeWeight = mutableStateOf(edgeWeightInput.toIntOrNull())
+    val isWeightValid = mutableStateOf(edgeWeightInput.toIntOrNull() != null )
+    val edgeError =  mutableStateOf(false)
+
+    val showDeleteConfirmation =  mutableStateOf(false)
+    val showNoSelectionWarning =  mutableStateOf(false)
+    
 
     val buttonEdgeLabel=mutableStateOf(false)
 

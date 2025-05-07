@@ -76,6 +76,7 @@ import model.graphs.EmptyGraph
 import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
+import view.windows.AddVertexDialog
 import view.windows.edgeErrorWindow
 import view.windows.errorWindow
 import view.windows.indexErrorWindow
@@ -111,21 +112,10 @@ fun <K, V> mainScreen() {
 
     val requester = remember { FocusRequester() }
 
-    val showAddVertexDialog = remember { mutableStateOf(false) }
-    val newVertexKey = remember { mutableStateOf("") }
-    val newVertexValue = remember { mutableStateOf("") }
-    val addVertexError = remember { mutableStateOf<String?>(null) }
-
-    var showAddEdgesDialog by remember { mutableStateOf(false) }
-    var edgeWeightInput by remember { mutableStateOf("1") }
-    var isAllToAllMode by remember { mutableStateOf(true) }
-    val edgeWeight = remember(edgeWeightInput) { edgeWeightInput.toIntOrNull() }
-    val isWeightValid = remember(edgeWeightInput) { edgeWeightInput.toIntOrNull() != null }
-    val edgeError = remember { mutableStateOf(false) }
-
-    val showDeleteConfirmation = remember { mutableStateOf(false) }
-    val showNoSelectionWarning = remember { mutableStateOf(false) }
-
+//    var edgeWeightInput by remember { mutableStateOf("1") }
+//    var isAllToAllMode by remember { mutableStateOf(true) }
+//    val edgeWeight = remember(edgeWeightInput) { edgeWeightInput.toIntOrNull() }
+//    val isWeightValid = remember(edgeWeightInput) { edgeWeightInput.toIntOrNull() != null }
 
     val set: (Double) -> Unit = { n ->
         screenViewModel.viewModel.vertices.values.forEach {
@@ -146,22 +136,22 @@ fun <K, V> mainScreen() {
             when {
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Delete -> {
                     if (screenViewModel.viewModel.selected.isNotEmpty()) {
-                        showDeleteConfirmation.value = true
+                        screenViewModel.showDeleteConfirmation.value = true
                     } else {
-                        showNoSelectionWarning.value = true
+                        screenViewModel.showNoSelectionWarning.value = true
                     }
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.V -> {
-                    showAddVertexDialog.value = true
+                    screenViewModel.showAddVertexDialog.value = true
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.E -> {
                     if (screenViewModel.viewModel.selected.size >= 2) {
-                        showAddEdgesDialog = true
-                        edgeError.value = false
+                        screenViewModel.showAddEdgesDialog.value = true
+                        screenViewModel.edgeError.value = false
                     } else {
-                        edgeError.value = true
+                        screenViewModel.edgeError.value = true
                     }
                     true
                 }
@@ -460,7 +450,7 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(
                             onClick = {
-                                showAddVertexDialog.value = true
+                                screenViewModel.showAddVertexDialog.value = true
                                 expanded = false
                             }
                         ) {
@@ -469,10 +459,10 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 if (screenViewModel.viewModel.selected.size >= 2) {
-                                    showAddEdgesDialog = true
-                                    edgeError.value = false
+                                    screenViewModel.showAddEdgesDialog.value = true
+                                    screenViewModel.edgeError.value = false
                                 } else {
-                                    edgeError.value = true
+                                    screenViewModel.edgeError.value = true
                                 }
                                 expanded = false
                             }
@@ -482,9 +472,9 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 if (screenViewModel.viewModel.selected.isNotEmpty()) {
-                                    showDeleteConfirmation.value = true
+                                    screenViewModel.showDeleteConfirmation.value = true
                                 } else {
-                                    showNoSelectionWarning.value = true
+                                    screenViewModel.showNoSelectionWarning.value = true
                                 }
                                 expanded = false
                             }
@@ -517,55 +507,13 @@ fun <K, V> mainScreen() {
             processNeo4j(screenViewModel.readyNeo4j)
             windowPath(screenViewModel.viewModel.selected,
                 screenViewModel.path,screenViewModel.pathDialog)
-            edgeErrorWindow(edgeError)
+            edgeErrorWindow(screenViewModel.edgeError)
 
-            if (showAddVertexDialog.value) {
-                AlertDialog(
-                    onDismissRequest = {
-                        showAddVertexDialog.value = false
-                        addVertexError.value = null
-                    },
-                    title = { Text("Add new vertex") },
-                    text = {
-                        Column {
-                            TextField(
-                                value = newVertexKey.value,
-                                onValueChange = { newVertexKey.value = it },
-                                label = { Text("Key") }
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            TextField(
-                                value = newVertexValue.value,
-                                onValueChange = { newVertexValue.value = it },
-                                label = { Text("Value") }
-                            )
-                            addVertexError.value?.let {
-                                Spacer(Modifier.height(8.dp))
-                                Text(it, color = Color.Red)
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        Button({
-                            addVertexError.value = screenViewModel.viewModel.addVertex(
-                                newVertexKey.value,
-                                newVertexValue.value
-                            )
-                            if (addVertexError.value == null) {
-                                showAddVertexDialog.value = false
-                                newVertexKey.value = ""
-                                newVertexValue.value = ""
-                            }
-                        }) { Text("Add") }
-                    },
-                    dismissButton = {
-                        Button({
-                            showAddVertexDialog.value = false
-                            addVertexError.value = null
-                        }) { Text("Cancel") }
-                    }
-                )
-            }
+            AddVertexDialog(screenViewModel.showAddVertexDialog,
+                screenViewModel.addVertexError,
+                screenViewModel.newVertexKey, screenViewModel.newVertexValue,
+                screenViewModel.viewModel::addVertex)
+
             if (showAddEdgesDialog) {
                 AlertDialog(
                     onDismissRequest = { showAddEdgesDialog = false },
