@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.TextFieldValue
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.DelicateCoroutinesApi
 import model.GraphFactory
@@ -496,6 +497,7 @@ fun <K, V> mainScreen() {
                 }
             })
         ) {
+
             graphView(screenViewModel.viewModel)
             errorWindow(screenViewModel.errorText.value, screenViewModel.error)
             indexErrorWindow(screenViewModel.warning)
@@ -509,40 +511,39 @@ fun <K, V> mainScreen() {
                 screenViewModel.path,screenViewModel.pathDialog)
             edgeErrorWindow(screenViewModel.edgeError)
 
-            AddVertexDialog(screenViewModel.showAddVertexDialog,
-                screenViewModel.addVertexError,
-                screenViewModel.newVertexKey, screenViewModel.newVertexValue,
-                screenViewModel.viewModel::addVertex)
+            AddVertexDialog(screenViewModel)
 
-            if (showAddEdgesDialog) {
+            if (screenViewModel.showAddEdgesDialog.value) {
                 AlertDialog(
-                    onDismissRequest = { showAddEdgesDialog = false },
+                    onDismissRequest = { screenViewModel.showAddEdgesDialog.value = false },
                     title = { Text("Add Edges") },
                     text = {
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 RadioButton(
-                                    selected = isAllToAllMode,
-                                    onClick = { isAllToAllMode = true }
+                                    selected = screenViewModel.isAllToAllMode.value,
+                                    onClick = { screenViewModel.isAllToAllMode.value = true }
                                 )
                                 Text("All to all", Modifier.padding(start = 4.dp))
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 RadioButton(
-                                    selected = !isAllToAllMode,
-                                    onClick = { isAllToAllMode = false }
+                                    selected = !screenViewModel.isAllToAllMode.value,
+                                    onClick = { screenViewModel.isAllToAllMode.value = false }
                                 )
                                 Text("Sequentially", Modifier.padding(start = 4.dp))
-                            }
-                            Spacer(Modifier.height(16.dp))
-                            TextField(
-                                value = edgeWeightInput,
-                                onValueChange = { edgeWeightInput = it },
-                                label = { Text("Edge weight") },
-                                isError = !isWeightValid
-                            )
-                            if (!isWeightValid) {
-                                Text("Enter valid number", color = Color.Red)
+
+                                Spacer(Modifier.height(16.dp))
+
+                                TextField(
+                                    value =screenViewModel.edgeWeight.value,
+                                    onValueChange = { screenViewModel.edgeWeight.value = it.toString().toIntOrNull() },
+                                    label = { Text("Edge weight") },
+                                    isError = !screenViewModel.isWeightValid.value
+                                )
+                                if (!isWeightValid) {
+                                    Text("Enter valid number", color = Color.Red)
+                                }
                             }
                         }
                     },

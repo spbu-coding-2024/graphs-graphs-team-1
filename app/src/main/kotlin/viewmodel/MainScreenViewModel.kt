@@ -43,10 +43,10 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     val addVertexError = mutableStateOf<String?>(null)
 
     var showAddEdgesDialog = mutableStateOf(false)
-    var edgeWeightInput = "1"
+
     var isAllToAllMode = mutableStateOf(true)
-    val edgeWeight = mutableStateOf(edgeWeightInput.toIntOrNull())
-    val isWeightValid = mutableStateOf(edgeWeightInput.toIntOrNull() != null )
+    val edgeWeight = mutableStateOf("1".toIntOrNull())
+    val isWeightValid = mutableStateOf("1".toIntOrNull() != null )
     val edgeError =  mutableStateOf(false)
 
     val showDeleteConfirmation =  mutableStateOf(false)
