@@ -111,9 +111,7 @@ fun <K, V> mainScreen() {
 
     val requester = remember { FocusRequester() }
 
-    var edgeWeightInput by remember { mutableStateOf("1") }
-    val edgeWeight = remember(edgeWeightInput) { edgeWeightInput.toIntOrNull() }
-    val isWeightValid = remember(edgeWeightInput) { edgeWeightInput.toIntOrNull() != null }
+
 
     val set: (Double) -> Unit = { n ->
         screenViewModel.viewModel.vertices.values.forEach {
@@ -486,7 +484,6 @@ fun <K, V> mainScreen() {
     ) {
 
 
-
         Surface(
             Modifier.fillMaxSize().onDrag(onDrag = { offset ->
                 screenViewModel.viewModel.vertices.values.forEach {
@@ -533,12 +530,11 @@ fun <K, V> mainScreen() {
                             }
                             Spacer(Modifier.height(16.dp))
                             TextField(
-                                value = edgeWeightInput,
-                                onValueChange = { edgeWeightInput = it },
-                                label = { Text("Edge weight") },
-                                isError = !isWeightValid
+                                value = screenViewModel.edgeWeightInput.value,
+                                onValueChange = {n -> screenViewModel.edgeWeightInput.value = n},
+                                //label = { Text("Edge weight") },
                             )
-                            if (!isWeightValid) {
+                            if (screenViewModel.edgeWeightInput.value.toIntOrNull()==null) {
                                 Text("Enter valid number", color = Color.Red)
                             }
                         }
@@ -546,7 +542,7 @@ fun <K, V> mainScreen() {
                     confirmButton = {
                         Button(
                             onClick = {
-                                edgeWeight.let { weight ->
+                                screenViewModel.edgeWeightInput.let { weight ->
                                     val selectedVertices = screenViewModel.viewModel.selected.map { it.vertex }
                                     if (screenViewModel.isAllToAllMode.value) {
                                         for (i in selectedVertices.indices) {
@@ -554,7 +550,7 @@ fun <K, V> mainScreen() {
                                                 screenViewModel.viewModel.graph.addEdge(
                                                     selectedVertices[i],
                                                     selectedVertices[j],
-                                                    weight!!
+                                                    weight.value.toIntOrNull()!!
                                                 )
                                             }
                                         }
@@ -563,7 +559,7 @@ fun <K, V> mainScreen() {
                                             screenViewModel.viewModel.graph.addEdge(
                                                 selectedVertices[i],
                                                 selectedVertices[i + 1],
-                                                weight!!
+                                                weight.value.toIntOrNull()!!
                                             )
                                         }
                                     }
@@ -571,7 +567,7 @@ fun <K, V> mainScreen() {
                                     screenViewModel.showAddEdgesDialog.value = false
                                 }
                             },
-                            enabled = isWeightValid
+                            enabled = screenViewModel.edgeWeightInput.value.toIntOrNull()!=null
                         ) { Text("Add") }
                     },
                     dismissButton = {

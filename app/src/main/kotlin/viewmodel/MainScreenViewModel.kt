@@ -43,6 +43,9 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     val addVertexError = mutableStateOf<String?>(null)
 
     var showAddEdgesDialog = mutableStateOf(false)
+    var edgeWeightInput=mutableStateOf("1")
+
+
 
     var isAllToAllMode = mutableStateOf(true)
     val edgeError =  mutableStateOf(false)
@@ -52,7 +55,6 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     
 
     val buttonEdgeLabel=mutableStateOf(false)
-
     val path=mutableStateOf(0)
 
     val planarAlgos: (Planar) -> Unit = {
