@@ -12,7 +12,6 @@ import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun errorWindow(errorText: String?, flag: MutableState<Boolean>) {
-    println(errorText)
     if (flag.value)
         AlertDialog(
             onDismissRequest = { flag.value = false},
