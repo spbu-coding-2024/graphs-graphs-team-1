@@ -36,13 +36,6 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -87,11 +80,6 @@ import view.windows.processNeo4j
 import view.windows.windowPath
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
-import java.io.File
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import javax.swing.JFileChooser
-import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
 import kotlin.math.max
 import kotlin.math.min
@@ -228,6 +216,7 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.downloadJson()
+                                downloader = false
                             }
                         ) {
                             Text("From JSON...")
@@ -236,6 +225,7 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.downloadNeo4j()
+                                downloader = false
                             }
                         ) {
                             Text("From Neo4j...")
@@ -257,6 +247,7 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.uploadJson()
+                                uploader = false
                             }
                         ) {
                             Text("To JSON...")
@@ -265,6 +256,7 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.uploadNeo4j()
+                                uploader = false
                             }
                         ) {
                             Text("To Neo4j...")
@@ -277,7 +269,6 @@ fun <K, V> mainScreen() {
                 }
                 //выбор графа
                 Box {
-                    val start = mutableStateOf(false)
                     IconButton(onClick = { create = !create }, Modifier.padding(8.dp, 2.dp)) {
                         Text("Graphs")
                     }
@@ -287,7 +278,7 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(
                             onClick = {
-                                start.value = true
+                               screenViewModel.graphtype.value = true
                             }
                         ) {
                             val graphs = listOf(
@@ -297,9 +288,9 @@ fun <K, V> mainScreen() {
                                 "Directed Graph"
                             )
                             val (selectedOption, onOptionSelected) = remember { mutableStateOf(graphs[0]) }
-                            if (start.value) {
+                            if (screenViewModel.graphtype.value) {
                                 AlertDialog(
-                                    onDismissRequest = { start.value = false },
+                                    onDismissRequest = { screenViewModel.graphtype.value = false },
                                     text = {
                                         Column(Modifier.selectableGroup()) {
                                             graphs.forEach { text ->
@@ -333,7 +324,7 @@ fun <K, V> mainScreen() {
                                                     else -> DirectedGraph()
                                                 }
                                                 screenViewModel.viewModel = GraphViewModel(graph)
-                                                start.value = false
+                                                screenViewModel.graphtype.value=false
                                             }
                                         ) { Text("OK") }
 
@@ -357,6 +348,7 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.dijkstra()
+                                expAlgo = false
                             }
                         ) {
                             Text("Dijkstra")
@@ -365,6 +357,7 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.fordBellman()
+                                expAlgo = false
                             }
 
                         ) {
@@ -376,6 +369,7 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.cycles()
+                                expAlgo = false
                             },
                         ) {
                             Text("Cycles search")
@@ -386,6 +380,7 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.kosajuruSharir()
+                                expAlgo = false
                             },
                         ) {
                             Text("Connected components search")
@@ -395,6 +390,7 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.forceAtlas2()
+                                expAlgo = false
                             }
                         ) {
                             Text("ForceAtlas2")
@@ -403,6 +399,7 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.yuifanHu()
+                                expAlgo = false
                             }
                         ) {
                             Text("YuifanHu")
@@ -420,10 +417,12 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(onClick = {
                             screenViewModel.resetSelected()
+                            expandedSecondary=false
                         }) { Text("Reset") }
 
                         DropdownMenuItem(onClick = {
                             screenViewModel.visibleEdges()
+                            expandedSecondary=false
                         })
                         {
                             Text(
@@ -482,8 +481,6 @@ fun <K, V> mainScreen() {
             }
         }
     ) {
-
-
         Surface(
             Modifier.fillMaxSize().onDrag(onDrag = { offset ->
                 screenViewModel.viewModel.vertices.values.forEach {
@@ -516,7 +513,6 @@ fun <K, V> mainScreen() {
 
             if (screenViewModel.showNoSelectionWarning.value)
                 SelectionErrorWindow(screenViewModel)
-
         }
     }
 }

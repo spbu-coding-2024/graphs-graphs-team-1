@@ -46,7 +46,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     var showAddEdgesDialog = mutableStateOf(false)
     var edgeWeightInput=mutableStateOf("1")
 
-
+    var graphtype=mutableStateOf(false)
 
     var isAllToAllMode = mutableStateOf(true)
     val edgeError =  mutableStateOf(false)

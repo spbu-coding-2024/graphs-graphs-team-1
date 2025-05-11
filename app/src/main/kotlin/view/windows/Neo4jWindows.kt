@@ -9,6 +9,7 @@ import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
@@ -26,25 +27,37 @@ fun inputNeo4j(flag: MutableState<Boolean>, set: MutableState<Boolean>,
                     Text("URI")
                     TextField(
                         value = uriNeo4j.value,
-                        onValueChange = { n -> uriNeo4j.value = n }
+                        onValueChange = { n -> uriNeo4j.value = n },
+                        label = {Text("uri")}
                     )
                     Text("Login")
                     TextField(
                         value = loginNeo4j.value,
-                        onValueChange = { n -> loginNeo4j.value = n }
+                        onValueChange = { n -> loginNeo4j.value = n },
+                        label = {Text("login")}
                     )
                     Text("Password")
                     TextField(
                         value = passwordNeo4j.value,
-                        onValueChange = { n -> passwordNeo4j.value = n }
+                        onValueChange = { n -> passwordNeo4j.value = n },
+                        label = {Text("password")}
                     )
-                    Button({ flag.value = false; set.value=true }) {
-                        Text("OK", fontSize = 22.sp)
-                    }
+                    if (passwordNeo4j.value.isBlank() || loginNeo4j.value.isBlank() || uriNeo4j.value.isBlank())
+                        Text("Enter valid number", color = Color.Red)
                 }
+
             },
             properties = DialogProperties(dismissOnBackPress = false),
-            buttons = {}
+            confirmButton = {
+                Button({ flag.value = false; set.value=true }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                Button({ flag.value = false; set.value=true }) {
+                    Text("Cancel")
+                }
+            }
         )
 }
 
