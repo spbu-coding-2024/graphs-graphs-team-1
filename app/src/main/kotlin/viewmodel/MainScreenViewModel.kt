@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import model.Vertex
 import model.graphs.EmptyGraph
 import view.ColorList
 import java.io.File
@@ -357,6 +358,74 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         }
     }
 
+    fun vertexAddition() {
+        try {
+            if (viewModel.graph is EmptyGraph<*,*>)
+                throw IllegalStateException()
+            addVertexError.value = viewModel.addVertex(
+                newVertexKey.value,
+                newVertexValue.value
+            )
+        }  catch (e: IllegalStateException) {
+            errorText.value="Choose graph type first"
+            error.value=true
+        } catch (e: Exception) {
+            errorText.value=e.message.toString()
+            error.value=true
+        }
+    }
+
+    fun edgeAddition() {
+        try {
+            if (viewModel.graph is EmptyGraph<*,*>)
+                throw IllegalStateException()
+            edgeWeightInput.let { weight ->
+                val selectedVertices = viewModel.selected.map { it.vertex }
+                if (isAllToAllMode.value) {
+                    for (i in selectedVertices.indices) {
+                        for (j in i + 1 until selectedVertices.size) {
+                            viewModel.graph.addEdge(
+                                selectedVertices[i],
+                                selectedVertices[j],
+                                weight.value.toIntOrNull()!!
+                            )
+                        }
+                    }
+                } else {
+                    for (i in 0 until selectedVertices.size - 1) {
+                        viewModel.graph.addEdge(
+                            selectedVertices[i],
+                            selectedVertices[i + 1],
+                            weight.value.toIntOrNull()!!
+                        )
+                    }
+                }
+                viewModel.updateEdgesView()
+                showAddEdgesDialog.value = false
+            }
+        } catch (e: IllegalStateException) {
+            errorText.value="Choose graph type first"
+            error.value=true
+        } catch (e: Exception) {
+            errorText.value=e.message.toString()
+            error.value=true
+        }
+    }
+
+    fun vertexDeletion() {
+        try {
+            if (viewModel.graph is EmptyGraph<*,*>)
+                throw IllegalStateException()
+            viewModel.deleteSelectedVertices()
+            showDeleteConfirmation.value = false
+        } catch (e: IllegalStateException) {
+            errorText.value="Choose graph type first"
+            error.value=true
+        } catch (e: Exception) {
+            errorText.value=e.message.toString()
+            error.value=true
+        }
+    }
 
 }
 
