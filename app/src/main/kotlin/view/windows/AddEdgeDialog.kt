@@ -14,6 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import model.Vertex
+import model.graphs.DirWeightGraph
+import model.graphs.UndirWeightGraph
+import model.graphs.UndirectedGraph
 import viewmodel.MainScreenViewModel
 import java.lang.reflect.Type
 
@@ -39,11 +42,12 @@ fun AddEdgeDialog(screenViewModel: MainScreenViewModel<*, *>) {
                     Text("Sequentially", Modifier.padding(start = 4.dp))
                 }
                 Spacer(Modifier.height(16.dp))
-                TextField(
-                    value = screenViewModel.edgeWeightInput.value,
-                    onValueChange = { n -> screenViewModel.edgeWeightInput.value = n },
-                    label = { Text("Edge weight") },
-                )
+                if (screenViewModel.viewModel.graph::class.simpleName !in arrayOf("UndirectedGraph", "DirectedGraph"))
+                    TextField(
+                        value = screenViewModel.edgeWeightInput.value,
+                        onValueChange = { n -> screenViewModel.edgeWeightInput.value = n },
+                        label = { Text("Edge weight") },
+                    )
                 if (screenViewModel.edgeWeightInput.value.toIntOrNull() == null) {
                     Text("Enter valid number", color = Color.Red)
                 }

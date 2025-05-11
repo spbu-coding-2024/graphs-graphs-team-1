@@ -23,7 +23,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
     init {
         graph.edges.values.forEach { it ->
             for (i in it) {
-                if (graph::class.simpleName in arrayOf("UndirectedGraph", "UndirWeightGraph"))
+                if (graph is UndirWeightGraph)
                     if (temp.any { it.link.first === i.link.second && it.link.second === i.link.first })
                         continue
                 temp.add(i)

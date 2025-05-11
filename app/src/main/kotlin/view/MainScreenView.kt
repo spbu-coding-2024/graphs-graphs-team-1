@@ -1,21 +1,12 @@
 package view
 
 import AddEdgeDialog
-import algo.bellmanford.FordBellman
-import algo.cycles.Cycles
-import algo.dijkstra.Dijkstra
-import algo.planar.ForceAtlas2
-import algo.planar.Planar
-import algo.planar.YifanHu
-import algo.strconnect.KosarujuSharir
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.material.TextField
 import androidx.compose.material.RadioButton
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,16 +20,13 @@ import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,22 +43,16 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.semantics.Role
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.DelicateCoroutinesApi
-import model.GraphFactory
-import model.InternalFormatFactory
-import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
-import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import view.windows.AddVertexDialog
 import view.windows.DeleteConfirmWindow
+import view.windows.DeleteEdgeDialog
 import view.windows.SelectionErrorWindow
 import view.windows.edgeErrorWindow
 import view.windows.errorWindow
@@ -122,7 +104,7 @@ fun <K, V> mainScreen() {
             when {
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Delete -> {
                     if (screenViewModel.viewModel.selected.isNotEmpty()) {
-                        screenViewModel.showDeleteConfirmation.value = true
+                        screenViewModel.showDeleteConfirmationVertex.value = true
                     } else {
                         screenViewModel.showNoSelectionWarning.value = true
                     }
@@ -278,7 +260,7 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(
                             onClick = {
-                               screenViewModel.graphtype.value = true
+                               screenViewModel.graphType.value = true
                             }
                         ) {
                             val graphs = listOf(
@@ -288,9 +270,9 @@ fun <K, V> mainScreen() {
                                 "Directed Graph"
                             )
                             val (selectedOption, onOptionSelected) = remember { mutableStateOf(graphs[0]) }
-                            if (screenViewModel.graphtype.value) {
+                            if (screenViewModel.graphType.value) {
                                 AlertDialog(
-                                    onDismissRequest = { screenViewModel.graphtype.value = false },
+                                    onDismissRequest = { screenViewModel.graphType.value = false },
                                     text = {
                                         Column(Modifier.selectableGroup()) {
                                             graphs.forEach { text ->
@@ -324,7 +306,7 @@ fun <K, V> mainScreen() {
                                                     else -> DirectedGraph()
                                                 }
                                                 screenViewModel.viewModel = GraphViewModel(graph)
-                                                screenViewModel.graphtype.value=false
+                                                screenViewModel.graphType.value=false
                                             }
                                         ) { Text("OK") }
 
@@ -467,7 +449,7 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 if (screenViewModel.viewModel.selected.isNotEmpty()) {
-                                    screenViewModel.showDeleteConfirmation.value = true
+                                    screenViewModel.showDeleteConfirmationVertex.value = true
                                 } else {
                                     screenViewModel.showNoSelectionWarning.value = true
                                 }
@@ -475,6 +457,17 @@ fun <K, V> mainScreen() {
                             }
                         ) {
                             Text("Delete selected vertices")
+                        }
+                        DropdownMenuItem(
+                            onClick = {
+                                if (screenViewModel.viewModel.selected.isNotEmpty())
+                                    screenViewModel.showDeleteEdgeDialog.value = true
+                                else
+                                    screenViewModel.showNoSelectionWarning.value = true
+                                expanded = false
+                            }
+                        ) {
+                            Text("Delete edges")
                         }
                     }
                 }
@@ -508,8 +501,11 @@ fun <K, V> mainScreen() {
             if (screenViewModel.showAddEdgesDialog.value)
                 AddEdgeDialog(screenViewModel)
 
-            if (screenViewModel.showDeleteConfirmation.value)
-                DeleteConfirmWindow(screenViewModel)
+            if (screenViewModel.showDeleteConfirmationVertex.value)
+                DeleteConfirmWindow(screenViewModel, "vertices")
+
+            if (screenViewModel.showDeleteEdgeDialog.value)
+                DeleteEdgeDialog(screenViewModel)
 
             if (screenViewModel.showNoSelectionWarning.value)
                 SelectionErrorWindow(screenViewModel)

@@ -5,21 +5,27 @@ import algo.planar.Planar
 import algo.planar.YifanHu
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import model.Edge
 import model.Vertex
 import model.graphs.EmptyGraph
 import view.ColorList
 import java.io.File
+import java.util.Vector
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
 
 class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
+    enum class DeletionMode{
+        SOLO,
+        ALL,
+        SEQUENCE
+    }
 
     var viewModel by mutableStateOf(graphViewModel)
 
@@ -43,15 +49,18 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     val newVertexValue =  mutableStateOf("") 
     val addVertexError = mutableStateOf<String?>(null)
 
+    var showDeleteEdgeDialog = mutableStateOf(false)
     var showAddEdgesDialog = mutableStateOf(false)
     var edgeWeightInput=mutableStateOf("1")
 
-    var graphtype=mutableStateOf(false)
+    var graphType=mutableStateOf(false)
 
     var isAllToAllMode = mutableStateOf(true)
     val edgeError =  mutableStateOf(false)
 
-    val showDeleteConfirmation =  mutableStateOf(false)
+    var allEdgesFromSelected = mutableStateOf(DeletionMode.SOLO)
+
+    val showDeleteConfirmationVertex =  mutableStateOf(false)
     val showNoSelectionWarning =  mutableStateOf(false)
     
 
@@ -387,7 +396,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                             viewModel.graph.addEdge(
                                 selectedVertices[i],
                                 selectedVertices[j],
-                                weight.value.toIntOrNull()!!
+                                weight.value.toIntOrNull() ?: throw IllegalArgumentException()
                             )
                         }
                     }
@@ -396,13 +405,13 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                         viewModel.graph.addEdge(
                             selectedVertices[i],
                             selectedVertices[i + 1],
-                            weight.value.toIntOrNull()!!
+                            weight.value.toIntOrNull() ?: throw IllegalArgumentException()
                         )
                     }
                 }
-                viewModel.updateEdgesView()
-                showAddEdgesDialog.value = false
             }
+            viewModel.updateEdgesView()
+            showAddEdgesDialog.value = false
         } catch (e: IllegalStateException) {
             errorText.value="Choose graph type first"
             error.value=true
@@ -417,7 +426,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             if (viewModel.graph is EmptyGraph<*,*>)
                 throw IllegalStateException()
             viewModel.deleteSelectedVertices()
-            showDeleteConfirmation.value = false
+            showDeleteConfirmationVertex.value = true
         } catch (e: IllegalStateException) {
             errorText.value="Choose graph type first"
             error.value=true
@@ -427,5 +436,59 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         }
     }
 
+    fun edgeDeletion() {
+        try {
+            if (viewModel.graph is EmptyGraph<*,*>)
+                throw IllegalStateException()
+
+                val selectedVertices = viewModel.selected.map { it.vertex }
+                when (allEdgesFromSelected.value) {
+                    DeletionMode.ALL -> {
+                        for (i in selectedVertices) {
+                            for (j in selectedVertices) {
+                                if (i != j) {
+                                    viewModel.graph.deleteEdge(i, j)
+                                    viewModel.edges.keys.removeAll { edge ->
+                                        edge.link.first == i && edge.link.first == j
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    DeletionMode.SEQUENCE -> {
+                        for (i in 0..<selectedVertices.size - 1) {
+                            viewModel.graph.deleteEdge(
+                                selectedVertices[i],
+                                selectedVertices[i + 1]
+                            )
+                            viewModel.edges.keys.removeAll { edge ->
+                                edge.link.first == selectedVertices[i] && edge.link.second == selectedVertices[i + 1]
+                            }
+                        }
+                    }
+                    else -> {
+                        val temp= Vector<Edge<K, V>>()
+                        viewModel.graph.edges.forEach{ start ->
+                            start.value.forEach {
+                                if (it.link.first===selectedVertices[0] || it.link.second===selectedVertices[0]) {
+                                    temp.add(it)
+                                    viewModel.edges.remove(it)
+                                }
+                            }
+                        }
+                        temp.forEach{
+                            viewModel.graph.deleteEdge(it.link.first, it.link.second)
+                        }
+                    }
+                }
+            allEdgesFromSelected.value= DeletionMode.SOLO
+        } catch (e: IllegalStateException) {
+            errorText.value = "Choose graph type first"
+            error.value = true
+        } catch (e: Exception) {
+            errorText.value=e.message.toString()
+            error.value=true
+        }
+    }
 }
 

@@ -7,18 +7,19 @@ import androidx.compose.runtime.Composable
 import viewmodel.MainScreenViewModel
 
 @Composable
-fun DeleteConfirmWindow(screenViewModel: MainScreenViewModel<*,*>) {
+fun DeleteConfirmWindow(screenViewModel: MainScreenViewModel<*,*>, text: String) {
     AlertDialog(
-        onDismissRequest = { screenViewModel.showDeleteConfirmation.value = false },
+        onDismissRequest = { screenViewModel.showDeleteConfirmationVertex.value = false },
         title = { Text("Confirm deletion") },
-        text = { Text("Delete ${screenViewModel.viewModel.selected.size} selected vertices?") },
+        text = { Text("Delete ${screenViewModel.viewModel.selected.size} selected $text?") },
         confirmButton = {
             Button({
                 screenViewModel.vertexDeletion()
+                screenViewModel.showDeleteConfirmationVertex.value = false
             }) { Text("Delete") }
         },
         dismissButton = {
-            Button({ screenViewModel.showDeleteConfirmation.value = false }) { Text("Cancel") }
+            Button({ screenViewModel.showDeleteConfirmationVertex.value = false }) { Text("Cancel") }
         }
     )
 }
