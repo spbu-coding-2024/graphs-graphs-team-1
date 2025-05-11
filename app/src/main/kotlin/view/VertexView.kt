@@ -60,6 +60,10 @@ fun <K, V> VertexView(
                     onTap = {
                         viewModel.selected.value = !viewModel.selected.value
                         viewModel.color.value = if (!viewModel.selected.value) Color.Cyan else Color.Red
+                        if (viewModel.selected.value)
+                            graphViewModel.selected.add(viewModel)
+                        else
+                            graphViewModel.selected.remove(viewModel)
                     },
                     onDoubleTap = {
                         openDialog.value = true
@@ -69,55 +73,56 @@ fun <K, V> VertexView(
                     }
                 )
             }
-    ) {}
+    ) {
 
-    if (openDialog.value) {
-        AlertDialog(
-            onDismissRequest = { openDialog.value = false },
-            title = { Text("Vertex ${viewModel.vertex.hashCode()}") },
-            text = {
-                Column {
-                    Text("Current key: ${viewModel.vertex.key}")
-                    TextField(
-                        value = tempKey.value,
-                        onValueChange = { tempKey.value = it },
-                        label = { Text("New key") }
-                    )
+        if (openDialog.value) {
+            AlertDialog(
+                onDismissRequest = { openDialog.value = false },
+                title = { Text("Vertex ${viewModel.vertex.hashCode()}") },
+                text = {
+                    Column {
+                        Text("Current key: ${viewModel.vertex.key}")
+                        TextField(
+                            value = tempKey.value,
+                            onValueChange = { tempKey.value = it },
+                            label = { Text("New key") }
+                        )
 
-                    Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(8.dp))
 
-                    Text("Current value: ${viewModel.vertex.value}")
-                    TextField(
-                        value = tempValue.value,
-                        onValueChange = { tempValue.value = it },
-                        label = { Text("New value") }
-                    )
+                        Text("Current value: ${viewModel.vertex.value}")
+                        TextField(
+                            value = tempValue.value,
+                            onValueChange = { tempValue.value = it },
+                            label = { Text("New value") }
+                        )
 
-                    Spacer(Modifier.height(8.dp))
-                    Text("Degree: ${graphViewModel.graph.getOutDegreeOfVertex(viewModel.vertex)}")
+                        Spacer(Modifier.height(8.dp))
+                        Text("Degree: ${graphViewModel.graph.getOutDegreeOfVertex(viewModel.vertex)}")
 
-                    errorMessage.value?.let {
-                        Text(it, color = Color.Red)
+                        errorMessage.value?.let {
+                            Text(it, color = Color.Red)
+                        }
                     }
+                },
+                confirmButton = {
+                    Button({
+                        val error = graphViewModel.updateVertex(
+                            viewModel.vertex,
+                            tempKey.value,
+                            tempValue.value
+                        )
+                        if (error == null) {
+                            openDialog.value = false
+                        } else {
+                            errorMessage.value = error
+                        }
+                    }) { Text("Save") }
+                },
+                dismissButton = {
+                    Button({ openDialog.value = false }) { Text("Cancel") }
                 }
-            },
-            confirmButton = {
-                Button({
-                    val error = graphViewModel.updateVertex(
-                        viewModel.vertex,
-                        tempKey.value,
-                        tempValue.value
-                    )
-                    if (error == null) {
-                        openDialog.value = false
-                    } else {
-                        errorMessage.value = error
-                    }
-                }) { Text("Save") }
-            },
-            dismissButton = {
-                Button({ openDialog.value = false }) { Text("Cancel") }
-            }
-        )
+            )
+        }
     }
 }
