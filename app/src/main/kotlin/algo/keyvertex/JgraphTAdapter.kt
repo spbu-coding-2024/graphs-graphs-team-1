@@ -15,6 +15,7 @@ import model.Vertex
 class JGraphTAdapter<K, V>(private val originalGraph: Graph<K, V>) {
 
     private val adaptedGraph: JGraphTGraph<Vertex<K, V>, DefaultEdge> = createBaseGraph()
+    fun getAdaptedGraph(): JGraphTGraph<Vertex<K, V>, DefaultEdge> = adaptedGraph
 
     private fun createBaseGraph(): JGraphTGraph<Vertex<K, V>, DefaultEdge> {
         return when (originalGraph) {
@@ -35,15 +36,15 @@ class JGraphTAdapter<K, V>(private val originalGraph: Graph<K, V>) {
                 val target = edge.link.second
                 val jgraphtEdge = adaptedGraph.addEdge(source, target)
 
-                when (originalGraph) {
-                    is DirWeightGraph<*, *>, is UndirWeightGraph<*, *> ->
-                        adaptedGraph.setEdgeWeight(jgraphtEdge, edge.weight.toDouble())
-                    else ->
-                        adaptedGraph.setEdgeWeight(jgraphtEdge, 1.0)
+                if (jgraphtEdge != null) {
+                    when (originalGraph) {
+                        is DirWeightGraph<*, *>, is UndirWeightGraph<*, *> ->
+                            adaptedGraph.setEdgeWeight(jgraphtEdge, edge.weight?.toDouble() ?: 1.0)
+                        else ->
+                            adaptedGraph.setEdgeWeight(jgraphtEdge, 1.0)
+                    }
                 }
             }
         }
     }
-
-    fun getAdaptedGraph(): JGraphTGraph<Vertex<K, V>, DefaultEdge> = adaptedGraph
 }
