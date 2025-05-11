@@ -388,34 +388,6 @@ fun <K, V> mainScreen() {
                         }
                     }
                 }
-                //побочные функции
-                Box {
-                    IconButton(onClick = { expandedSecondary = !expandedSecondary }, Modifier.padding(8.dp, 2.dp)) {
-                        Text("Other")
-                    }
-                    DropdownMenu(
-                        expanded = expandedSecondary,
-                        onDismissRequest = { expandedSecondary = false }
-                    ) {
-                        DropdownMenuItem(onClick = {
-                            screenViewModel.resetSelected()
-                            expandedSecondary=false
-                        }) { Text("Reset") }
-
-                        DropdownMenuItem(onClick = {
-                            screenViewModel.visibleEdges()
-                            expandedSecondary=false
-                        })
-                        {
-                            Text(
-                                when (screenViewModel.buttonEdgeLabel.value) {
-                                    false -> "Show edge weights"
-                                    true -> "Hide edge weights"
-                                }
-                            )
-                        }
-                    }
-                }
                 //добавление/удаление
                 Box {
                     IconButton(onClick = { expanded = true }, modifier = Modifier.padding(8.dp, 2.dp)) {
@@ -468,6 +440,34 @@ fun <K, V> mainScreen() {
                             }
                         ) {
                             Text("Delete edges")
+                        }
+                    }
+                }
+                //побочные функции
+                Box {
+                    IconButton(onClick = { expandedSecondary = !expandedSecondary }, Modifier.padding(8.dp, 2.dp)) {
+                        Text("Other")
+                    }
+                    DropdownMenu(
+                        expanded = expandedSecondary,
+                        onDismissRequest = { expandedSecondary = false }
+                    ) {
+                        DropdownMenuItem(onClick = {
+                            screenViewModel.resetSelected()
+                            expandedSecondary=false
+                        }) { Text("Reset") }
+
+                        DropdownMenuItem(onClick = {
+                            screenViewModel.visibleEdges()
+                            expandedSecondary=false
+                        })
+                        {
+                            Text(
+                                when (screenViewModel.buttonEdgeLabel.value) {
+                                    false -> "Show edge weights"
+                                    true -> "Hide edge weights"
+                                }
+                            )
                         }
                     }
                 }
