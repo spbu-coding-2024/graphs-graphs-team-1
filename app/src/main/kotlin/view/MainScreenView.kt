@@ -39,6 +39,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
@@ -102,9 +103,17 @@ fun <K, V> mainScreen() {
     Scaffold(
         modifier = Modifier.focusRequester(requester).focusable().onKeyEvent { keyEvent ->
             when {
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Delete -> {
+                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.V && keyEvent.isShiftPressed-> {
                     if (screenViewModel.viewModel.selected.isNotEmpty()) {
                         screenViewModel.showDeleteConfirmationVertex.value = true
+                    } else {
+                        screenViewModel.showNoSelectionWarning.value = true
+                    }
+                    true
+                }
+                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.E && keyEvent.isShiftPressed-> {
+                    if (screenViewModel.viewModel.selected.isNotEmpty()) {
+                        screenViewModel.showDeleteEdgeDialog.value = true
                     } else {
                         screenViewModel.showNoSelectionWarning.value = true
                     }
