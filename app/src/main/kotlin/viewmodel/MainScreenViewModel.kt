@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import model.Edge
 import model.Vertex
@@ -35,11 +36,9 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     var error = mutableStateOf(false)
     var errorText = mutableStateOf("")
 
-    var repainter= mutableStateOf(false)
-
+    var statusNeo4j=mutableStateOf(true)
     val openNeo4j=mutableStateOf(false)
     val readyNeo4j=mutableStateOf(true)
-    val set= mutableStateOf(false)
 
 
     val uriNeo4j = mutableStateOf("")
@@ -291,27 +290,30 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
     @OptIn(DelicateCoroutinesApi::class)
     fun downloadNeo4jBasic() {
-        try {
-//        GlobalScope.launch(
-//            block = {
-
+            GlobalScope.launch(
+                block = {
+                    try {
+                        openNeo4j.value = false
                         readyNeo4j.value = false
-                        val result = viewModel.downloadNeo4j(uriNeo4j.value,
-                            loginNeo4j.value, passwordNeo4j.value)
-                        println(result.vertices.size)
-                        println(result.edges.values.flatten().size)
+                        val result = viewModel.downloadNeo4j(
+                            uriNeo4j.value,
+                            loginNeo4j.value, passwordNeo4j.value
+                        )
                         viewModel.downloader(result)
+                        showAddVertexDialog.value=true
+                    } catch (e: Exception) {
+                        openNeo4j.value = false
+                        errorText.value = e.message.toString()
+                        error.value = true
+                    } finally {
+                        showAddVertexDialog.value=false
+                        readyNeo4j.value = true
+                    }
+                }
+            )
 
-           // }
-        //)
-        } catch (e: Exception) {
-            openNeo4j.value = false
-            errorText.value = e.message.toString()
-            error.value = true
-        } finally {
-            set.value = false
-            readyNeo4j.value = true
-        }
+
+
     }
 
     fun uploadJson() {
@@ -334,22 +336,22 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
     @OptIn(DelicateCoroutinesApi::class)
     fun uploadNeo4jBasic() {
-        GlobalScope.launch(
-            block = {
-                try {
-                    readyNeo4j.value = false
-                    viewModel.uploadNeo4j(uriNeo4j.value,
-                        loginNeo4j.value, passwordNeo4j.value)
-                } catch (e: Exception) {
-                    openNeo4j.value = false
-                    errorText.value = e.message.toString()
-                    error.value = true
-                } finally {
-                    readyNeo4j.value = true
-                    set.value = false
+        try {
+            openNeo4j.value = false
+            readyNeo4j.value = false
+            GlobalScope.launch(
+                block = {
+                        viewModel.uploadNeo4j(uriNeo4j.value,
+                            loginNeo4j.value, passwordNeo4j.value)
                 }
-            }
-        )
+            )
+        } catch (e: Exception) {
+            openNeo4j.value = false
+            errorText.value = e.message.toString()
+            error.value = true
+        } finally {
+            readyNeo4j.value = true
+        }
     }
 
     fun uploadNeo4j() {

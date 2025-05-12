@@ -1,6 +1,10 @@
 package view.windows
 
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
@@ -8,53 +12,59 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import viewmodel.MainScreenViewModel
 
 @Composable
-fun inputNeo4j(flag: MutableState<Boolean>, set: MutableState<Boolean>,
-               uriNeo4j: MutableState<String>, loginNeo4j: MutableState<String>,
-               passwordNeo4j: MutableState<String>) {
-    if (flag.value)
+fun inputNeo4j(screenViewModel: MainScreenViewModel<*, *>) {
+    if (screenViewModel.openNeo4j.value)
         AlertDialog(
-            onDismissRequest = { flag.value = false},
+            onDismissRequest = { screenViewModel.openNeo4j.value = false},
             title = { Text(text = "Neo4j database") },
             text = {
                 Column {
-                    Text("URI")
                     TextField(
-                        value = uriNeo4j.value,
-                        onValueChange = { n -> uriNeo4j.value = n },
+                        value = screenViewModel.uriNeo4j.value,
+                        onValueChange = { n -> screenViewModel.uriNeo4j.value = n },
                         label = {Text("uri")}
                     )
-                    Text("Login")
                     TextField(
-                        value = loginNeo4j.value,
-                        onValueChange = { n -> loginNeo4j.value = n },
+                        value = screenViewModel.loginNeo4j.value,
+                        onValueChange = { n -> screenViewModel.loginNeo4j.value = n },
                         label = {Text("login")}
                     )
-                    Text("Password")
                     TextField(
-                        value = passwordNeo4j.value,
-                        onValueChange = { n -> passwordNeo4j.value = n },
+                        value = screenViewModel.passwordNeo4j.value,
+                        onValueChange = { n -> screenViewModel.passwordNeo4j.value = n },
                         label = {Text("password")}
                     )
-                    if (passwordNeo4j.value.isBlank() || loginNeo4j.value.isBlank() || uriNeo4j.value.isBlank())
-                        Text("Enter valid number", color = Color.Red)
+                    if (screenViewModel.passwordNeo4j.value.isBlank() || screenViewModel.loginNeo4j.value.isBlank() || screenViewModel.uriNeo4j.value.isBlank())
+                        Text("Enter valid data", color = Color.Red)
                 }
 
             },
             properties = DialogProperties(dismissOnBackPress = false),
             confirmButton = {
-                Button({ flag.value = false; set.value=true }) {
+                Button({
+                    screenViewModel.openNeo4j.value = false
+                    if (screenViewModel.statusNeo4j.value)
+                        screenViewModel.downloadNeo4jBasic()
+                    else
+                        screenViewModel.uploadNeo4jBasic()
+
+
+                }) {
                     Text("OK")
                 }
             },
             dismissButton = {
-                Button({ flag.value = false; set.value=true }) {
+                Button({ screenViewModel.openNeo4j.value = false }) {
                     Text("Cancel")
                 }
             }
@@ -67,7 +77,16 @@ fun processNeo4j(flag: MutableState<Boolean>) {
         AlertDialog(
             onDismissRequest = {},
             buttons = {},
-            text = {Text("Processing...", fontSize = 50.sp) },
-            modifier = Modifier.padding(25.dp)
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Text(
+                        "Processing...",
+                        fontSize = 48.sp,
+                        modifier = Modifier.padding(40.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+
         )
 }
