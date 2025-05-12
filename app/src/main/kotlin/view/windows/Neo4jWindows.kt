@@ -30,19 +30,25 @@ fun inputNeo4j(screenViewModel: MainScreenViewModel<*, *>) {
             text = {
                 Column {
                     TextField(
+                        modifier = Modifier.focusable().padding(0.dp, 10.dp),
+                        singleLine = true,
                         value = screenViewModel.uriNeo4j.value,
                         onValueChange = { n -> screenViewModel.uriNeo4j.value = n },
                         label = {Text("uri")}
                     )
                     TextField(
+                        modifier = Modifier.focusable().padding(0.dp, 10.dp),
                         value = screenViewModel.loginNeo4j.value,
                         onValueChange = { n -> screenViewModel.loginNeo4j.value = n },
-                        label = {Text("login")}
+                        label = {Text("login")},
+                        singleLine = true
                     )
                     TextField(
+                        modifier = Modifier.focusable().padding(0.dp, 10.dp),
                         value = screenViewModel.passwordNeo4j.value,
                         onValueChange = { n -> screenViewModel.passwordNeo4j.value = n },
-                        label = {Text("password")}
+                        label = {Text("password")},
+                        singleLine = true
                     )
                     if (screenViewModel.passwordNeo4j.value.isBlank() || screenViewModel.loginNeo4j.value.isBlank() || screenViewModel.uriNeo4j.value.isBlank())
                         Text("Enter valid data", color = Color.Red)
