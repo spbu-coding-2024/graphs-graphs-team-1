@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class Neo4jTest {
-    private companion object {
+    companion object {
         const val AMOUNT=50
         var neo4j: Neo4j = Neo4jBuilders.newInProcessBuilder().withDisabledServer().build()
         var driver = GraphDatabase.driver(neo4j.boltURI())
@@ -43,11 +43,11 @@ class Neo4jTest {
 
         @BeforeAll
         @JvmStatic fun init() {
-            var vertices = Array<Vertex<Int, Int>>(AMOUNT) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
-            var edges = Vector<Edge<Int, Int>>()
+            val vertices = Array(AMOUNT) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
+            val edges = Vector<Edge<Int, Int>>()
             for (iter in 1..AMOUNT * AMOUNT / 2) {
-                var from = Random.nextInt(0, AMOUNT)
-                var to = Random.nextInt(0, AMOUNT)
+                val from = Random.nextInt(0, AMOUNT)
+                val to = Random.nextInt(0, AMOUNT)
                 if (from == to)
                     continue
                 if (!edges.map { it.link.first === vertices[from] && it.link.second === vertices[to] }.contains(true))
