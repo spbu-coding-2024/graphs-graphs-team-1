@@ -29,7 +29,6 @@ class IntegrationTest1 {
     var neo4j: Neo4j = Neo4jBuilders.newInProcessBuilder().withDisabledServer().build()
     var driver = GraphDatabase.driver(neo4j.boltURI())
     var session = driver.session()
-
     val graph= UndirectedGraph<Int, Int>()
 
     @BeforeEach

@@ -9,10 +9,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import model.Edge
-import model.Vertex
 import model.graphs.EmptyGraph
 import view.ColorList
 import java.io.File
@@ -20,7 +18,6 @@ import java.util.Vector
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
-import kotlin.collections.set
 
 class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     enum class DeletionMode{
