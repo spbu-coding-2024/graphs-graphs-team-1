@@ -248,7 +248,6 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         }
     }
 
-
     fun downloadJson() {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
@@ -302,7 +301,6 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                         println(result.vertices.size)
                         println(result.edges.values.flatten().size)
                         viewModel.downloader(result)
-            showAddVertexDialog.value=true
 
            // }
         //)
@@ -313,7 +311,6 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         } finally {
             set.value = false
             readyNeo4j.value = true
-            showAddVertexDialog.value=false
         }
     }
 
