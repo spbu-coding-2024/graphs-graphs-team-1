@@ -19,6 +19,7 @@ import java.util.Vector
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
+import kotlin.collections.set
 
 class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     enum class DeletionMode{
@@ -34,6 +35,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     var error = mutableStateOf(false)
     var errorText = mutableStateOf("")
 
+    var repainter= mutableStateOf(false)
 
     val openNeo4j=mutableStateOf(false)
     val readyNeo4j=mutableStateOf(true)
@@ -246,6 +248,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         }
     }
 
+
     fun downloadJson() {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
@@ -258,12 +261,16 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
                 file = chooser.selectedFile
             val result = viewModel.downloadJson(file)
+            viewModel.downloader(result)
+            showAddVertexDialog.value=true
         } catch (e: IllegalStateException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
             errorText.value=e.message.toString()
             error.value=true
+        } finally {
+            showAddVertexDialog.value=false
         }
     }
 
@@ -276,28 +283,38 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             openNeo4j.value = false
             errorText.value = "Choose graph type first"
             error.value = true
+        } catch (e: Exception){
+            openNeo4j.value = false
+            errorText.value=e.message.toString()
+            error.value=true
         }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
     fun downloadNeo4jBasic() {
-        GlobalScope.launch(
-            block = {
-                    try {
+        try {
+//        GlobalScope.launch(
+//            block = {
+
                         readyNeo4j.value = false
                         val result = viewModel.downloadNeo4j(uriNeo4j.value,
                             loginNeo4j.value, passwordNeo4j.value)
-                    } catch (e: Exception) {
-                        openNeo4j.value = false
-                        errorText.value = e.message.toString()
-                        error.value = true
-                    } finally {
-                        set.value = false
-                        readyNeo4j.value = true
-                    }
+                        println(result.vertices.size)
+                        println(result.edges.values.flatten().size)
+                        viewModel.downloader(result)
+            showAddVertexDialog.value=true
 
-            }
-        )
+           // }
+        //)
+        } catch (e: Exception) {
+            openNeo4j.value = false
+            errorText.value = e.message.toString()
+            error.value = true
+        } finally {
+            set.value = false
+            readyNeo4j.value = true
+            showAddVertexDialog.value=false
+        }
     }
 
     fun uploadJson() {
@@ -410,6 +427,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                     }
                 }
             }
+            edgeWeightInput.value="1"
             viewModel.updateEdgesView()
             showAddEdgesDialog.value = false
         } catch (e: IllegalStateException) {
@@ -482,6 +500,9 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                     }
                 }
             allEdgesFromSelected.value= DeletionMode.SOLO
+            viewModel.vertices.values.forEach { vertexVM ->
+                vertexVM.degree = viewModel.graph.getOutDegreeOfVertex(vertexVM.vertex)
+            }
         } catch (e: IllegalStateException) {
             errorText.value = "Choose graph type first"
             error.value = true
