@@ -46,11 +46,8 @@ class IntegrationTest1 {
             graph.addEdge(vertices3[i], vertices3[i+1], 1)
         graph.addEdge(vertices3.last(), vertices3.first(), 1)
         InternalFormatFactory.toNeo4j(graph, Neo4jTest.Companion.neo4j.boltURI().toString(), "user", "password")
+        neo4j.boltURI().normalize()
     }
-
-
-
-
 
     @Test
     fun integrationTest1() {

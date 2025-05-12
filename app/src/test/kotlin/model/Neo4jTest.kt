@@ -55,6 +55,7 @@ class Neo4jTest {
             }
             for (i in edges)
                 graph.addEdge(i.link.first, i.link.second, i.weight)
+            neo4j.boltURI().normalize()
         }
         @AfterAll
         @JvmStatic fun close() {
