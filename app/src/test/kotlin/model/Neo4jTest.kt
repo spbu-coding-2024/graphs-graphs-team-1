@@ -86,6 +86,7 @@ class Neo4jTest {
 
     @Test
     fun integrational() {
+
         val t=GraphViewModel(graph)
         val viewmodel= MainScreenViewModel(t)
         viewmodel.kosajuruSharir()

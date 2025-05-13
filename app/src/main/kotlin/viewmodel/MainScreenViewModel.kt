@@ -15,8 +15,6 @@ import model.graphs.EmptyGraph
 import view.ColorList
 import java.io.File
 import java.util.Vector
-import javax.swing.JFileChooser
-import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
 
 class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
@@ -244,17 +242,10 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         }
     }
 
-    fun downloadJson() {
+    fun downloadJson(file: File?) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw IllegalStateException()
-            var file: File? = null
-            val chooser = JFileChooser()
-            chooser.dialogTitle = "Choose json file"
-            chooser.fileSelectionMode = JFileChooser.FILES_ONLY
-            chooser.addChoosableFileFilter(FileNameExtensionFilter("JSON file", "json"))
-            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
-                file = chooser.selectedFile
             val result = viewModel.downloadJson(file)
             viewModel.downloader(result)
             showAddVertexDialog.value=true
@@ -313,14 +304,10 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
     }
 
-    fun uploadJson() {
+    fun uploadJson(file: File) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw IllegalStateException()
-            val chooser = JFileChooser()
-            chooser.dialogTitle = "Choose path to save"
-            chooser.showSaveDialog(null)
-            val file = File(chooser.selectedFile.toString())
             file.writeText(viewModel.uploadJson())
         } catch (e: IllegalStateException) {
             errorText.value="Choose graph type first"

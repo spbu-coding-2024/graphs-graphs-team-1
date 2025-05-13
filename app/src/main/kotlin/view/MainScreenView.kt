@@ -206,7 +206,7 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(
                             onClick = {
-                                screenViewModel.downloadJson()
+                                screenViewModel.downloadJson(JsonDownloader())
                                 downloader = false
                             }
                         ) {
@@ -237,7 +237,7 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(
                             onClick = {
-                                screenViewModel.uploadJson()
+                                screenViewModel.uploadJson(JsonUploader())
                                 uploader = false
                             }
                         ) {
