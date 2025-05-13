@@ -7,13 +7,17 @@ import java.util.Vector
 import kotlin.random.Random
 import model.graphs.*
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
 import kotlin.test.assertEquals
 
+
+@TestMethodOrder(MethodOrderer.MethodName::class)
 class Neo4jTest {
     companion object {
         const val AMOUNT=50
@@ -68,8 +72,7 @@ class Neo4jTest {
     }
 
     @Test
-    @Order(0)
-    fun checkSendingToNeo4j() {
+    fun ACheckSendingToNeo4j() {
         InternalFormatFactory.toNeo4j(graph, neo4j.boltURI().toString(), "user", "password")
         assertEquals(graph.vertices.size, getVertexAmount())
         assertEquals(graph.edges.values.sumOf { it.size }, getRelationsAmount())
@@ -77,14 +80,12 @@ class Neo4jTest {
     }
 
     @Test
-    @Order(1)
     fun checkGettingFromNeo4j() {
-        var result=GraphFactory.fromNeo4j<Int, Int>(::DirWeightGraph,  neo4j.boltURI().toString(), "neo", "pass")
+        val result=GraphFactory.fromNeo4j<Int, Int>(::DirWeightGraph,  neo4j.boltURI().toString(), "neo", "pass")
         assertEquals(graph.edges.values.sumOf { it.size }, result.edges.values.sumOf { it.size })
     }
 
     @Test
-    @Order(2)
     fun clear() {
         session.executeWrite {transaction ->
             val amount = transaction.run(
@@ -107,7 +108,6 @@ class Neo4jTest {
     }
 
     @Test
-    @Order(3)
     fun integrational() {
         val viewmodel= MainScreenViewModel(GraphViewModel(GraphFactory.fromNeo4j<Int, Int>(::UndirectedGraph,
             neo4j.boltURI().toString(), "user", "password")))
