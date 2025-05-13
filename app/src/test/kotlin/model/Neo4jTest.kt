@@ -10,6 +10,8 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import viewmodel.GraphViewModel
+import viewmodel.MainScreenViewModel
 import kotlin.test.assertEquals
 
 class Neo4jTest {
@@ -60,11 +62,6 @@ class Neo4jTest {
         }
         @AfterAll
         @JvmStatic fun close() {
-            session.executeWrite {transaction ->
-                val amount = transaction.run(
-                    "MATCH (n) DETACH DELETE n"
-                )
-            }
             session.close()
             driver.close()
         }
@@ -84,5 +81,40 @@ class Neo4jTest {
     fun checkGettingFromNeo4j() {
         var result=GraphFactory.fromNeo4j<Int, Int>(::DirWeightGraph,  neo4j.boltURI().toString(), "neo", "pass")
         assertEquals(graph.edges.values.sumOf { it.size }, result.edges.values.sumOf { it.size })
+    }
+
+    @Test
+    @Order(2)
+    fun clear() {
+        session.executeWrite {transaction ->
+            val amount = transaction.run(
+                "MATCH (n) DETACH DELETE n"
+            )
+        }
+        val vertices1 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
+        val vertices2 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
+        val vertices3 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
+        for (i in 0..8)
+            graph.addEdge(vertices1[i], vertices1[i+1], 1)
+        graph.addEdge(vertices1.last(), vertices1.first(), 1)
+        for (i in 0..8)
+            graph.addEdge(vertices2[i], vertices2[i+1], 1)
+        graph.addEdge(vertices2.last(), vertices2.first(), 1)
+        for (i in 0..8)
+            graph.addEdge(vertices3[i], vertices3[i+1], 1)
+        graph.addEdge(vertices3.last(), vertices3.first(), 1)
+        InternalFormatFactory.toNeo4j(graph, neo4j.boltURI().toString(), "user", "password")
+    }
+
+    @Test
+    @Order(3)
+    fun integrational() {
+        val viewmodel= MainScreenViewModel(GraphViewModel(GraphFactory.fromNeo4j<Int, Int>(::UndirectedGraph,
+            neo4j.boltURI().toString(), "user", "password")))
+        viewmodel.kosajuruSharir()
+        viewmodel.viewModel.edges.values.forEach {edge ->
+            assertEquals(edge.to.color.value, edge.from.color.value)
+            assertEquals(edge.color.value, edge.to.color.value)
+        }
     }
 }
