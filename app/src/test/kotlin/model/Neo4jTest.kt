@@ -50,19 +50,18 @@ class Neo4jTest {
 
         @BeforeAll
         @JvmStatic fun init() {
-            val vertices = Array(AMOUNT) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
-            val edges = Vector<Edge<Int, Int>>()
-            for (iter in 1..AMOUNT * AMOUNT / 2) {
-                val from = Random.nextInt(0, AMOUNT)
-                val to = Random.nextInt(0, AMOUNT)
-                if (from == to)
-                    continue
-                if (!edges.map { it.link.first === vertices[from] && it.link.second === vertices[to] }.contains(true))
-                    edges.addLast(Edge(vertices[from], vertices[to], Random.nextInt(0, 100)))
-            }
-            for (i in edges)
-                graph.addEdge(i.link.first, i.link.second, i.weight)
-            neo4j.boltURI().normalize()
+            val vertices1 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
+            val vertices2 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
+            val vertices3 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
+            for (i in 0..8)
+                graph.addEdge(vertices1[i], vertices1[i+1], 1)
+            graph.addEdge(vertices1.last(), vertices1.first(), 1)
+            for (i in 0..8)
+                graph.addEdge(vertices2[i], vertices2[i+1], 1)
+            graph.addEdge(vertices2.last(), vertices2.first(), 1)
+            for (i in 0..8)
+                graph.addEdge(vertices3[i], vertices3[i+1], 1)
+            graph.addEdge(vertices3.last(), vertices3.first(), 1)
         }
         @AfterAll
         @JvmStatic fun close() {
@@ -86,33 +85,9 @@ class Neo4jTest {
     }
 
     @Test
-    fun clear() {
-        driver=GraphDatabase.driver(neo4j.boltURI())
-        session=driver.session()
-        session.executeWrite {transaction ->
-            val amount = transaction.run(
-                "MATCH (n) DETACH DELETE n"
-            )
-        }
-        val vertices1 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
-        val vertices2 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
-        val vertices3 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
-        for (i in 0..8)
-            graph.addEdge(vertices1[i], vertices1[i+1], 1)
-        graph.addEdge(vertices1.last(), vertices1.first(), 1)
-        for (i in 0..8)
-            graph.addEdge(vertices2[i], vertices2[i+1], 1)
-        graph.addEdge(vertices2.last(), vertices2.first(), 1)
-        for (i in 0..8)
-            graph.addEdge(vertices3[i], vertices3[i+1], 1)
-        graph.addEdge(vertices3.last(), vertices3.first(), 1)
-        InternalFormatFactory.toNeo4j(graph, neo4j.boltURI().toString(), "user", "password")
-    }
-
-    @Test
     fun integrational() {
-        val viewmodel= MainScreenViewModel(GraphViewModel(GraphFactory.fromNeo4j<Int, Int>(::UndirectedGraph,
-            neo4j.boltURI().toString(), "user", "password")))
+        print(getVertexAmount())
+        val viewmodel= MainScreenViewModel(GraphViewModel(graph))
         viewmodel.kosajuruSharir()
         viewmodel.viewModel.edges.values.forEach {edge ->
             assertEquals(edge.to.color.value, edge.from.color.value)
