@@ -86,7 +86,6 @@ class Neo4jTest {
 
     @Test
     fun integrational() {
-        print(getVertexAmount())
         val viewmodel= MainScreenViewModel(GraphViewModel(graph))
         viewmodel.kosajuruSharir()
         viewmodel.viewModel.edges.values.forEach {edge ->
