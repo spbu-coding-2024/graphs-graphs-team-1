@@ -86,8 +86,8 @@ class Neo4jTest {
 
     @Test
     fun integrational() {
-        print(getVertexAmount())
-        val viewmodel= MainScreenViewModel(GraphViewModel(graph))
+        val t=GraphViewModel(graph)
+        val viewmodel= MainScreenViewModel(t)
         viewmodel.kosajuruSharir()
         viewmodel.viewModel.edges.values.forEach {edge ->
             assertEquals(edge.to.color.value, edge.from.color.value)
