@@ -14,6 +14,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.neo4j.driver.GraphDatabase
 import org.neo4j.harness.Neo4j
@@ -23,7 +24,7 @@ import viewmodel.MainScreenViewModel
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
-
+@Tag("Integration")
 class IntegrationTest1 {
 
     var neo4j: Neo4j = Neo4jBuilders.newInProcessBuilder().withDisabledServer().build()
@@ -45,14 +46,13 @@ class IntegrationTest1 {
         for (i in 0..8)
             graph.addEdge(vertices3[i], vertices3[i+1], 1)
         graph.addEdge(vertices3.last(), vertices3.first(), 1)
-        InternalFormatFactory.toNeo4j(graph, Neo4jTest.Companion.neo4j.boltURI().toString(), "user", "password")
-        neo4j.boltURI().normalize()
+        InternalFormatFactory.toNeo4j(graph, neo4j.boltURI().toString(), "user", "password")
     }
 
     @Test
     fun integrationTest1() {
         val viewmodel= MainScreenViewModel(GraphViewModel(GraphFactory.fromNeo4j<Int, Int>(::UndirectedGraph,
-            Neo4jTest.Companion.neo4j.boltURI().toString(), "user", "password")))
+            neo4j.boltURI().toString(), "user", "password")))
         viewmodel.kosajuruSharir()
         viewmodel.viewModel.edges.values.forEach {edge ->
             assertEquals(edge.to.color.value, edge.from.color.value)
@@ -62,6 +62,11 @@ class IntegrationTest1 {
 
     @AfterEach
     fun close() {
+        session.executeWrite {transaction ->
+            val amount = transaction.run(
+                "MATCH (n) DETACH DELETE n"
+            )
+        }
         session.close()
         driver.close()
     }

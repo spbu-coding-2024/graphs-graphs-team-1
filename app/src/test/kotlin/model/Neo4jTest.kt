@@ -8,6 +8,7 @@ import kotlin.random.Random
 import model.graphs.*
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
@@ -59,6 +60,11 @@ class Neo4jTest {
         }
         @AfterAll
         @JvmStatic fun close() {
+            session.executeWrite {transaction ->
+                val amount = transaction.run(
+                    "MATCH (n) DETACH DELETE n"
+                )
+            }
             session.close()
             driver.close()
         }
