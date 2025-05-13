@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import viewmodel.MainScreenViewModel
 
@@ -78,10 +79,9 @@ fun inputNeo4j(screenViewModel: MainScreenViewModel<*, *>) {
 @Composable
 fun processNeo4j(flag: MutableState<Boolean>) {
     if (!flag.value)
-        AlertDialog(
+        Dialog(
             onDismissRequest = {},
-            buttons = {},
-            text = {
+            content = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                     Text(
                         "Processing...",
