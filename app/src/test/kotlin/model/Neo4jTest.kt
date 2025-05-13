@@ -87,6 +87,8 @@ class Neo4jTest {
 
     @Test
     fun clear() {
+        driver=GraphDatabase.driver(neo4j.boltURI())
+        session=driver.session()
         session.executeWrite {transaction ->
             val amount = transaction.run(
                 "MATCH (n) DETACH DELETE n"
