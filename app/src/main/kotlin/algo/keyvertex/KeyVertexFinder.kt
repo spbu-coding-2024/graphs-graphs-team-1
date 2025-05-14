@@ -14,12 +14,7 @@ class KeyVertexFinder<K, V>(private val graph: Graph<K, V>) : KeyVertex<K, V> {
         if (count > scores.size) throw IllegalArgumentException("Count cannot be more graph size")
         if (count < 0) throw IllegalArgumentException("Count cannot be negative")
 
-        val entries = mutableListOf<Map.Entry<Vertex<K, V>, Double>>()
-        for (entry in scores.entries) {
-            entries.add(entry)
-        }
-
-        val sortedEntries = entries.sortedByDescending { it.value }
+        val sortedEntries = scores.entries.sortedByDescending { it.value }
 
         val result = mutableListOf<Vertex<K, V>>()
         for (i in 0 until count) {
