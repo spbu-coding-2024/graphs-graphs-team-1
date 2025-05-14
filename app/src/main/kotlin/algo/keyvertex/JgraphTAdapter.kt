@@ -5,11 +5,9 @@ import org.jgrapht.graph.DefaultDirectedWeightedGraph
 import org.jgrapht.graph.DefaultUndirectedWeightedGraph
 import org.jgrapht.graph.DefaultEdge
 import model.graphs.Graph
-import model.graphs.DirectedGraph
 import model.graphs.UndirectedGraph
 import model.graphs.DirWeightGraph
 import model.graphs.UndirWeightGraph
-import model.Edge
 import model.Vertex
 
 class JGraphTAdapter<K, V>(private val originalGraph: Graph<K, V>) {
