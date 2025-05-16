@@ -1,3 +1,4 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("jvm") version "1.9.20"
@@ -54,31 +55,13 @@ tasks.jacocoTestReport {
     }
 }
 
-
-tasks.build {
-    dependsOn("Load")
+compose.desktop {
+    application {
+        mainClass = "MainKt"
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "graph_demo"
+            packageVersion = "1.0.0"
+        }
+    }
 }
-
-tasks.test {
-    useJUnitPlatform()
-    finalizedBy(tasks.jacocoTestReport)
-}
-
-tasks.register("Load") {
-    val path = "lib/gephi-toolkit-0.10.0-all.jar"
-    val sourceUrl = "https://github.com/gephi/gephi-toolkit/releases/download/v0.10.0/gephi-toolkit-0.10.0-all.jar"
-    val libsDirectory = File("lib")
-    val jarFile = File(path)
-
-    if (!libsDirectory.exists())
-        libsDirectory.mkdir()
-    if (!jarFile.exists())
-        download(sourceUrl, path)
-}
-
-fun download(url: String, path: String){
-    val destinationFile = File(path)
-    ant.invokeMethod("get", mapOf("src" to url, "dest" to destinationFile))
-}
-
-
