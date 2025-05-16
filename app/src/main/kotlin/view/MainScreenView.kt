@@ -4,6 +4,7 @@ import AddEdgeDialog
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.onDrag
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +26,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
+import androidx.compose.material.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -195,7 +197,7 @@ fun <K, V> mainScreen() {
         },
         topBar = {
             TopAppBar(backgroundColor = Color.White, modifier = Modifier.height(40.dp)) {
-                //загрузка графа !!!как-то нужно доработать результат
+                //загрузка графа
                 Box {
                     IconButton(onClick = { downloader = !downloader }, Modifier.padding(8.dp, 2.dp)) {
                         Text("Download")
@@ -407,12 +409,20 @@ fun <K, V> mainScreen() {
                         onDismissRequest = { expanded = false }
                     ) {
                         DropdownMenuItem(
+
                             onClick = {
                                 screenViewModel.showAddVertexDialog.value = true
                                 expanded = false
                             }
                         ) {
-                            Text("Add vertex")
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Add vertex")
+                                Text("V", color = Color.Gray, modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp))
+                            }
+
                         }
                         DropdownMenuItem(
                             onClick = {
@@ -425,7 +435,14 @@ fun <K, V> mainScreen() {
                                 expanded = false
                             }
                         ) {
-                            Text("Add edges between selected vertices")
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Add edges")
+                                Text("E", color = Color.Gray, modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp))
+                            }
+
                         }
                         DropdownMenuItem(
                             onClick = {
@@ -437,7 +454,13 @@ fun <K, V> mainScreen() {
                                 expanded = false
                             }
                         ) {
-                            Text("Delete selected vertices")
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Delete vertices")
+                                Text("Shift + V", color = Color.Gray, modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp))
+                            }
                         }
                         DropdownMenuItem(
                             onClick = {
@@ -448,7 +471,13 @@ fun <K, V> mainScreen() {
                                 expanded = false
                             }
                         ) {
-                            Text("Delete edges")
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Delete edges")
+                                Text("Shift + E", color = Color.Gray, modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp))
+                            }
                         }
                     }
                 }
