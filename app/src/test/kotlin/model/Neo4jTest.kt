@@ -7,19 +7,12 @@ import java.util.Vector
 import kotlin.random.Random
 import model.graphs.*
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
-import viewmodel.GraphViewModel
-import viewmodel.MainScreenViewModel
 import kotlin.test.assertEquals
 
-
-@TestMethodOrder(MethodOrderer.MethodName::class)
 class Neo4jTest {
-    companion object {
+    private companion object {
         const val AMOUNT=50
         var neo4j: Neo4j = Neo4jBuilders.newInProcessBuilder().withDisabledServer().build()
         var driver = GraphDatabase.driver(neo4j.boltURI())
@@ -50,18 +43,18 @@ class Neo4jTest {
 
         @BeforeAll
         @JvmStatic fun init() {
-            val vertices1 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
-            val vertices2 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
-            val vertices3 = Array(10) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
-            for (i in 0..8)
-                graph.addEdge(vertices1[i], vertices1[i+1], 1)
-            graph.addEdge(vertices1.last(), vertices1.first(), 1)
-            for (i in 0..8)
-                graph.addEdge(vertices2[i], vertices2[i+1], 1)
-            graph.addEdge(vertices2.last(), vertices2.first(), 1)
-            for (i in 0..8)
-                graph.addEdge(vertices3[i], vertices3[i+1], 1)
-            graph.addEdge(vertices3.last(), vertices3.first(), 1)
+            var vertices = Array(AMOUNT) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
+            var edges = Vector<Edge<Int, Int>>()
+            for (iter in 1..AMOUNT * AMOUNT / 2) {
+                var from = Random.nextInt(0, AMOUNT)
+                var to = Random.nextInt(0, AMOUNT)
+                if (from == to)
+                    continue
+                if (!edges.map { it.link.first === vertices[from] && it.link.second === vertices[to] }.contains(true))
+                    edges.addLast(Edge(vertices[from], vertices[to], Random.nextInt(0, 100)))
+            }
+            for (i in edges)
+                graph.addEdge(i.link.first, i.link.second, i.weight)
         }
         @AfterAll
         @JvmStatic fun close() {
@@ -71,7 +64,8 @@ class Neo4jTest {
     }
 
     @Test
-    fun ACheckSendingToNeo4j() {
+    @Order(0)
+    fun checkSendingToNeo4j() {
         InternalFormatFactory.toNeo4j(graph, neo4j.boltURI().toString(), "user", "password")
         assertEquals(graph.vertices.size, getVertexAmount())
         assertEquals(graph.edges.values.sumOf { it.size }, getRelationsAmount())
@@ -79,20 +73,10 @@ class Neo4jTest {
     }
 
     @Test
+    @Order(1)
     fun checkGettingFromNeo4j() {
-        val result=GraphFactory.fromNeo4j<Int, Int>(::DirWeightGraph,  neo4j.boltURI().toString(), "neo", "pass")
+        var result=GraphFactory.fromNeo4j<Int, Int>(::DirWeightGraph,  neo4j.boltURI().toString(), "neo", "pass")
         assertEquals(graph.edges.values.sumOf { it.size }, result.edges.values.sumOf { it.size })
     }
 
-    @Test
-    fun integrational() {
-
-        val t=GraphViewModel(graph)
-        val viewmodel= MainScreenViewModel(t)
-        viewmodel.kosajuruSharir()
-        viewmodel.viewModel.edges.values.forEach {edge ->
-            assertEquals(edge.to.color.value, edge.from.color.value)
-            assertEquals(edge.color.value, edge.to.color.value)
-        }
-    }
 }
