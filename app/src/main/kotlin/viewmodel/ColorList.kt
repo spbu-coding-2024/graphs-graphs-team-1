@@ -1,4 +1,4 @@
-package view
+package viewmodel
 
 class ColorList: Iterator<String> {
     private var index=0

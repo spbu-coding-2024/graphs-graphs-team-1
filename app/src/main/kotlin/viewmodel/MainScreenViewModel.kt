@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import model.Edge
 import algo.keyvertex.KeyVertexFinder
 import model.graphs.EmptyGraph
-import view.ColorList
+import viewmodel.ColorList
 import java.io.File
 import java.util.Vector
 import kotlin.collections.forEach
@@ -24,6 +24,8 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         ALL,
         SEQUENCE
     }
+
+    private class NoGraphException(): Throwable()
 
     var viewModel by mutableStateOf(graphViewModel)
 
@@ -91,7 +93,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         clean()
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
-                throw IllegalStateException()
+                throw NoGraphException()
             val temp = viewModel.dijkstra()
             path.value = temp.first
             temp.second.forEach {
@@ -107,7 +109,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             pathDialog.value = true
         } catch (e: IndexOutOfBoundsException) {
             warning.value =true
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value =true
         } catch (e: Exception) {
@@ -120,7 +122,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         clean()
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
-                throw IllegalStateException()
+                throw NoGraphException()
             val temp =
                 viewModel.fordBellman()
             path.value = temp.first
@@ -145,7 +147,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                         it.value.color.value = Color.Yellow
                 }
             pathDialog.value = true
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: IndexOutOfBoundsException) {
@@ -160,7 +162,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         clean()
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
-                throw IllegalStateException()
+                throw NoGraphException()
             val temp = viewModel.cycles()
             temp.forEach { cycle ->
                 for (i in 0..cycle.size - 1) {
@@ -176,7 +178,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             }
         }  catch (e: NoSuchElementException) {
             warning.value=true
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
@@ -189,7 +191,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         clean()
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
-                throw IllegalStateException()
+                throw NoGraphException()
             val colors = ColorList().iterator()
             val temp =
                 viewModel.kosarujuSharir()
@@ -208,7 +210,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                 }
 
             }
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
@@ -221,9 +223,9 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         clean()
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
-                throw IllegalStateException()
+                throw NoGraphException()
             planarAlgos(ForceAtlas2())
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
@@ -236,9 +238,9 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         clean()
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
-                throw IllegalStateException()
+                throw NoGraphException()
             planarAlgos(YifanHu())
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
@@ -272,11 +274,12 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     fun downloadJson(file: File?) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
-                throw IllegalStateException()
+                throw NoGraphException()
+            var file: File? = null
             val result = viewModel.downloadJson(file)
             viewModel.downloader(result)
             showAddVertexDialog.value=true
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
@@ -290,9 +293,9 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     fun downloadNeo4j() {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
-                throw IllegalStateException()
+                throw NoGraphException()
             openNeo4j.value=true
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             openNeo4j.value = false
             errorText.value = "Choose graph type first"
             error.value = true
@@ -331,9 +334,9 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     fun uploadJson(file: File) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
-                throw IllegalStateException()
+                throw NoGraphException()
             file.writeText(viewModel.uploadJson())
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
@@ -365,9 +368,9 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     fun uploadNeo4j() {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
-                throw IllegalStateException()
+                throw NoGraphException()
             openNeo4j.value=true
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             openNeo4j.value = false
             errorText.value = "Choose graph type first"
             error.value = true
@@ -394,12 +397,12 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     fun vertexAddition() {
         try {
             if (viewModel.graph is EmptyGraph<*,*>)
-                throw IllegalStateException()
+                throw NoGraphException()
             addVertexError.value = viewModel.addVertex(
                 newVertexKey.value,
                 newVertexValue.value
             )
-        }  catch (e: IllegalStateException) {
+        }  catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
@@ -411,7 +414,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     fun edgeAddition() {
         try {
             if (viewModel.graph is EmptyGraph<*,*>)
-                throw IllegalStateException()
+                throw NoGraphException()
             edgeWeightInput.let { weight ->
                 val selectedVertices = viewModel.selected.map { it.vertex }
                 if (isAllToAllMode.value) {
@@ -437,7 +440,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             edgeWeightInput.value="1"
             viewModel.updateEdgesView()
             showAddEdgesDialog.value = false
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
@@ -449,10 +452,10 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     fun vertexDeletion() {
         try {
             if (viewModel.graph is EmptyGraph<*,*>)
-                throw IllegalStateException()
+                throw NoGraphException()
             viewModel.deleteSelectedVertices()
             showDeleteConfirmationVertex.value = true
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
@@ -464,7 +467,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     fun edgeDeletion() {
         try {
             if (viewModel.graph is EmptyGraph<*,*>)
-                throw IllegalStateException()
+                throw NoGraphException()
 
             val selectedVertices = viewModel.selected.map { it.vertex }
             when (allEdgesFromSelected.value) {
@@ -510,7 +513,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             viewModel.vertices.values.forEach { vertexVM ->
                 vertexVM.degree = viewModel.graph.getOutDegreeOfVertex(vertexVM.vertex)
             }
-        } catch (e: IllegalStateException) {
+        } catch (e: NoGraphException) {
             errorText.value = "Choose graph type first"
             error.value = true
         } catch (e: Exception) {
