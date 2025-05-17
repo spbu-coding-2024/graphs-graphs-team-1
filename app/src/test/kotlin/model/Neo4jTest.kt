@@ -43,7 +43,7 @@ class Neo4jTest {
 
         @BeforeAll
         @JvmStatic fun init() {
-            var vertices = Array<Vertex<Int, Int>>(AMOUNT) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
+            var vertices = Array(AMOUNT) { Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100)) }
             var edges = Vector<Edge<Int, Int>>()
             for (iter in 1..AMOUNT * AMOUNT / 2) {
                 var from = Random.nextInt(0, AMOUNT)
@@ -78,4 +78,5 @@ class Neo4jTest {
         var result=GraphFactory.fromNeo4j<Int, Int>(::DirWeightGraph,  neo4j.boltURI().toString(), "neo", "pass")
         assertEquals(graph.edges.values.sumOf { it.size }, result.edges.values.sumOf { it.size })
     }
+
 }

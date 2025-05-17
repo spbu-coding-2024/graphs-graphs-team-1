@@ -11,13 +11,11 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import model.Edge
-import model.Vertex
+import algo.keyvertex.KeyVertexFinder
 import model.graphs.EmptyGraph
 import viewmodel.ColorList
 import java.io.File
 import java.util.Vector
-import javax.swing.JFileChooser
-import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.collections.forEach
 
 class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
@@ -36,19 +34,18 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     var error = mutableStateOf(false)
     var errorText = mutableStateOf("")
 
-
+    var statusNeo4j=mutableStateOf(true)
     val openNeo4j=mutableStateOf(false)
     val readyNeo4j=mutableStateOf(true)
-    val set= mutableStateOf(false)
 
 
     val uriNeo4j = mutableStateOf("")
     val passwordNeo4j = mutableStateOf("")
     val loginNeo4j = mutableStateOf("")
 
-    val showAddVertexDialog = mutableStateOf(false) 
-    val newVertexKey = mutableStateOf("") 
-    val newVertexValue =  mutableStateOf("") 
+    val showAddVertexDialog = mutableStateOf(false)
+    val newVertexKey = mutableStateOf("")
+    val newVertexValue =  mutableStateOf("")
     val addVertexError = mutableStateOf<String?>(null)
 
     var showDeleteEdgeDialog = mutableStateOf(false)
@@ -64,10 +61,14 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
     val showDeleteConfirmationVertex =  mutableStateOf(false)
     val showNoSelectionWarning =  mutableStateOf(false)
-    
+
 
     val buttonEdgeLabel=mutableStateOf(false)
     val path=mutableStateOf(0)
+
+    val showKeyVertexDialog = mutableStateOf(false)
+    val showKeyVerticesResult = mutableStateOf(false)
+    val keyVerticesCount = mutableStateOf(0)
 
     val planarAlgos: (Planar) -> Unit = {
         clean()
@@ -247,25 +248,45 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             error.value=true
         }
     }
+    
+    fun findKeyVertices(count: Int? = null, minCentrality: Double? = null) {
+        clean()
+        try {
+            if (viewModel.graph is EmptyGraph<*, *>)
+                throw IllegalStateException("Graph is empty")
+            val finder = KeyVertexFinder(viewModel.graph)
+            val keyVertices = when {
+                count != null -> finder.findTopKeyVertices(count)
+                minCentrality != null -> finder.findVerticesWithMinCentrality(minCentrality)
+                else -> throw IllegalArgumentException("Specify count or minCentrality")
+            }
+            keyVertices.forEach { vertex ->
+                viewModel.vertices[vertex]?.color?.value = Color.Yellow
+            }
+            keyVerticesCount.value = keyVertices.size
+            showKeyVerticesResult.value = true
+        } catch (e: Exception) {
+            errorText.value = e.message ?: "Error finding key vertices"
+            error.value = true
+        }
+    }
 
-    fun downloadJson() {
+    fun downloadJson(file: File?) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw NoGraphException()
             var file: File? = null
-            val chooser = JFileChooser()
-            chooser.dialogTitle = "Choose json file"
-            chooser.fileSelectionMode = JFileChooser.FILES_ONLY
-            chooser.addChoosableFileFilter(FileNameExtensionFilter("JSON file", "json"))
-            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
-                file = chooser.selectedFile
             val result = viewModel.downloadJson(file)
+            viewModel.downloader(result)
+            showAddVertexDialog.value=true
         } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
         } catch (e: Exception) {
             errorText.value=e.message.toString()
             error.value=true
+        } finally {
+            showAddVertexDialog.value=false
         }
     }
 
@@ -278,38 +299,42 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             openNeo4j.value = false
             errorText.value = "Choose graph type first"
             error.value = true
+        } catch (e: Exception){
+            openNeo4j.value = false
+            errorText.value=e.message.toString()
+            error.value=true
         }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
     fun downloadNeo4jBasic() {
-        GlobalScope.launch(
-            block = {
+            GlobalScope.launch(
+                block = {
                     try {
+                        openNeo4j.value = false
                         readyNeo4j.value = false
-                        val result = viewModel.downloadNeo4j(uriNeo4j.value,
-                            loginNeo4j.value, passwordNeo4j.value)
+                        val result = viewModel.downloadNeo4j(
+                            uriNeo4j.value,
+                            loginNeo4j.value, passwordNeo4j.value
+                        )
+                        viewModel.downloader(result)
+                        showAddVertexDialog.value=true
                     } catch (e: Exception) {
                         openNeo4j.value = false
                         errorText.value = e.message.toString()
                         error.value = true
                     } finally {
-                        set.value = false
+                        showAddVertexDialog.value=false
                         readyNeo4j.value = true
                     }
-
-            }
-        )
+                }
+            )
     }
 
-    fun uploadJson() {
+    fun uploadJson(file: File) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw NoGraphException()
-            val chooser = JFileChooser()
-            chooser.dialogTitle = "Choose path to save"
-            chooser.showSaveDialog(null)
-            val file = File(chooser.selectedFile.toString())
             file.writeText(viewModel.uploadJson())
         } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
@@ -322,22 +347,22 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
     @OptIn(DelicateCoroutinesApi::class)
     fun uploadNeo4jBasic() {
-        GlobalScope.launch(
-            block = {
-                try {
-                    readyNeo4j.value = false
-                    viewModel.uploadNeo4j(uriNeo4j.value,
-                        loginNeo4j.value, passwordNeo4j.value)
-                } catch (e: Exception) {
-                    openNeo4j.value = false
-                    errorText.value = e.message.toString()
-                    error.value = true
-                } finally {
-                    readyNeo4j.value = true
-                    set.value = false
+        try {
+            openNeo4j.value = false
+            readyNeo4j.value = false
+            GlobalScope.launch(
+                block = {
+                        viewModel.uploadNeo4j(uriNeo4j.value,
+                            loginNeo4j.value, passwordNeo4j.value)
                 }
-            }
-        )
+            )
+        } catch (e: Exception) {
+            openNeo4j.value = false
+            errorText.value = e.message.toString()
+            error.value = true
+        } finally {
+            readyNeo4j.value = true
+        }
     }
 
     fun uploadNeo4j() {
@@ -412,6 +437,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                     }
                 }
             }
+            edgeWeightInput.value="1"
             viewModel.updateEdgesView()
             showAddEdgesDialog.value = false
         } catch (e: NoGraphException) {
@@ -443,47 +469,50 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             if (viewModel.graph is EmptyGraph<*,*>)
                 throw NoGraphException()
 
-                val selectedVertices = viewModel.selected.map { it.vertex }
-                when (allEdgesFromSelected.value) {
-                    DeletionMode.ALL -> {
-                        for (i in selectedVertices) {
-                            for (j in selectedVertices) {
-                                if (i != j) {
-                                    viewModel.graph.deleteEdge(i, j)
-                                    viewModel.edges.keys.removeAll { edge ->
-                                        edge.link.first == i && edge.link.first == j
-                                    }
+            val selectedVertices = viewModel.selected.map { it.vertex }
+            when (allEdgesFromSelected.value) {
+                DeletionMode.ALL -> {
+                    for (i in selectedVertices) {
+                        for (j in selectedVertices) {
+                            if (i != j) {
+                                viewModel.graph.deleteEdge(i, j)
+                                viewModel.edges.keys.removeAll { edge ->
+                                    edge.link.first == i && edge.link.first == j
                                 }
                             }
-                        }
-                    }
-                    DeletionMode.SEQUENCE -> {
-                        for (i in 0..<selectedVertices.size - 1) {
-                            viewModel.graph.deleteEdge(
-                                selectedVertices[i],
-                                selectedVertices[i + 1]
-                            )
-                            viewModel.edges.keys.removeAll { edge ->
-                                edge.link.first == selectedVertices[i] && edge.link.second == selectedVertices[i + 1]
-                            }
-                        }
-                    }
-                    else -> {
-                        val temp= Vector<Edge<K, V>>()
-                        viewModel.graph.edges.forEach{ start ->
-                            start.value.forEach {
-                                if (it.link.first===selectedVertices[0] || it.link.second===selectedVertices[0]) {
-                                    temp.add(it)
-                                    viewModel.edges.remove(it)
-                                }
-                            }
-                        }
-                        temp.forEach{
-                            viewModel.graph.deleteEdge(it.link.first, it.link.second)
                         }
                     }
                 }
+                DeletionMode.SEQUENCE -> {
+                    for (i in 0..<selectedVertices.size - 1) {
+                        viewModel.graph.deleteEdge(
+                            selectedVertices[i],
+                            selectedVertices[i + 1]
+                        )
+                        viewModel.edges.keys.removeAll { edge ->
+                            edge.link.first == selectedVertices[i] && edge.link.second == selectedVertices[i + 1]
+                        }
+                    }
+                }
+                else -> {
+                    val temp= Vector<Edge<K, V>>()
+                    viewModel.graph.edges.forEach{ start ->
+                        start.value.forEach {
+                            if (it.link.first===selectedVertices[0] || it.link.second===selectedVertices[0]) {
+                                temp.add(it)
+                                viewModel.edges.remove(it)
+                            }
+                        }
+                    }
+                    temp.forEach{
+                        viewModel.graph.deleteEdge(it.link.first, it.link.second)
+                    }
+                }
+            }
             allEdgesFromSelected.value= DeletionMode.SOLO
+            viewModel.vertices.values.forEach { vertexVM ->
+                vertexVM.degree = viewModel.graph.getOutDegreeOfVertex(vertexVM.vertex)
+            }
         } catch (e: NoGraphException) {
             errorText.value = "Choose graph type first"
             error.value = true
@@ -493,4 +522,3 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         }
     }
 }
-

@@ -16,5 +16,10 @@ jobs:
           build-scan-publish: true
           build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"
           build-scan-terms-of-use-agree: "yes"
+      - name: Setup xvfb
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+              packages: xvfb
+              version: 0.4.0
       - name: Run build
-        run: ./gradlew build
+        run: xvfb-run ./gradlew build

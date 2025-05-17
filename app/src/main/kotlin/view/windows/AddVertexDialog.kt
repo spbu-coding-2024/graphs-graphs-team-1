@@ -1,8 +1,10 @@
 package view.windows
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Text
@@ -24,12 +26,15 @@ fun AddVertexDialog(screenViewModel: MainScreenViewModel<*,*>) {
                 text = {
                     Column {
                         TextField(
+                            modifier = Modifier.focusable().padding(0.dp, 10.dp),
+                            singleLine = true,
                             value = screenViewModel.newVertexKey.value,
                             onValueChange = { screenViewModel.newVertexKey.value = it },
                             label = { Text("Key") }
                         )
-                        Spacer(Modifier.height(8.dp))
                         TextField(
+                            modifier = Modifier.padding(0.dp, 10.dp),
+                            singleLine = true,
                             value = screenViewModel.newVertexValue.value,
                             onValueChange = { screenViewModel.newVertexValue.value = it },
                             label = { Text("Value") }

@@ -4,12 +4,9 @@ import model.graphs.AbstractGraph
 import model.graphs.*
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
-import org.neo4j.driver.exceptions.ClientException
-import org.neo4j.driver.exceptions.DatabaseException
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonDeserializationContext
-import com.google.gson.JsonParseException
 import com.google.gson.GsonBuilder
 import java.lang.reflect.Type
 import com.google.gson.reflect.TypeToken
@@ -30,7 +27,7 @@ class GraphFactory {
                     "MATCH (n) RETURN max(ID(n))"
                 ).list()[0].get("max(ID(n))")
                 val vertices = Array<Vertex<K, V>?>(amount.asInt() + 1) { null }
-                val result = transaction.run(
+                var result = transaction.run(
                     "MATCH (x: Vertex)-[t]->(y: Vertex) RETURN ID(x) AS fid, x.key AS fk, x.value AS fv, " +
                             "ID(y) as sid, y.key AS sk, y.value AS sv, t.weight AS weight"
                 )
@@ -44,6 +41,15 @@ class GraphFactory {
                         vertices[record["sid"].asInt()] ?: throw IllegalStateException(),
                         record["weight"].asInt()
                     )
+                }
+                result = transaction.run(
+                    "MATCH (s: Vertex) RETURN ID(s) AS id, s.key AS k, s.value AS v"
+                )
+                for (record in result) {
+                    if (vertices[record["id"].asInt()]==null) {
+                        vertices[record["id"].asInt()] = Vertex(record["k"] as K, record["v"] as V)
+                        graph.addVertex(vertices[record["id"].asInt()] ?: throw IllegalStateException())
+                    }
                 }
             }
             session.close()
