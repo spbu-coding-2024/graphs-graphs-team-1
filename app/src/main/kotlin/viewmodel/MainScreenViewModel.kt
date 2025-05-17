@@ -11,6 +11,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import model.Edge
+import algo.keyvertex.KeyVertexFinder
 import model.graphs.EmptyGraph
 import view.ColorList
 import java.io.File
@@ -40,9 +41,9 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     val passwordNeo4j = mutableStateOf("")
     val loginNeo4j = mutableStateOf("")
 
-    val showAddVertexDialog = mutableStateOf(false) 
-    val newVertexKey = mutableStateOf("") 
-    val newVertexValue =  mutableStateOf("") 
+    val showAddVertexDialog = mutableStateOf(false)
+    val newVertexKey = mutableStateOf("")
+    val newVertexValue =  mutableStateOf("")
     val addVertexError = mutableStateOf<String?>(null)
 
     var showDeleteEdgeDialog = mutableStateOf(false)
@@ -58,10 +59,14 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
     val showDeleteConfirmationVertex =  mutableStateOf(false)
     val showNoSelectionWarning =  mutableStateOf(false)
-    
+
 
     val buttonEdgeLabel=mutableStateOf(false)
     val path=mutableStateOf(0)
+
+    val showKeyVertexDialog = mutableStateOf(false)
+    val showKeyVerticesResult = mutableStateOf(false)
+    val keyVerticesCount = mutableStateOf(0)
 
     val planarAlgos: (Planar) -> Unit = {
         clean()
@@ -241,6 +246,28 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             error.value=true
         }
     }
+    
+    fun findKeyVertices(count: Int? = null, minCentrality: Double? = null) {
+        clean()
+        try {
+            if (viewModel.graph is EmptyGraph<*, *>)
+                throw IllegalStateException("Graph is empty")
+            val finder = KeyVertexFinder(viewModel.graph)
+            val keyVertices = when {
+                count != null -> finder.findTopKeyVertices(count)
+                minCentrality != null -> finder.findVerticesWithMinCentrality(minCentrality)
+                else -> throw IllegalArgumentException("Specify count or minCentrality")
+            }
+            keyVertices.forEach { vertex ->
+                viewModel.vertices[vertex]?.color?.value = Color.Yellow
+            }
+            keyVerticesCount.value = keyVertices.size
+            showKeyVerticesResult.value = true
+        } catch (e: Exception) {
+            errorText.value = e.message ?: "Error finding key vertices"
+            error.value = true
+        }
+    }
 
     fun downloadJson(file: File?) {
         try {
@@ -299,9 +326,6 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                     }
                 }
             )
-
-
-
     }
 
     fun uploadJson(file: File) {
@@ -442,46 +466,46 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             if (viewModel.graph is EmptyGraph<*,*>)
                 throw IllegalStateException()
 
-                val selectedVertices = viewModel.selected.map { it.vertex }
-                when (allEdgesFromSelected.value) {
-                    DeletionMode.ALL -> {
-                        for (i in selectedVertices) {
-                            for (j in selectedVertices) {
-                                if (i != j) {
-                                    viewModel.graph.deleteEdge(i, j)
-                                    viewModel.edges.keys.removeAll { edge ->
-                                        edge.link.first == i && edge.link.first == j
-                                    }
+            val selectedVertices = viewModel.selected.map { it.vertex }
+            when (allEdgesFromSelected.value) {
+                DeletionMode.ALL -> {
+                    for (i in selectedVertices) {
+                        for (j in selectedVertices) {
+                            if (i != j) {
+                                viewModel.graph.deleteEdge(i, j)
+                                viewModel.edges.keys.removeAll { edge ->
+                                    edge.link.first == i && edge.link.first == j
                                 }
                             }
-                        }
-                    }
-                    DeletionMode.SEQUENCE -> {
-                        for (i in 0..<selectedVertices.size - 1) {
-                            viewModel.graph.deleteEdge(
-                                selectedVertices[i],
-                                selectedVertices[i + 1]
-                            )
-                            viewModel.edges.keys.removeAll { edge ->
-                                edge.link.first == selectedVertices[i] && edge.link.second == selectedVertices[i + 1]
-                            }
-                        }
-                    }
-                    else -> {
-                        val temp= Vector<Edge<K, V>>()
-                        viewModel.graph.edges.forEach{ start ->
-                            start.value.forEach {
-                                if (it.link.first===selectedVertices[0] || it.link.second===selectedVertices[0]) {
-                                    temp.add(it)
-                                    viewModel.edges.remove(it)
-                                }
-                            }
-                        }
-                        temp.forEach{
-                            viewModel.graph.deleteEdge(it.link.first, it.link.second)
                         }
                     }
                 }
+                DeletionMode.SEQUENCE -> {
+                    for (i in 0..<selectedVertices.size - 1) {
+                        viewModel.graph.deleteEdge(
+                            selectedVertices[i],
+                            selectedVertices[i + 1]
+                        )
+                        viewModel.edges.keys.removeAll { edge ->
+                            edge.link.first == selectedVertices[i] && edge.link.second == selectedVertices[i + 1]
+                        }
+                    }
+                }
+                else -> {
+                    val temp= Vector<Edge<K, V>>()
+                    viewModel.graph.edges.forEach{ start ->
+                        start.value.forEach {
+                            if (it.link.first===selectedVertices[0] || it.link.second===selectedVertices[0]) {
+                                temp.add(it)
+                                viewModel.edges.remove(it)
+                            }
+                        }
+                    }
+                    temp.forEach{
+                        viewModel.graph.deleteEdge(it.link.first, it.link.second)
+                    }
+                }
+            }
             allEdgesFromSelected.value= DeletionMode.SOLO
             viewModel.vertices.values.forEach { vertexVM ->
                 vertexVM.degree = viewModel.graph.getOutDegreeOfVertex(vertexVM.vertex)
@@ -495,4 +519,3 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         }
     }
 }
-

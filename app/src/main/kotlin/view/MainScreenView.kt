@@ -61,6 +61,7 @@ import view.windows.indexErrorWindow
 import view.windows.inputNeo4j
 import view.windows.processNeo4j
 import view.windows.windowPath
+import view.windows.KeyVertexDialog
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
 import kotlin.collections.forEach
@@ -394,6 +395,15 @@ fun <K, V> mainScreen() {
                         ) {
                             Text("YuifanHu")
                         }
+                        // key vertices
+                        DropdownMenuItem(
+                            onClick = {
+                                screenViewModel.showKeyVertexDialog.value = true
+                                expAlgo = false
+                            },
+                        ) {
+                            Text("Find Key Vertices")
+                        }
                     }
                 }
                 //добавление/удаление
@@ -513,6 +523,9 @@ fun <K, V> mainScreen() {
 
             if (screenViewModel.showNoSelectionWarning.value)
                 SelectionErrorWindow(screenViewModel)
+
+            if (screenViewModel.showKeyVertexDialog.value)
+                KeyVertexDialog(screenViewModel)
         }
     }
 }
