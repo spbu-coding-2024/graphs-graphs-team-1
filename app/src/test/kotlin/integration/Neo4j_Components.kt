@@ -44,9 +44,11 @@ class Neo4j_Components {
         fun integrationTest() {
             val result= GraphFactory.fromNeo4j<Int, Int>(::UndirectedGraph,
                 neo4j.boltURI().toString(), "user", "password")
-            val viewModel= GraphViewModel(result)
-            viewModel.kosarujuSharir()
-
+            val viewModel= MainScreenViewModel(GraphViewModel(result))
+            viewModel.viewModel.kosarujuSharir()
+            viewModel.viewModel.edges.values.forEach {
+                assertEquals(it.from.color.value, it.to.color.value)
+            }
         }
 
         @AfterEach
