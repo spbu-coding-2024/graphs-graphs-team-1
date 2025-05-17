@@ -1,6 +1,6 @@
 package integration
 
-import algo.strconnect.KosarujuSharir
+import androidx.compose.ui.graphics.Color
 import model.GraphFactory
 import model.InternalFormatFactory
 import model.Vertex
@@ -13,7 +13,6 @@ import org.neo4j.harness.Neo4j
 import org.neo4j.harness.Neo4jBuilders
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
-import java.awt.GraphicsEnvironment
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
@@ -45,10 +44,19 @@ class Neo4j_Components {
             val result= GraphFactory.fromNeo4j<Int, Int>(::UndirectedGraph,
                 neo4j.boltURI().toString(), "user", "password")
             val viewModel= MainScreenViewModel(GraphViewModel(result))
-            viewModel.viewModel.kosarujuSharir()
+            viewModel.kosajuruSharir()
+            val list=mutableSetOf<Color>()
             viewModel.viewModel.edges.values.forEach {
                 assertEquals(it.from.color.value, it.to.color.value)
+                assertEquals(it.from.color.value, it.color.value)
+                list.add(it.from.color.value)
             }
+            assertEquals(3, list.size)
+            list.forEach {color->
+                assertEquals(10,
+                    viewModel.viewModel.vertices.values.count { it.color.value==color })
+            }
+
         }
 
         @AfterEach
