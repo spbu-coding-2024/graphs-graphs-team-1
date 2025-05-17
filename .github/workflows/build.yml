@@ -22,4 +22,4 @@ jobs:
               packages: xvfb
               version: 0.4.0
       - name: Run build
-        run: xvfb-run ./gradlew -q build
+        run: xvfb-run ./gradlew build
