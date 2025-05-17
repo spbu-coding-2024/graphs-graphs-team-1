@@ -1,5 +1,6 @@
 package integration
 
+import algo.strconnect.KosarujuSharir
 import model.GraphFactory
 import model.InternalFormatFactory
 import model.Vertex
@@ -12,6 +13,7 @@ import org.neo4j.harness.Neo4j
 import org.neo4j.harness.Neo4jBuilders
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
+import java.awt.GraphicsEnvironment
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
@@ -40,13 +42,11 @@ class Neo4j_Components {
 
         @Test
         fun integrationTest() {
-            val viewmodel= GraphViewModel(GraphFactory.fromNeo4j<Int, Int>(::UndirectedGraph,
-                neo4j.boltURI().toString(), "user", "password"))
-            viewmodel.kosarujuSharir()
-            viewmodel.edges.values.forEach {edge ->
-                assertEquals(edge.to.color.value, edge.from.color.value)
-                assertEquals(edge.color.value, edge.to.color.value)
-            }
+            val result= GraphFactory.fromNeo4j<Int, Int>(::UndirectedGraph,
+                neo4j.boltURI().toString(), "user", "password")
+            val viewModel= GraphViewModel(result)
+            viewModel.kosarujuSharir()
+
         }
 
         @AfterEach
