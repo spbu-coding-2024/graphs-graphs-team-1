@@ -5,7 +5,6 @@ import algo.cycles.Cycles
 import algo.dijkstra.Dijkstra
 import algo.strconnect.KosarujuSharir
 import model.Vertex
-import androidx.compose.runtime.mutableStateOf
 import com.google.gson.reflect.TypeToken
 import model.Edge
 import model.GraphFactory
@@ -17,6 +16,7 @@ import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import java.io.File
 import java.util.Vector
+import kotlin.collections.forEach
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
     private val temp = Vector<Edge<K, V>>()
@@ -84,7 +84,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
     }
 
     fun downloadNeo4j(uriNeo4j: String, loginNeo4j: String, passwordNeo4j: String): Graph<K, V> {
-        return GraphFactory.fromNeo4j<K, V>(
+        return GraphFactory.fromNeo4j(
             when (graph::class.simpleName) {
                 "DirectedGraph" -> ::DirectedGraph
                 "DirWeightGraph" -> ::DirWeightGraph
@@ -107,20 +107,36 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             val tempVM = VertexViewModel<Any?, Any?>(Vertex(null, null), 25.0, 0)
             val parsedKey = tempVM.parseKey(key)
             val parsedValue = tempVM.parseValue(value)
-            val newVertex = Vertex<K, V>(parsedKey as K, parsedValue as V)
+            val newVertex = Vertex(parsedKey as K, parsedValue as V)
             graph.addVertex(newVertex)
             vertices[newVertex] = VertexViewModel(
                 newVertex,
                 25.0,
-                degree = graph.getOutDegreeOfVertex(newVertex)
+                graph.getOutDegreeOfVertex(newVertex)
             )
-
             null
         } catch (e: IllegalArgumentException) {
             e.message
         } catch (e: Exception) {
             "Invalid input format"
         }
+    }
+
+    fun downloader(result: Graph<K, V>) {
+        val map=mutableMapOf<Vertex<K, V>, VertexViewModel<K, V>>()
+            result.vertices.onEach {
+                map[it]= VertexViewModel(it, 25.0, result.getOutDegreeOfVertex(it))
+                graph.addVertex(it)
+                vertices[it] = map[it] ?: throw IllegalArgumentException()
+            }
+            result.edges.values.flatten().forEach { edge->
+                graph.addEdge(
+                    edge.link.first,
+                    edge.link.second,
+                    edge.weight
+                )
+            }
+            updateEdgesView()
     }
 
     fun updateVertex(vertex: Vertex<K, V>, newKey: String, newValue: String): String? {

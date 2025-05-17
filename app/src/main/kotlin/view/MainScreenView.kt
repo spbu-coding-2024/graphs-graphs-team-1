@@ -207,7 +207,7 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(
                             onClick = {
-                                screenViewModel.downloadJson()
+                                screenViewModel.downloadJson(JsonDownloader())
                                 downloader = false
                             }
                         ) {
@@ -216,13 +216,13 @@ fun <K, V> mainScreen() {
 
                         DropdownMenuItem(
                             onClick = {
+                                screenViewModel.statusNeo4j.value=true
                                 screenViewModel.downloadNeo4j()
                                 downloader = false
                             }
                         ) {
                             Text("From Neo4j...")
-                            if (screenViewModel.set.value)
-                                screenViewModel.downloadNeo4jBasic()
+
                         }
 
                     }
@@ -238,7 +238,7 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(
                             onClick = {
-                                screenViewModel.uploadJson()
+                                screenViewModel.uploadJson(JsonUploader())
                                 uploader = false
                             }
                         ) {
@@ -247,13 +247,12 @@ fun <K, V> mainScreen() {
 
                         DropdownMenuItem(
                             onClick = {
+                                screenViewModel.statusNeo4j.value=false
                                 screenViewModel.uploadNeo4j()
                                 uploader = false
                             }
                         ) {
                             Text("To Neo4j...")
-                            if (screenViewModel.set.value)
-                                screenViewModel.uploadNeo4jBasic()
 
                         }
                     }
@@ -504,11 +503,7 @@ fun <K, V> mainScreen() {
             graphView(screenViewModel.viewModel)
             errorWindow(screenViewModel.errorText.value, screenViewModel.error)
             indexErrorWindow(screenViewModel.warning)
-            inputNeo4j(
-                screenViewModel.openNeo4j, screenViewModel.set,
-                screenViewModel.uriNeo4j, screenViewModel.loginNeo4j,
-                screenViewModel.passwordNeo4j
-            )
+            inputNeo4j(screenViewModel)
             processNeo4j(screenViewModel.readyNeo4j)
             windowPath(screenViewModel.viewModel.selected,
                 screenViewModel.path,screenViewModel.pathDialog)

@@ -1,3 +1,4 @@
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,13 +39,16 @@ fun AddEdgeDialog(screenViewModel: MainScreenViewModel<*, *>) {
                     )
                     Text("Sequentially", Modifier.padding(start = 4.dp))
                 }
-                Spacer(Modifier.height(16.dp))
-                if (screenViewModel.viewModel.graph::class.simpleName !in arrayOf("UndirectedGraph", "DirectedGraph"))
+                if (screenViewModel.viewModel.graph::class.simpleName !in arrayOf("UndirectedGraph", "DirectedGraph")) {
+                    Spacer(Modifier.height(16.dp))
                     TextField(
+                        modifier = Modifier.focusable().padding(0.dp, 10.dp),
+                        singleLine = true,
                         value = screenViewModel.edgeWeightInput.value,
                         onValueChange = { n -> screenViewModel.edgeWeightInput.value = n },
                         label = { Text("Edge weight") },
                     )
+                }
                 if (screenViewModel.edgeWeightInput.value.toIntOrNull() == null) {
                     Text("Enter valid number", color = Color.Red)
                 }
