@@ -67,7 +67,9 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         return Cycles.findCycles(graph, selected.first().vertex)
     }
 
-    fun downloadJson(file: File?): Graph<K, V> {
+    fun downloadJson(file: File?): Graph<K, V>? {
+        if (file==null)
+            return null
         return GraphFactory.fromJSON(
             file?.readText() ?: throw IllegalStateException(),
             when (graph::class.simpleName) {
@@ -122,7 +124,9 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         }
     }
 
-    fun downloader(result: Graph<K, V>) {
+    fun downloader(result: Graph<K, V>?) {
+        if (result==null)
+            return
         val map=mutableMapOf<Vertex<K, V>, VertexViewModel<K, V>>()
             result.vertices.onEach {
                 map[it]= VertexViewModel(it, 25.0, result.getOutDegreeOfVertex(it))

@@ -13,7 +13,6 @@ import kotlinx.coroutines.launch
 import model.Edge
 import algo.keyvertex.KeyVertexFinder
 import model.graphs.EmptyGraph
-import viewmodel.ColorList
 import java.io.File
 import java.util.Vector
 import kotlin.collections.forEach
@@ -330,11 +329,11 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             )
     }
 
-    fun uploadJson(file: File) {
+    fun uploadJson(file: File?) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw NoGraphException()
-            file.writeText(viewModel.uploadJson())
+            file?.writeText(viewModel.uploadJson())
         } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
