@@ -275,7 +275,6 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw NoGraphException()
-            var file: File? = null
             val result = viewModel.downloadJson(file)
             viewModel.downloader(result)
             showAddVertexDialog.value=true
