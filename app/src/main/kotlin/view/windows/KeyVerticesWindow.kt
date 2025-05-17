@@ -41,7 +41,11 @@ fun <K, V> KeyVertexDialog(viewModel: MainScreenViewModel<K, V>) {
                     Spacer(modifier = Modifier.width(8.dp))
                     TextField(
                         value = count,
-                        onValueChange = { if (it.all { c -> c.isDigit() }) count = it },
+                        onValueChange = {
+                            if (it.isEmpty() || it == "-" || it.toIntOrNull() != null) {
+                                count = it
+                            }
+                        },
                         enabled = mode == "count",
                         modifier = Modifier.width(100.dp)
                     )
@@ -59,7 +63,7 @@ fun <K, V> KeyVertexDialog(viewModel: MainScreenViewModel<K, V>) {
                     TextField(
                         value = minCentrality,
                         onValueChange = {
-                            if (it.isEmpty() || it.toDoubleOrNull() != null) {
+                            if (it.isEmpty() || it == "-" || it.toDoubleOrNull() != null) {
                                 minCentrality = it
                             }
                         },
@@ -70,20 +74,31 @@ fun <K, V> KeyVertexDialog(viewModel: MainScreenViewModel<K, V>) {
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    try {
-                        when (mode) {
-                            "count" -> viewModel.findKeyVertices(count = count.toInt())
-                            "centrality" -> viewModel.findKeyVertices(minCentrality = minCentrality.toDouble())
+            Button(onClick = {
+                try {
+                    when (mode) {
+                        "count" -> {
+                            if (count.isEmpty()) throw IllegalArgumentException("Count cannot be empty")
+                            val possibleCount = count.toInt()
+                            when {
+                                possibleCount == 0 -> throw IllegalArgumentException("Count cannot be zero")
+                                possibleCount < 0 -> throw IllegalArgumentException("Count cannot be negative")
+                                else -> viewModel.findKeyVertices(count = possibleCount)
+                            }
                         }
-                        viewModel.showKeyVertexDialog.value = false
-                    } catch (e: Exception) {
-                        viewModel.errorText.value = "Invalid input: ${e.message}"
-                        viewModel.error.value = true
+                        "centrality" -> {
+                            if (minCentrality.isEmpty()) throw IllegalArgumentException("Centrality cannot be empty")
+                            val possibleCentrality = minCentrality.toDouble()
+                            if (possibleCentrality < 0) throw IllegalArgumentException("Centrality cannot be negative")
+                            viewModel.findKeyVertices(minCentrality = possibleCentrality)
+                        }
                     }
+                    viewModel.showKeyVertexDialog.value = false
+                } catch (e: Exception) {
+                    viewModel.errorText.value = "Error: ${e.message}"
+                    viewModel.error.value = true
                 }
-            ) {
+            }) {
                 Text("Find")
             }
         },
