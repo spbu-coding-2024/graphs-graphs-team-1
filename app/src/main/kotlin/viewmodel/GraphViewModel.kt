@@ -4,6 +4,7 @@ import algo.bellmanford.FordBellman
 import algo.cycles.Cycles
 import algo.dijkstra.Dijkstra
 import algo.strconnect.KosarujuSharir
+import androidx.compose.runtime.MutableState
 import model.Vertex
 import com.google.gson.reflect.TypeToken
 import model.Edge
@@ -14,6 +15,7 @@ import model.graphs.DirectedGraph
 import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
+import viewmodel.MainScreenViewModel.DeletionMode
 import java.io.File
 import java.util.Vector
 import kotlin.collections.forEach
@@ -33,6 +35,8 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
 
 
     val selected = mutableListOf<VertexViewModel<K, V>>()
+    var stateHolder = StateHolder<K, V>(this)
+
 
     var vertices = graph.vertices.associateWith { v ->
         VertexViewModel(
@@ -114,11 +118,49 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                 25.0,
                 graph.getOutDegreeOfVertex(newVertex)
             )
+            stateHolder.pushVertex(newVertex)
             null
         } catch (e: IllegalArgumentException) {
             e.message
         } catch (e: Exception) {
             "Invalid input format"
+        }
+    }
+
+    fun addEdge(edgeWeightInput: MutableState<String>, isAllToAllMode: MutableState<Boolean>) {
+        edgeWeightInput.let { weight ->
+            val selectedVertices = selected.map { it.vertex }
+            if (isAllToAllMode.value) {
+                for (i in selectedVertices.indices) {
+                    for (j in i + 1 until selectedVertices.size) {
+                        graph.addEdge(
+                            selectedVertices[i],
+                            selectedVertices[j],
+                            weight.value.toIntOrNull() ?: throw IllegalArgumentException()
+                        )
+                        stateHolder.pushEdge(
+                            graph.edges.values
+                                .flatten().first {
+                                    it.link.first === selectedVertices[i] && it.link.second === selectedVertices[j]
+                                }
+                        )
+                    }
+                }
+            } else {
+                for (i in 0 until selectedVertices.size - 1) {
+                    graph.addEdge(
+                        selectedVertices[i],
+                        selectedVertices[i + 1],
+                        weight.value.toIntOrNull() ?: throw IllegalArgumentException()
+                    )
+                    stateHolder.pushEdge(
+                        graph.edges.values
+                            .flatten().first {
+                                it.link.first === selectedVertices[i] && it.link.second === selectedVertices[i+1]
+                            }
+                    )
+                }
+            }
         }
     }
 
@@ -128,6 +170,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                 map[it]= VertexViewModel(it, 25.0, result.getOutDegreeOfVertex(it))
                 graph.addVertex(it)
                 vertices[it] = map[it] ?: throw IllegalArgumentException()
+                stateHolder.pushVertex(it)
             }
             result.edges.values.flatten().forEach { edge->
                 graph.addEdge(
@@ -135,6 +178,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                     edge.link.second,
                     edge.weight
                 )
+                stateHolder.pushEdge(edge)
             }
             updateEdgesView()
     }
@@ -171,19 +215,75 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             .toMutableMap()
     }
 
-    fun deleteSelectedVertices(): Boolean {
-        val selectedVertices = vertices.values.filter { it.selected.value }.map { it.vertex }
+    fun deleteSelectedVertices(selectedVertices:
+                               List<Vertex<K, V>> = vertices.values
+                                   .filter { it.selected.value }
+                                   .map { it.vertex }): Boolean {
+
         if (selectedVertices.isEmpty()) return false
         selectedVertices.forEach { vertex ->
             graph.deleteVertex(vertex)
             vertices.remove(vertex)
-            edges.keys.removeAll { edge ->
+            edges.keys.forEach {edge->
+                stateHolder.popEdge(edge)
+            }
+            edges.keys.removeAll() { edge ->
+                stateHolder.popEdge(edge)
                 edge.link.first == vertex || edge.link.second == vertex
             }
+
+
         }
         vertices.values.forEach { vertexVM ->
             vertexVM.degree = graph.getOutDegreeOfVertex(vertexVM.vertex)
         }
         return true
     }
+
+    fun deleteEdges(allEdgesFromSelected: MutableState<DeletionMode>) {
+        val selectedVertices = selected.map { it.vertex }
+        when (allEdgesFromSelected.value) {
+            DeletionMode.ALL -> {
+                for (i in selectedVertices) {
+                    for (j in selectedVertices) {
+                        if (i != j) {
+                            graph.deleteEdge(i, j)
+                            edges.keys.removeAll { edge ->
+                                edge.link.first == i && edge.link.first == j
+                            }
+                        }
+                    }
+                }
+            }
+            DeletionMode.SEQUENCE -> {
+                for (i in 0..<selectedVertices.size - 1) {
+                    graph.deleteEdge(
+                        selectedVertices[i],
+                        selectedVertices[i + 1]
+                    )
+                    edges.keys.removeAll { edge ->
+                        edge.link.first == selectedVertices[i] && edge.link.second == selectedVertices[i + 1]
+                    }
+                }
+            }
+            else -> {
+                val temp= Vector<Edge<K, V>>()
+                graph.edges.forEach{ start ->
+                    start.value.forEach {
+                        if (it.link.first===selectedVertices[0] || it.link.second===selectedVertices[0]) {
+                            temp.add(it)
+                            edges.remove(it)
+                        }
+                    }
+                }
+                temp.forEach{
+                    graph.deleteEdge(it.link.first, it.link.second)
+                }
+            }
+        }
+        vertices.values.forEach { vertexVM ->
+            vertexVM.degree = graph.getOutDegreeOfVertex(vertexVM.vertex)
+        }
+    }
 }
+

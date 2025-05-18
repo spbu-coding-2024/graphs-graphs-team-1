@@ -25,6 +25,8 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         SEQUENCE
     }
 
+
+
     private class NoGraphException(): Throwable()
 
     var viewModel by mutableStateOf(graphViewModel)
@@ -415,28 +417,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         try {
             if (viewModel.graph is EmptyGraph<*,*>)
                 throw NoGraphException()
-            edgeWeightInput.let { weight ->
-                val selectedVertices = viewModel.selected.map { it.vertex }
-                if (isAllToAllMode.value) {
-                    for (i in selectedVertices.indices) {
-                        for (j in i + 1 until selectedVertices.size) {
-                            viewModel.graph.addEdge(
-                                selectedVertices[i],
-                                selectedVertices[j],
-                                weight.value.toIntOrNull() ?: throw IllegalArgumentException()
-                            )
-                        }
-                    }
-                } else {
-                    for (i in 0 until selectedVertices.size - 1) {
-                        viewModel.graph.addEdge(
-                            selectedVertices[i],
-                            selectedVertices[i + 1],
-                            weight.value.toIntOrNull() ?: throw IllegalArgumentException()
-                        )
-                    }
-                }
-            }
+            viewModel.addEdge(edgeWeightInput, isAllToAllMode)
             edgeWeightInput.value="1"
             viewModel.updateEdgesView()
             showAddEdgesDialog.value = false
@@ -468,51 +449,8 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         try {
             if (viewModel.graph is EmptyGraph<*,*>)
                 throw NoGraphException()
-
-            val selectedVertices = viewModel.selected.map { it.vertex }
-            when (allEdgesFromSelected.value) {
-                DeletionMode.ALL -> {
-                    for (i in selectedVertices) {
-                        for (j in selectedVertices) {
-                            if (i != j) {
-                                viewModel.graph.deleteEdge(i, j)
-                                viewModel.edges.keys.removeAll { edge ->
-                                    edge.link.first == i && edge.link.first == j
-                                }
-                            }
-                        }
-                    }
-                }
-                DeletionMode.SEQUENCE -> {
-                    for (i in 0..<selectedVertices.size - 1) {
-                        viewModel.graph.deleteEdge(
-                            selectedVertices[i],
-                            selectedVertices[i + 1]
-                        )
-                        viewModel.edges.keys.removeAll { edge ->
-                            edge.link.first == selectedVertices[i] && edge.link.second == selectedVertices[i + 1]
-                        }
-                    }
-                }
-                else -> {
-                    val temp= Vector<Edge<K, V>>()
-                    viewModel.graph.edges.forEach{ start ->
-                        start.value.forEach {
-                            if (it.link.first===selectedVertices[0] || it.link.second===selectedVertices[0]) {
-                                temp.add(it)
-                                viewModel.edges.remove(it)
-                            }
-                        }
-                    }
-                    temp.forEach{
-                        viewModel.graph.deleteEdge(it.link.first, it.link.second)
-                    }
-                }
-            }
+            viewModel.deleteEdges(allEdgesFromSelected)
             allEdgesFromSelected.value= DeletionMode.SOLO
-            viewModel.vertices.values.forEach { vertexVM ->
-                vertexVM.degree = viewModel.graph.getOutDegreeOfVertex(vertexVM.vertex)
-            }
         } catch (e: NoGraphException) {
             errorText.value = "Choose graph type first"
             error.value = true
