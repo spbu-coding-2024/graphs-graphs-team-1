@@ -23,7 +23,7 @@ class StateHolder<K, V>(var graphViewModel: GraphViewModel<K, V>) {
     var edges= Stack<Edge<K, V>>()
     var vertices=Stack<Vertex<K, V>>()
     private var actions= Stack<Record>()
-    var initiated= mutableStateOf(actions.isEmpty())
+    var initiated= actions.isEmpty()
 
     fun pushVertex(vertex: Vertex<K, V> = vertices.pop()) {
         vertices.push(vertex)

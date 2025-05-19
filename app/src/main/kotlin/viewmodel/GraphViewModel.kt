@@ -241,6 +241,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         return true
     }
 
+
     fun deleteEdges(allEdgesFromSelected: MutableState<DeletionMode>,
                     selectedVertices: List<Vertex<K, V>> = selected.map { it.vertex }) {
         when (allEdgesFromSelected.value) {

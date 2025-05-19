@@ -67,6 +67,7 @@ import view.windows.inputNeo4j
 import view.windows.processNeo4j
 import view.windows.windowPath
 import view.windows.KeyVertexDialog
+import view.windows.graphTypeDialog
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
 import kotlin.collections.forEach
@@ -111,6 +112,10 @@ fun <K, V> mainScreen() {
     Scaffold(
         modifier = Modifier.focusRequester(requester).focusable().onKeyEvent { keyEvent ->
             when {
+                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.N && keyEvent.isCtrlPressed -> {
+                    screenViewModel.graphType.value=true
+                    true
+                }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Z && keyEvent.isCtrlPressed -> {
                     screenViewModel.viewModel.stateHolder.undo()
                     screenViewModel.repainter.value=true
@@ -185,25 +190,33 @@ fun <K, V> mainScreen() {
         },
         bottomBar = {
             BottomAppBar(backgroundColor = Color.White, modifier = Modifier.height(40.dp)) {
-                Button(
-                    onClick = {
-                        scale += 10
-                        set(1.1)
-                    },
-
-                    ) {
-                    Text("+")
-                }
-                Box(Modifier.padding(horizontal = 10.dp)) {
-                    Text("${scale}%")
-                }
-                Button(
-                    onClick = {
-                        scale -= 10
-                        set(0.9)
+                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxSize()) {
+                    Button(
+                        onClick = { screenViewModel.viewModel.stateHolder.undo()
+                            screenViewModel.repainter.value=screenViewModel.repainter.value.not() },
+                        content = {Text("Undo")},
+                    )
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically){
+                        Button(
+                            onClick = {
+                                scale += 10
+                                set(1.1)
+                            },
+                            ) {
+                            Text("+")
+                        }
+                        Box(Modifier.padding(horizontal = 10.dp)) {
+                            Text("${scale}%")
+                        }
+                        Button(
+                            onClick = {
+                                scale -= 10
+                                set(0.9)
+                            }
+                        ) {
+                            Text("-")
+                        }
                     }
-                ) {
-                    Text("-")
                 }
             }
         },
@@ -285,56 +298,7 @@ fun <K, V> mainScreen() {
                                screenViewModel.graphType.value = true
                             }
                         ) {
-                            val graphs = listOf(
-                                "Undirected Graph",
-                                "Undirected Weighted Graph",
-                                "Directed Weighted Graph",
-                                "Directed Graph"
-                            )
-                            val (selectedOption, onOptionSelected) = remember { mutableStateOf(graphs[0]) }
-                            if (screenViewModel.graphType.value) {
-                                AlertDialog(
-                                    onDismissRequest = { screenViewModel.graphType.value = false },
-                                    text = {
-                                        Column(Modifier.selectableGroup()) {
-                                            graphs.forEach { text ->
-                                                Row(
-                                                    Modifier
-                                                        .fillMaxWidth()
-                                                        .height(56.dp)
-                                                        .selectable(
-                                                            selected = (text == selectedOption),
-                                                            onClick = { onOptionSelected(text) },
-                                                            role = Role.RadioButton
-                                                        ),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    RadioButton(
-                                                        selected = (text == selectedOption),
-                                                        onClick = null
-                                                    )
-                                                    Text(text = text)
-                                                }
-                                            }
-                                        }
-                                    },
-                                    confirmButton = {
-                                        Button(
-                                            onClick = {
-                                                val graph = when (selectedOption) {
-                                                    graphs[0] -> UndirectedGraph<K, V>()
-                                                    graphs[1] -> UndirWeightGraph()
-                                                    graphs[2] -> DirWeightGraph()
-                                                    else -> DirectedGraph()
-                                                }
-                                                screenViewModel.viewModel = GraphViewModel(graph)
-                                                screenViewModel.graphType.value=false
-                                            }
-                                        ) { Text("OK") }
 
-                                    }
-                                )
-                            }
                             Text("New Graph...")
                         }
                     }
@@ -548,6 +512,7 @@ fun <K, V> mainScreen() {
             windowPath(screenViewModel.viewModel.selected,
                 screenViewModel.path,screenViewModel.pathDialog)
             edgeErrorWindow(screenViewModel.edgeError)
+            graphTypeDialog(screenViewModel)
 
             if (screenViewModel.showAddVertexDialog.value)
                 AddVertexDialog(screenViewModel)
@@ -569,6 +534,10 @@ fun <K, V> mainScreen() {
 
             if (screenViewModel.repainter.value)
                 currentRecomposeScope.invalidate()
+
+
+
+
         }
     }
 }
