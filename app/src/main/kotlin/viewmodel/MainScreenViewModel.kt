@@ -284,7 +284,6 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw NoGraphException()
-            var file: File? = null
             val result = viewModel.downloadJson(file)
             viewModel.downloader(result)
             repainter.value=true
@@ -340,11 +339,11 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             )
     }
 
-    fun uploadJson(file: File) {
+    fun uploadJson(file: File?) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw NoGraphException()
-            file.writeText(viewModel.uploadJson())
+            file?.writeText(viewModel.uploadJson())
         } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
