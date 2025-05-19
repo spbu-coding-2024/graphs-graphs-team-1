@@ -12,7 +12,11 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import model.Edge
 import algo.keyvertex.KeyVertexFinder
+import model.graphs.DirWeightGraph
+import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
+import model.graphs.UndirWeightGraph
+import model.graphs.UndirectedGraph
 import viewmodel.ColorList
 import java.io.File
 import java.util.Vector
@@ -25,10 +29,13 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         SEQUENCE
     }
 
+
+
     private class NoGraphException(): Throwable()
 
     var viewModel by mutableStateOf(graphViewModel)
 
+    var repainter= mutableStateOf(false)
     var pathDialog = mutableStateOf(false)
     var warning = mutableStateOf(false)
     var error = mutableStateOf(false)
@@ -69,6 +76,8 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     val showKeyVertexDialog = mutableStateOf(false)
     val showKeyVerticesResult = mutableStateOf(false)
     val keyVerticesCount = mutableStateOf(0)
+
+
 
     val planarAlgos: (Planar) -> Unit = {
         clean()
@@ -278,7 +287,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             var file: File? = null
             val result = viewModel.downloadJson(file)
             viewModel.downloader(result)
-            showAddVertexDialog.value=true
+            repainter.value=true
         } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
@@ -286,7 +295,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             errorText.value=e.message.toString()
             error.value=true
         } finally {
-            showAddVertexDialog.value=false
+            repainter.value=false
         }
     }
 
@@ -318,13 +327,13 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                             loginNeo4j.value, passwordNeo4j.value
                         )
                         viewModel.downloader(result)
-                        showAddVertexDialog.value=true
+                        repainter.value=true
                     } catch (e: Exception) {
                         openNeo4j.value = false
                         errorText.value = e.message.toString()
                         error.value = true
                     } finally {
-                        showAddVertexDialog.value=false
+                        repainter.value=false
                         readyNeo4j.value = true
                     }
                 }
@@ -415,28 +424,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         try {
             if (viewModel.graph is EmptyGraph<*,*>)
                 throw NoGraphException()
-            edgeWeightInput.let { weight ->
-                val selectedVertices = viewModel.selected.map { it.vertex }
-                if (isAllToAllMode.value) {
-                    for (i in selectedVertices.indices) {
-                        for (j in i + 1 until selectedVertices.size) {
-                            viewModel.graph.addEdge(
-                                selectedVertices[i],
-                                selectedVertices[j],
-                                weight.value.toIntOrNull() ?: throw IllegalArgumentException()
-                            )
-                        }
-                    }
-                } else {
-                    for (i in 0 until selectedVertices.size - 1) {
-                        viewModel.graph.addEdge(
-                            selectedVertices[i],
-                            selectedVertices[i + 1],
-                            weight.value.toIntOrNull() ?: throw IllegalArgumentException()
-                        )
-                    }
-                }
-            }
+            viewModel.addEdge(edgeWeightInput, isAllToAllMode)
             edgeWeightInput.value="1"
             viewModel.updateEdgesView()
             showAddEdgesDialog.value = false
@@ -468,51 +456,8 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         try {
             if (viewModel.graph is EmptyGraph<*,*>)
                 throw NoGraphException()
-
-            val selectedVertices = viewModel.selected.map { it.vertex }
-            when (allEdgesFromSelected.value) {
-                DeletionMode.ALL -> {
-                    for (i in selectedVertices) {
-                        for (j in selectedVertices) {
-                            if (i != j) {
-                                viewModel.graph.deleteEdge(i, j)
-                                viewModel.edges.keys.removeAll { edge ->
-                                    edge.link.first == i && edge.link.first == j
-                                }
-                            }
-                        }
-                    }
-                }
-                DeletionMode.SEQUENCE -> {
-                    for (i in 0..<selectedVertices.size - 1) {
-                        viewModel.graph.deleteEdge(
-                            selectedVertices[i],
-                            selectedVertices[i + 1]
-                        )
-                        viewModel.edges.keys.removeAll { edge ->
-                            edge.link.first == selectedVertices[i] && edge.link.second == selectedVertices[i + 1]
-                        }
-                    }
-                }
-                else -> {
-                    val temp= Vector<Edge<K, V>>()
-                    viewModel.graph.edges.forEach{ start ->
-                        start.value.forEach {
-                            if (it.link.first===selectedVertices[0] || it.link.second===selectedVertices[0]) {
-                                temp.add(it)
-                                viewModel.edges.remove(it)
-                            }
-                        }
-                    }
-                    temp.forEach{
-                        viewModel.graph.deleteEdge(it.link.first, it.link.second)
-                    }
-                }
-            }
+            viewModel.deleteEdges(allEdgesFromSelected)
             allEdgesFromSelected.value= DeletionMode.SOLO
-            viewModel.vertices.values.forEach { vertexVM ->
-                vertexVM.degree = viewModel.graph.getOutDegreeOfVertex(vertexVM.vertex)
-            }
         } catch (e: NoGraphException) {
             errorText.value = "Choose graph type first"
             error.value = true
@@ -520,5 +465,16 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             errorText.value=e.message.toString()
             error.value=true
         }
+    }
+
+    fun graphTypeSelection(selectedOption: String, graphs: List<String>) {
+        val graph = when (selectedOption) {
+            graphs[0] -> UndirectedGraph<K, V>()
+            graphs[1] -> UndirWeightGraph()
+            graphs[2] -> DirWeightGraph()
+            else -> DirectedGraph()
+        }
+        viewModel = GraphViewModel(graph)
+        graphType.value=false
     }
 }
