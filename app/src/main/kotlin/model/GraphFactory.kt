@@ -90,12 +90,8 @@ class GraphJsonDeserializer<K, V> (private val constructor: () -> Graph<K, V>, p
 
                     try {
                         val id = vertexObj.get("id").asInt
-                        val key = context.deserialize<K>(
-                            vertexObj.get("key").asJsonObject.get("val"), keyType)
-
-                        val value = context.deserialize<V>(
-                            vertexObj.get("value").asJsonObject.get("val"), valueType)
-
+                        val key = context.deserialize<K>(vertexObj.get("key"), keyType)
+                        val value = context.deserialize<V>(vertexObj.get("value"), valueType)
                         if (key != null && value != null) {
                             vertexMap[id] = Vertex<K, V>(key, value).also { graph.addVertex(it) }
                         } else {
