@@ -61,6 +61,8 @@ There are several ways for user to interact with graph: through menu, keyboard a
    * `E` - add edges
    * `Shift + E` - delete edges
    * `Shift + V` - delete vertices
+   * `Ctrl + N` - select graph type/create new graph
+   * `Ctrl + Z` - undo last element addition
    * `- (Minus)` - decrease graph (accommodate graph)
    * `+ (Plus)` - enlarge graph (focus on center of screen)
    
