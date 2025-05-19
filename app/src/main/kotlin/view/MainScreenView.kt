@@ -29,6 +29,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.currentRecomposeScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +49,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.DelicateCoroutinesApi
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
@@ -88,6 +90,8 @@ fun <K, V> mainScreen() {
     var uploader by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
+
+
     val requester = remember { FocusRequester() }
 
     val set: (Double) -> Unit = { n ->
@@ -109,6 +113,8 @@ fun <K, V> mainScreen() {
             when {
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Z && keyEvent.isCtrlPressed -> {
                     screenViewModel.viewModel.stateHolder.undo()
+                    screenViewModel.repainter.value=true
+                    screenViewModel.repainter.value=false
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.V && keyEvent.isShiftPressed-> {
@@ -560,6 +566,9 @@ fun <K, V> mainScreen() {
 
             if (screenViewModel.showKeyVertexDialog.value)
                 KeyVertexDialog(screenViewModel)
+
+            if (screenViewModel.repainter.value)
+                currentRecomposeScope.invalidate()
         }
     }
 }

@@ -20,8 +20,8 @@ enum class Object {
 class Record(var status: Status, var obj: Object)
 
 class StateHolder<K, V>(var graphViewModel: GraphViewModel<K, V>) {
-    private var edges= Stack<Edge<K, V>>()
-    private var vertices=Stack<Vertex<K, V>>()
+    var edges= Stack<Edge<K, V>>()
+    var vertices=Stack<Vertex<K, V>>()
     private var actions= Stack<Record>()
     var initiated= mutableStateOf(actions.isEmpty())
 
@@ -35,7 +35,10 @@ class StateHolder<K, V>(var graphViewModel: GraphViewModel<K, V>) {
     }
 
     fun popEdge(edge: Edge<K, V> = edges.pop()) {
-        graphViewModel.edges.remove(edge)
+        graphViewModel.graph.deleteEdge(edge.link.first, edge.link.second)
+        graphViewModel.edges.keys.removeAll {
+            edge.link.first == it.link.first && edge.link.first == it.link.second
+        }
         graphViewModel.updateEdgesView()
     }
 
@@ -44,13 +47,11 @@ class StateHolder<K, V>(var graphViewModel: GraphViewModel<K, V>) {
     }
 
     fun undo() {
-        val record=actions.pop()
+        val record=if (actions.isNotEmpty()) actions.pop() else return
         println("${record.obj} ${record.status}")
         when {
             record.status== Status.ADDITION && record.obj== Object.VERTEX -> popVertex()
             record.status== Status.ADDITION && record.obj== Object.EDGE -> popEdge()
-            record.status== Status.DELETION && record.obj== Object.VERTEX -> pushVertex()
-            record.status== Status.DELETION && record.obj== Object.EDGE -> pushEdge()
         }
     }
 

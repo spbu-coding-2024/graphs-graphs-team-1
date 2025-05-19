@@ -31,6 +31,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
     var viewModel by mutableStateOf(graphViewModel)
 
+    var repainter= mutableStateOf(false)
     var pathDialog = mutableStateOf(false)
     var warning = mutableStateOf(false)
     var error = mutableStateOf(false)
@@ -280,7 +281,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             var file: File? = null
             val result = viewModel.downloadJson(file)
             viewModel.downloader(result)
-            showAddVertexDialog.value=true
+            repainter.value=true
         } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value=true
@@ -288,7 +289,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             errorText.value=e.message.toString()
             error.value=true
         } finally {
-            showAddVertexDialog.value=false
+            repainter.value=false
         }
     }
 
@@ -320,13 +321,13 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                             loginNeo4j.value, passwordNeo4j.value
                         )
                         viewModel.downloader(result)
-                        showAddVertexDialog.value=true
+                        repainter.value=true
                     } catch (e: Exception) {
                         openNeo4j.value = false
                         errorText.value = e.message.toString()
                         error.value = true
                     } finally {
-                        showAddVertexDialog.value=false
+                        repainter.value=false
                         readyNeo4j.value = true
                     }
                 }

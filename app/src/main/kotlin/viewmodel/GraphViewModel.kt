@@ -5,6 +5,9 @@ import algo.cycles.Cycles
 import algo.dijkstra.Dijkstra
 import algo.strconnect.KosarujuSharir
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import model.Vertex
 import com.google.gson.reflect.TypeToken
 import model.Edge
@@ -224,11 +227,9 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         selectedVertices.forEach { vertex ->
             graph.deleteVertex(vertex)
             vertices.remove(vertex)
-            edges.keys.forEach {edge->
-                stateHolder.popEdge(edge)
-            }
+            stateHolder.vertices.removeAll {it===vertex}
             edges.keys.removeAll() { edge ->
-                stateHolder.popEdge(edge)
+                stateHolder.edges.removeAll { it===edge }
                 edge.link.first == vertex || edge.link.second == vertex
             }
 
@@ -240,8 +241,8 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         return true
     }
 
-    fun deleteEdges(allEdgesFromSelected: MutableState<DeletionMode>) {
-        val selectedVertices = selected.map { it.vertex }
+    fun deleteEdges(allEdgesFromSelected: MutableState<DeletionMode>,
+                    selectedVertices: List<Vertex<K, V>> = selected.map { it.vertex }) {
         when (allEdgesFromSelected.value) {
             DeletionMode.ALL -> {
                 for (i in selectedVertices) {
@@ -249,6 +250,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                         if (i != j) {
                             graph.deleteEdge(i, j)
                             edges.keys.removeAll { edge ->
+                                stateHolder.edges.removeAll { it===edge }
                                 edge.link.first == i && edge.link.first == j
                             }
                         }
@@ -262,6 +264,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                         selectedVertices[i + 1]
                     )
                     edges.keys.removeAll { edge ->
+                        stateHolder.edges.removeAll { it===edge }
                         edge.link.first == selectedVertices[i] && edge.link.second == selectedVertices[i + 1]
                     }
                 }
@@ -278,6 +281,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                 }
                 temp.forEach{
                     graph.deleteEdge(it.link.first, it.link.second)
+                    stateHolder.edges.remove(it)
                 }
             }
         }
