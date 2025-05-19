@@ -17,6 +17,8 @@ import model.graphs.UndirectedGraph
 import java.io.File
 import java.util.Vector
 import kotlin.collections.forEach
+import kotlin.reflect.full.createType
+import kotlin.reflect.javaType
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
     private val temp = Vector<Edge<K, V>>()

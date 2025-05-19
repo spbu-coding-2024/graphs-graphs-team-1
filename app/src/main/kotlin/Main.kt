@@ -6,7 +6,7 @@ import view.mainScreen
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "Graph Application") {
         MaterialTheme {
-            mainScreen<Int, Int>()
+            mainScreen<Any, Any>()
         }
     }
 }

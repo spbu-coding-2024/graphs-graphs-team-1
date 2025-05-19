@@ -10,6 +10,9 @@ import com.google.gson.JsonDeserializationContext
 import com.google.gson.GsonBuilder
 import java.lang.reflect.Type
 import com.google.gson.reflect.TypeToken
+import java.util.Objects
+import kotlin.reflect.full.createType
+import kotlin.reflect.javaType
 
 class GraphFactory {
     companion object {
@@ -33,9 +36,10 @@ class GraphFactory {
                 )
                 for (record in result) {
                     if (vertices[record["fid"].asInt()] == null)
-                        vertices[record["fid"].asInt()] = Vertex(record["fk"] as K, record["fv"] as V)
+                        vertices[record["fid"].asInt()] = Vertex(record["fk"].asObject() as K, record["fv"].asObject() as V)
+
                     if (vertices[record["sid"].asInt()] == null)
-                        vertices[record["sid"].asInt()] = Vertex(record["sk"] as K, record["sv"] as V)
+                        vertices[record["sid"].asInt()] = Vertex(record["sk"].asObject() as K, record["sv"].asObject() as V)
                     graph.addEdge(
                         vertices[record["fid"].asInt()] ?: throw IllegalStateException(),
                         vertices[record["sid"].asInt()] ?: throw IllegalStateException(),
@@ -47,11 +51,12 @@ class GraphFactory {
                 )
                 for (record in result) {
                     if (vertices[record["id"].asInt()]==null) {
-                        vertices[record["id"].asInt()] = Vertex(record["k"] as K, record["v"] as V)
+                        vertices[record["id"].asInt()] = Vertex(record["k"].asObject() as K, record["v"].asObject() as V)
                         graph.addVertex(vertices[record["id"].asInt()] ?: throw IllegalStateException())
                     }
                 }
             }
+
             session.close()
             driver.close()
             return graph
@@ -90,8 +95,10 @@ class GraphJsonDeserializer<K, V> (private val constructor: () -> Graph<K, V>, p
 
                     try {
                         val id = vertexObj.get("id").asInt
-                        val key = context.deserialize<K>(vertexObj.get("key"), keyType)
-                        val value = context.deserialize<V>(vertexObj.get("value"), valueType)
+                        val key = context.deserialize<K>(
+                            vertexObj.get("key"), keyType) as K
+                        val value = context.deserialize<V>(
+                            vertexObj.get("value"), valueType) as V
                         if (key != null && value != null) {
                             vertexMap[id] = Vertex<K, V>(key, value).also { graph.addVertex(it) }
                         } else {
