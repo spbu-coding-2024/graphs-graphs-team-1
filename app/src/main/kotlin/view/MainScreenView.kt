@@ -51,9 +51,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.DelicateCoroutinesApi
+import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
+import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import view.windows.AddVertexDialog
@@ -70,16 +72,65 @@ import view.windows.KeyVertexDialog
 import view.windows.graphTypeDialog
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
+import java.util.Vector
+import java.util.stream.Stream
 import kotlin.collections.forEach
 import kotlin.math.max
 import kotlin.math.min
-
+import kotlin.random.Random
+import kotlin.reflect.full.primaryConstructor
 
 
 
 @OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun <K, V> mainScreen() {
+
+    fun generateGraph(): Graph<K, V> {
+
+        val graph: Graph<Int, Int> = UndirectedGraph()
+        val numb=100
+        val vector= Vector<Vertex<Int, Int>>()
+        repeat(numb) {
+            vector.add(Vertex(Random.nextInt(), Random.nextInt()))
+        }
+        val toVertex = hashMapOf<Vertex< Int, Int>, Vector<Vertex<Int, Int>>>()
+        val fromVertex = hashMapOf<Vertex< Int, Int>, Vector<Vertex<Int, Int>>>()
+        val repeat=100
+
+        for (i in 0..repeat) {
+            val from=vector.random()
+            val to=vector.random()
+            if (from==to)
+                continue
+            if (!graph.addEdge(from, to, 45))
+                continue
+
+            if (toVertex[to]==null)
+                toVertex[to]= Vector()
+            if (fromVertex[from]==null)
+                fromVertex[from]= Vector()
+            when(graph::class.simpleName) {
+                "UndirWeightGraph","UndirectedGraph" -> {
+                    if (toVertex[from]==null)
+                        toVertex[from]= Vector()
+                    if (fromVertex[to]==null)
+                        fromVertex[to]= Vector()
+                    fromVertex[to]?.add(from)
+                    toVertex[from]?.add(to)
+                }
+            }
+            if (toVertex[to]==null)
+                toVertex[to]= Vector()
+            if (fromVertex[from]==null)
+                fromVertex[from]= Vector()
+            fromVertex[from]?.add(to)
+            toVertex[to]?.add(from)
+        }
+        println(graph.edges.values.sumOf { it.size })
+        return graph as Graph<K, V>
+    }
+
     val screenViewModel =MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
 
     var scale by remember { mutableStateOf(100) }
@@ -91,15 +142,38 @@ fun <K, V> mainScreen() {
     var uploader by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
+    var enlargeNone=0
+    var lowNone=0
 
 
     val requester = remember { FocusRequester() }
 
-    val set: (Double) -> Unit = { n ->
+
+    val enlarge: () -> Unit = {
         screenViewModel.viewModel.vertices.values.forEach {
-            it.radius.value = min(max(it.radius.value * n, 10.0), 35.0)
-            it.x.value *= n
-            it.y.value *= n
+            it.x.value *= 1.1
+            it.y.value *= 1.1
+            if (enlargeNone>0)
+                enlargeNone--
+            else {
+                it.radius.value = min(it.radius.value * 1.1, 35.0)
+                if (it.radius.value == 35.0)
+                    lowNone++
+            }
+        }
+    }
+
+    val lower: () -> Unit = {
+        screenViewModel.viewModel.vertices.values.forEach {
+            it.x.value *= 0.9
+            it.y.value *= 0.9
+            if (lowNone>0)
+                lowNone--
+            else {
+                it.radius.value = max(it.radius.value * 0.9, 10.0)
+                if (it.radius.value == 10.0)
+                    enlargeNone++
+            }
         }
     }
 
@@ -152,12 +226,12 @@ fun <K, V> mainScreen() {
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Minus -> {
-                    set(0.9)
+                    lower()
                     scale -= 10
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Equals -> {
-                    set(1.1)
+                    enlarge()
                     scale += 10
                     true
                 }
@@ -200,7 +274,7 @@ fun <K, V> mainScreen() {
                         Button(
                             onClick = {
                                 scale += 10
-                                set(1.1)
+                                enlarge()
                             },
                             ) {
                             Text("+")
@@ -211,7 +285,7 @@ fun <K, V> mainScreen() {
                         Button(
                             onClick = {
                                 scale -= 10
-                                set(0.9)
+                                lower()
                             }
                         ) {
                             Text("-")

@@ -25,7 +25,6 @@ dependencies {
     testImplementation("org.junit.platform:junit-platform-suite:1.13.0-M2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.2")
     testImplementation(kotlin("test"))
-
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.20")

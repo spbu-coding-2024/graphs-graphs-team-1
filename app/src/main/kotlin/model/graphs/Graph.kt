@@ -29,7 +29,7 @@ interface Graph <K, V> {
         if (current != null)
             edges[first]?.remove(current)
         else
-            throw IllegalStateException()
+            return false
         return true
     }
 
