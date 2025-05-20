@@ -19,6 +19,7 @@ import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import viewmodel.MainScreenViewModel.DeletionMode
+import java.awt.Toolkit
 import java.io.File
 import java.util.Vector
 import kotlin.collections.forEach
@@ -37,7 +38,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             }
         }
     }
-
+    var screenSize= Toolkit.getDefaultToolkit().screenSize
 
     val selected = mutableListOf<VertexViewModel<K, V>>()
     var stateHolder = StateHolder<K, V>(this)
@@ -47,7 +48,9 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         VertexViewModel(
             v,
             25.0,
-            degree = graph.getOutDegreeOfVertex(v)
+            degree = graph.getOutDegreeOfVertex(v),
+            screenSize.width,
+            screenSize.height
         )
     }.toMutableMap()
 
@@ -113,9 +116,10 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         )
     }
 
-    fun addVertex(key: String, value: String): String? {
+    fun addVertex(key: String, value: String, width: Int=50000, height: Int=50000): String? {
         return try {
-            val tempVM = VertexViewModel<Any?, Any?>(Vertex(null, null), 25.0, 0)
+            val tempVM = VertexViewModel<Any?, Any?>(Vertex(null, null), 25.0, 0,
+                screenSize.width, screenSize.height)
             val parsedKey = tempVM.parseKey(key)
             val parsedValue = tempVM.parseValue(value)
             val newVertex = Vertex(parsedKey as K, parsedValue as V)
@@ -123,7 +127,9 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             vertices[newVertex] = VertexViewModel(
                 newVertex,
                 25.0,
-                graph.getOutDegreeOfVertex(newVertex)
+                graph.getOutDegreeOfVertex(newVertex),
+                width,
+                height
             )
             stateHolder.pushVertex(newVertex)
             null
@@ -176,7 +182,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             return
         val map=mutableMapOf<Vertex<K, V>, VertexViewModel<K, V>>()
             result.vertices.onEach {
-                map[it]= VertexViewModel(it, 25.0, result.getOutDegreeOfVertex(it))
+                map[it]= VertexViewModel(it, 25.0, result.getOutDegreeOfVertex(it), 50000, 50000)
                 graph.addVertex(it)
                 vertices[it] = map[it] ?: throw IllegalArgumentException()
                 stateHolder.pushVertex(it)

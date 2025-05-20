@@ -18,6 +18,7 @@ import model.graphs.EmptyGraph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import viewmodel.ColorList
+import java.awt.Toolkit
 import java.io.File
 import java.util.Vector
 import kotlin.collections.forEach
@@ -34,6 +35,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     private class NoGraphException(): Throwable()
 
     var viewModel by mutableStateOf(graphViewModel)
+
 
     var repainter= mutableStateOf(false)
     var pathDialog = mutableStateOf(false)
@@ -403,13 +405,16 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         }
     }
 
+
     fun vertexAddition() {
         try {
             if (viewModel.graph is EmptyGraph<*,*>)
                 throw NoGraphException()
             addVertexError.value = viewModel.addVertex(
                 newVertexKey.value,
-                newVertexValue.value
+                newVertexValue.value,
+                viewModel.screenSize.width,
+                viewModel.screenSize.height
             )
         }  catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
