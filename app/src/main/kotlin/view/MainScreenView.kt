@@ -86,51 +86,6 @@ import kotlin.reflect.full.primaryConstructor
 @Composable
 fun <K, V> mainScreen() {
 
-    fun generateGraph(): Graph<K, V> {
-
-        val graph: Graph<Int, Int> = UndirectedGraph()
-        val numb=100
-        val vector= Vector<Vertex<Int, Int>>()
-        repeat(numb) {
-            vector.add(Vertex(Random.nextInt(), Random.nextInt()))
-        }
-        val toVertex = hashMapOf<Vertex< Int, Int>, Vector<Vertex<Int, Int>>>()
-        val fromVertex = hashMapOf<Vertex< Int, Int>, Vector<Vertex<Int, Int>>>()
-        val repeat=100
-
-        for (i in 0..repeat) {
-            val from=vector.random()
-            val to=vector.random()
-            if (from==to)
-                continue
-            if (!graph.addEdge(from, to, 45))
-                continue
-
-            if (toVertex[to]==null)
-                toVertex[to]= Vector()
-            if (fromVertex[from]==null)
-                fromVertex[from]= Vector()
-            when(graph::class.simpleName) {
-                "UndirWeightGraph","UndirectedGraph" -> {
-                    if (toVertex[from]==null)
-                        toVertex[from]= Vector()
-                    if (fromVertex[to]==null)
-                        fromVertex[to]= Vector()
-                    fromVertex[to]?.add(from)
-                    toVertex[from]?.add(to)
-                }
-            }
-            if (toVertex[to]==null)
-                toVertex[to]= Vector()
-            if (fromVertex[from]==null)
-                fromVertex[from]= Vector()
-            fromVertex[from]?.add(to)
-            toVertex[to]?.add(from)
-        }
-        println(graph.edges.values.sumOf { it.size })
-        return graph as Graph<K, V>
-    }
-
     val screenViewModel =MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
 
     var scale by remember { mutableStateOf(100) }
@@ -296,9 +251,30 @@ fun <K, V> mainScreen() {
         },
         topBar = {
             TopAppBar(backgroundColor = Color.White, modifier = Modifier.height(40.dp)) {
+                //выбор графа
+                Box {
+                    IconButton(onClick = { create = !create }, Modifier.padding(8.dp, 2.dp)) {
+                        Text("Graphs")
+                    }
+                    DropdownMenu(
+                        expanded = create,
+                        onDismissRequest = { create = false },
+                    ) {
+                        DropdownMenuItem(
+                            onClick = {
+                                screenViewModel.graphType.value = true
+                            }
+                        ) {
+
+                            Text("New Graph...")
+                        }
+                    }
+                }
                 //загрузка графа
                 Box {
-                    IconButton(onClick = { downloader = !downloader }, Modifier.padding(8.dp, 2.dp)) {
+                    IconButton(onClick = { downloader = !downloader },
+                        Modifier.padding(8.dp, 2.dp),
+                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*,*>) {
                         Text("Download")
                     }
                     DropdownMenu(
@@ -329,7 +305,8 @@ fun <K, V> mainScreen() {
                 }
                 //выгрузка графа
                 Box {
-                    IconButton(onClick = { uploader = !uploader }, Modifier.padding(8.dp, 2.dp)) {
+                    IconButton(onClick = { uploader = !uploader }, Modifier.padding(8.dp, 2.dp),
+                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*,*>) {
                         Text("Upload")
                     }
                     DropdownMenu(
@@ -358,28 +335,10 @@ fun <K, V> mainScreen() {
                     }
 
                 }
-                //выбор графа
-                Box {
-                    IconButton(onClick = { create = !create }, Modifier.padding(8.dp, 2.dp)) {
-                        Text("Graphs")
-                    }
-                    DropdownMenu(
-                        expanded = create,
-                        onDismissRequest = { create = false },
-                    ) {
-                        DropdownMenuItem(
-                            onClick = {
-                               screenViewModel.graphType.value = true
-                            }
-                        ) {
-
-                            Text("New Graph...")
-                        }
-                    }
-                }
                 //алгоритмы
                 Box {
-                    IconButton(onClick = { expAlgo = !expAlgo }, Modifier.padding(8.dp, 2.dp)) {
+                    IconButton(onClick = { expAlgo = !expAlgo }, Modifier.padding(8.dp, 2.dp),
+                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*,*>) {
                         Text("Algorithms")
                     }
                     DropdownMenu(
@@ -447,6 +406,7 @@ fun <K, V> mainScreen() {
                             Text("YuifanHu")
                         }
                         // key vertices
+                        Divider()
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.showKeyVertexDialog.value = true
@@ -459,7 +419,8 @@ fun <K, V> mainScreen() {
                 }
                 //добавление/удаление
                 Box {
-                    IconButton(onClick = { expanded = true }, modifier = Modifier.padding(8.dp, 2.dp)) {
+                    IconButton(onClick = { expanded = true }, modifier = Modifier.padding(8.dp, 2.dp),
+                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*,*>) {
                         Text("Paint")
                     }
                     DropdownMenu(
@@ -541,7 +502,8 @@ fun <K, V> mainScreen() {
                 }
                 //побочные функции
                 Box {
-                    IconButton(onClick = { expandedSecondary = !expandedSecondary }, Modifier.padding(8.dp, 2.dp)) {
+                    IconButton(onClick = { expandedSecondary = !expandedSecondary }, Modifier.padding(8.dp, 2.dp),
+                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*,*>) {
                         Text("Other")
                     }
                     DropdownMenu(
