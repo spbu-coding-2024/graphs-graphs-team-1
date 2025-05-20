@@ -142,15 +142,38 @@ fun <K, V> mainScreen() {
     var uploader by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
+    var enlargeNone=0
+    var lowNone=0
 
 
     val requester = remember { FocusRequester() }
 
-    val set: (Double) -> Unit = { n ->
+
+    val enlarge: () -> Unit = {
         screenViewModel.viewModel.vertices.values.forEach {
-            it.radius.value = min(max(it.radius.value * n, 10.0), 35.0)
-            it.x.value *= n
-            it.y.value *= n
+            it.x.value *= 1.1
+            it.y.value *= 1.1
+            if (enlargeNone>0)
+                enlargeNone--
+            else {
+                it.radius.value = min(it.radius.value * 1.1, 35.0)
+                if (it.radius.value == 35.0)
+                    lowNone++
+            }
+        }
+    }
+
+    val lower: () -> Unit = {
+        screenViewModel.viewModel.vertices.values.forEach {
+            it.x.value *= 0.9
+            it.y.value *= 0.9
+            if (lowNone>0)
+                lowNone--
+            else {
+                it.radius.value = max(it.radius.value * 0.9, 10.0)
+                if (it.radius.value == 10.0)
+                    enlargeNone++
+            }
         }
     }
 
@@ -203,12 +226,12 @@ fun <K, V> mainScreen() {
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Minus -> {
-                    set(0.9)
+                    lower()
                     scale -= 10
                     true
                 }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Equals -> {
-                    set(1.1)
+                    enlarge()
                     scale += 10
                     true
                 }
@@ -251,7 +274,7 @@ fun <K, V> mainScreen() {
                         Button(
                             onClick = {
                                 scale += 10
-                                set(1.1)
+                                enlarge()
                             },
                             ) {
                             Text("+")
@@ -262,7 +285,7 @@ fun <K, V> mainScreen() {
                         Button(
                             onClick = {
                                 scale -= 10
-                                set(0.9)
+                                lower()
                             }
                         ) {
                             Text("-")

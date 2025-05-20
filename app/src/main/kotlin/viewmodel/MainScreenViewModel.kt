@@ -79,6 +79,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
 
 
+
     val planarAlgos: (Planar) -> Unit = {
         clean()
         val temp= it.apply(viewModel.graph)
