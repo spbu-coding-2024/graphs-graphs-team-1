@@ -51,9 +51,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.DelicateCoroutinesApi
+import model.Vertex
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
+import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import view.windows.AddVertexDialog
@@ -70,16 +72,65 @@ import view.windows.KeyVertexDialog
 import view.windows.graphTypeDialog
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
+import java.util.Vector
+import java.util.stream.Stream
 import kotlin.collections.forEach
 import kotlin.math.max
 import kotlin.math.min
-
+import kotlin.random.Random
+import kotlin.reflect.full.primaryConstructor
 
 
 
 @OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun <K, V> mainScreen() {
+
+    fun generateGraph(): Graph<K, V> {
+
+        val graph: Graph<Int, Int> = UndirectedGraph()
+        val numb=100
+        val vector= Vector<Vertex<Int, Int>>()
+        repeat(numb) {
+            vector.add(Vertex(Random.nextInt(), Random.nextInt()))
+        }
+        val toVertex = hashMapOf<Vertex< Int, Int>, Vector<Vertex<Int, Int>>>()
+        val fromVertex = hashMapOf<Vertex< Int, Int>, Vector<Vertex<Int, Int>>>()
+        val repeat=100
+
+        for (i in 0..repeat) {
+            val from=vector.random()
+            val to=vector.random()
+            if (from==to)
+                continue
+            if (!graph.addEdge(from, to, 45))
+                continue
+
+            if (toVertex[to]==null)
+                toVertex[to]= Vector()
+            if (fromVertex[from]==null)
+                fromVertex[from]= Vector()
+            when(graph::class.simpleName) {
+                "UndirWeightGraph","UndirectedGraph" -> {
+                    if (toVertex[from]==null)
+                        toVertex[from]= Vector()
+                    if (fromVertex[to]==null)
+                        fromVertex[to]= Vector()
+                    fromVertex[to]?.add(from)
+                    toVertex[from]?.add(to)
+                }
+            }
+            if (toVertex[to]==null)
+                toVertex[to]= Vector()
+            if (fromVertex[from]==null)
+                fromVertex[from]= Vector()
+            fromVertex[from]?.add(to)
+            toVertex[to]?.add(from)
+        }
+        println(graph.edges.values.sumOf { it.size })
+        return graph as Graph<K, V>
+    }
+
     val screenViewModel =MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
 
     var scale by remember { mutableStateOf(100) }

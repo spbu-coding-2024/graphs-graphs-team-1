@@ -3,6 +3,8 @@ package viewmodel
 import androidx.compose.runtime.mutableStateOf
 import model.Edge
 import model.Vertex
+import model.graphs.UndirWeightGraph
+import model.graphs.UndirectedGraph
 import viewmodel.MainScreenViewModel.DeletionMode
 import java.util.Stack
 
@@ -23,7 +25,6 @@ class StateHolder<K, V>(var graphViewModel: GraphViewModel<K, V>) {
     var edges= Stack<Edge<K, V>>()
     var vertices=Stack<Vertex<K, V>>()
     private var actions= Stack<Record>()
-    var initiated= actions.isEmpty()
 
     fun pushVertex(vertex: Vertex<K, V> = vertices.pop()) {
         vertices.push(vertex)
@@ -33,6 +34,7 @@ class StateHolder<K, V>(var graphViewModel: GraphViewModel<K, V>) {
         edges.push(edge)
         actions.push(Record(Status.ADDITION, Object.EDGE))
     }
+
 
     fun popEdge(edge: Edge<K, V> = edges.pop()) {
         graphViewModel.graph.deleteEdge(edge.link.first, edge.link.second)
@@ -48,7 +50,6 @@ class StateHolder<K, V>(var graphViewModel: GraphViewModel<K, V>) {
 
     fun undo() {
         val record=if (actions.isNotEmpty()) actions.pop() else return
-        println("${record.obj} ${record.status}")
         when {
             record.status== Status.ADDITION && record.obj== Object.VERTEX -> popVertex()
             record.status== Status.ADDITION && record.obj== Object.EDGE -> popEdge()

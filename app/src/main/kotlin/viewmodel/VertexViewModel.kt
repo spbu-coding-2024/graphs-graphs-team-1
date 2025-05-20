@@ -18,8 +18,8 @@ class VertexViewModel<K, V> (
     var color = mutableStateOf(Color.Cyan)
     var selected = mutableStateOf(false)
     var radius = mutableStateOf(radius)
-    val width = Toolkit.getDefaultToolkit().screenSize.width
-    val height = Toolkit.getDefaultToolkit().screenSize.height
+    val width = /*Toolkit.getDefaultToolkit().screenSize.width*/ 50000
+    val height = /*Toolkit.getDefaultToolkit().screenSize.height*/ 50000
     private var _x = Random.nextDouble(60.0 - width.toDouble() / 2, width.toDouble() / 2 - 60.0)
     private var _y = Random.nextDouble(100.0 - height.toDouble() / 2, height.toDouble() / 2 - 100.0)
 

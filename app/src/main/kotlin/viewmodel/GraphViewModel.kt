@@ -140,10 +140,10 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             if (isAllToAllMode.value) {
                 for (i in selectedVertices.indices) {
                     for (j in i + 1 until selectedVertices.size) {
-                        graph.addEdge(
+                        if (graph.addEdge(
                             selectedVertices[i],
                             selectedVertices[j],
-                            weight.value.toIntOrNull() ?: throw IllegalArgumentException()
+                            weight.value.toIntOrNull() ?: throw IllegalArgumentException())
                         )
                         stateHolder.pushEdge(
                             graph.edges.values
@@ -155,10 +155,10 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                 }
             } else {
                 for (i in 0 until selectedVertices.size - 1) {
-                    graph.addEdge(
+                    if (graph.addEdge(
                         selectedVertices[i],
                         selectedVertices[i + 1],
-                        weight.value.toIntOrNull() ?: throw IllegalArgumentException()
+                        weight.value.toIntOrNull() ?: throw IllegalArgumentException())
                     )
                     stateHolder.pushEdge(
                         graph.edges.values
@@ -182,10 +182,10 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                 stateHolder.pushVertex(it)
             }
             result.edges.values.flatten().forEach { edge->
-                graph.addEdge(
+                if (graph.addEdge(
                     edge.link.first,
                     edge.link.second,
-                    edge.weight
+                    edge.weight)
                 )
                 stateHolder.pushEdge(edge)
             }
