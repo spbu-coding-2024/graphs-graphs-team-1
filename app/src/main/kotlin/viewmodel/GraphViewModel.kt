@@ -83,7 +83,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         if (file==null)
             return null
         return GraphFactory.fromJSON(
-            file?.readText() ?: throw IllegalStateException(),
+            file.readText() ,
             when (graph::class.simpleName) {
                 "DirectedGraph" -> ::DirectedGraph
                 "DirWeightGraph" -> ::DirWeightGraph
@@ -126,7 +126,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             graph.addVertex(newVertex)
             vertices[newVertex] = VertexViewModel(
                 newVertex,
-                25.0,
+                if (vertices.isEmpty()) 25.0 else vertices.values.first().radius.value,
                 graph.getOutDegreeOfVertex(newVertex),
                 width,
                 height
@@ -182,7 +182,11 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             return
         val map=mutableMapOf<Vertex<K, V>, VertexViewModel<K, V>>()
             result.vertices.onEach {
-                map[it]= VertexViewModel(it, 25.0, result.getOutDegreeOfVertex(it), 50000, 50000)
+                map[it]= VertexViewModel(it,
+                    if (vertices.isEmpty()) 25.0 else vertices.values.first().radius.value,
+                    result.getOutDegreeOfVertex(it),
+                    50000,
+                    50000)
                 graph.addVertex(it)
                 vertices[it] = map[it] ?: throw IllegalArgumentException()
                 stateHolder.pushVertex(it)

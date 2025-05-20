@@ -14,7 +14,6 @@ We present MVVVM graph application designed to simplify user interaction with gr
 * JUnit 5
 * Gradle 8.13 
 * Java 21
-* SQLite
 * Neo4j
 * Jetpack Compose 1.5.10
 
@@ -33,6 +32,32 @@ We present MVVVM graph application designed to simplify user interaction with gr
 ```
     ./gradlew run
 ```
+
+## Architecture
+Application is based on MVVM pattern. So, there are three blocks:
+* **model** - basic types of graphs, algorithms implementation and classes to load/save graphs
+* **view model** - set of classes to communicate between user interface and basic classes from model
+* **view** - set of classes to create gui
+
+Application was created with idea, that basic classes from model can be used separately from gui application.
+
+## Model
+There are several types of graphs in our model:
+* [Directed Graph](https://en.wikipedia.org/wiki/Directed_graph)
+* [Undirected Graph](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics))
+* [Directed Weighted Graph](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics)#Weighted_graph)
+* [Undirected Weighted Graph](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics)#Weighted_graph)
+* Empty Graph
+
+These types represents set of relations that can exist in specific graph: either edges in graph can
+have "weight" - some label of numeric type (in our case - Int) and either there are mutual relation between vertices or one-way
+
+To learn more about graphs see corresponding links
+
+Vertex class represents nodes in graph. It stores two values:
+* ``key`` - represents some label of set type, that might be used in algorithms
+* ``value`` - some specific information that might be stored in node
+  To differ various vertices in system links (or hashcode) are used.
 
 ## Control
 There are several ways for user to interact with graph: through menu, keyboard and mouse (or touchpad)
@@ -102,33 +127,8 @@ Application is not responsible for compliance between data and expected result**
 There some important information, that needs to be known about graphs representations in corresponding formats:
 * **Neo4j** - any graph from neo4j database will be suitable, because vertex id is used on downloading process; 
 but there is a special attribute in vertex while uploading graph - special id (hash-code of object is used) 
-that helps to device nodes from each other
+that helps to identify nodes from each other
 
-## Architecture
-Application is based on MVVM pattern. So, there are three blocks:
-* **model** - basic types of graphs, algorithms implementation and classes to load/save graphs
-* **view model** - set of classes to communicate between user interface and basic classes from model
-* **view** - set of classes to create gui
-
-Application was created with idea, that basic classes from model can be used separately from gui application.
-
-## Model
-There are several types of graphs in our model:
-* [Directed Graph](https://en.wikipedia.org/wiki/Directed_graph)
-* [Undirected Graph](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics))
-* [Directed Weighted Graph](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics)#Weighted_graph)
-* [Undirected Weighted Graph](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics)#Weighted_graph)
-* Empty Graph
-
-These types represents set of relations that can exist in specific graph: either edges in graph can
-have "weight" - some label of numeric type (in our case - Int) and either there are mutual relation between vertices or one-way
-
-To learn more about graphs see corresponding links
-
-Vertex class represents nodes in graph. It stores two values:
-* ``key`` - represents some label of set type, that might be used in algorithms
-* ``value`` - some specific information that might be stored in node
-  To differ various vertices in system links (or hashcode) are used.
 
 ## Contributing
 
@@ -152,4 +152,3 @@ Before submitting, make sure:
 
 * [Михаил Свирюков](https://github.com/MikhailSvirukov)
 * [Дарья Нечаева](https://github.com/DaryaNechaeva)
-* [Анастасия Грицук](https://github.com/Nasty12121)
