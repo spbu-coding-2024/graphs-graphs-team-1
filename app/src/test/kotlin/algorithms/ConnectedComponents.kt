@@ -23,16 +23,15 @@ class ConnectedComponents {
                 val numb=Random.nextInt(1,250)
                 var components= Array<ArrayDeque<Vertex<Int, Int>>>(numb) { ArrayDeque() }
                 for (i in 0..<numb) {
-                    val amount=Random.nextInt(1, 10)
+                    val amount=Random.nextInt(3, 10)
                     for (u in 0..<amount) {
                         components[i].add(Vertex(Random.nextInt(0,100), Random.nextInt(0,100)))
                         if (components[i].size>1) {
-                            graph.addEdge(components[i][u-1],components[i][u], DEFAULT)
+                           graph.addEdge(components[i][u-1],components[i][u], DEFAULT)
                         }
                     }
                     graph.addEdge(components[i].last(),components[i].first(), DEFAULT)
                 }
-
                 for (i in 0..<numb step 2) {
                     for (u in 1..<numb step 2) {
                         var amount=Random.nextInt(0, components[i].size)

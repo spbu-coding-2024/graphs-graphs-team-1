@@ -80,11 +80,14 @@ class CyclesTest {
             val graph = DirectedGraph<Int, Int>()
             val start = Vertex(1, 1)
             val a = Vertex(2, 2)
+            val b= Vertex(3,4)
             graph.addVertex(start)
             graph.addVertex(a)
+            graph.addVertex(b)
             graph.addEdge(start, a, 1)
-            graph.addEdge(a, start, 2)
-            return Triple(graph, start, listOf(start, a, start))
+            graph.addEdge(a, b, 2)
+            graph.addEdge(b, start, 3)
+            return Triple(graph, start, listOf(start, a, b, start))
         }
 
         private fun createMultipleCyclesGraph(): Triple<DirectedGraph<Int, Int>, Vertex<Int, Int>, Set<List<Vertex<Int, Int>>>> {
@@ -92,16 +95,22 @@ class CyclesTest {
             val start = Vertex(1, 1)
             val a = Vertex(2, 2)
             val b = Vertex(3, 3)
+            val c = Vertex(2, 2)
+            val d = Vertex(3, 3)
             graph.addVertex(start)
             graph.addVertex(a)
             graph.addVertex(b)
+            graph.addVertex(c)
+            graph.addVertex(d)
             graph.addEdge(start, a, 1)
-            graph.addEdge(a, start, 2)
+            graph.addEdge(a, c, 2)
+            graph.addEdge(c, start,3)
             graph.addEdge(start, b, 3)
-            graph.addEdge(b, start, 4)
+            graph.addEdge(b, d, 4)
+            graph.addEdge(d, start,3)
             val expectedCycles = setOf(
-                listOf(start, a, start),
-                listOf(start, b, start)
+                listOf(start, a, c, start),
+                listOf(start, b, d, start)
             )
             return Triple(graph, start, expectedCycles)
         }
