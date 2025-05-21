@@ -255,20 +255,25 @@ class KeyVertexTest {
         val v1 = Vertex(1, "C is")
         val v2 = Vertex(2, "the best")
         val v3 = Vertex(3, "language")
+        val v4 = Vertex(4, "ever")
         graph.apply {
             addVertex(v1)
             addVertex(v2)
             addVertex(v3)
+            addVertex(v4)
             addEdge(v1, v2, 10)
             addEdge(v1, v3, 8)
             addEdge(v2, v3, 2)
-            addEdge(v3, v2, 1)
+            addEdge(v3, v4, 1)
+            addEdge(v4, v2, 0)
         }
         val finder = KeyVertexFinder(graph)
-        val topVertices = finder.findTopKeyVertices(3)
-        assertEquals(v3, topVertices[0])
-        assertEquals(v2, topVertices[1])
-        assertEquals(v1, topVertices[2])
+        val topVertices = finder.findTopKeyVertices(4)
+        assertEquals(v4, topVertices[0])
+        assertEquals(v3, topVertices[1])
+        assertEquals(v2, topVertices[2])
+        assertEquals(v1, topVertices[3])
+
     }
 
     @Test

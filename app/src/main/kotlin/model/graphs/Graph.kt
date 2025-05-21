@@ -15,7 +15,7 @@ interface Graph <K, V> {
         if (!vertices.map { it === second }.contains(true))
             addVertex(second)
         if (edges[first]?.map { it.link.second === second }?.contains(true) == false) {
-            edges[first]?.add(Edge<K, V>(first, second, weight)) ?: throw IllegalStateException()
+            edges[first]?.add(Edge(first, second, weight)) ?: return false
             return true
         }
         return false
