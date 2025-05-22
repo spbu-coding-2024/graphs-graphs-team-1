@@ -27,17 +27,7 @@ import kotlin.reflect.full.createType
 import kotlin.reflect.javaType
 
 class GraphViewModel<K, V>(var graph: Graph<K, V>) {
-    private val temp = Vector<Edge<K, V>>()
-    init {
-        graph.edges.values.forEach { it ->
-            for (i in it) {
-                if (graph is UndirWeightGraph)
-                    if (temp.any { it.link.first === i.link.second && it.link.second === i.link.first })
-                        continue
-                temp.add(i)
-            }
-        }
-    }
+
     var screenSize= Toolkit.getDefaultToolkit().screenSize
 
     val selected = mutableListOf<VertexViewModel<K, V>>()
@@ -54,7 +44,7 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
         )
     }.toMutableMap()
 
-    var edges = temp.associateWith { e ->
+    var edges = graph.edges.values.flatten().associateWith { e ->
         val fst = vertices[e.link.first]
             ?: throw IllegalStateException("VertexView for ${e.link.first} not found")
         val snd = vertices[e.link.second]
