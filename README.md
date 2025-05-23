@@ -7,6 +7,7 @@
 ![Build](https://img.shields.io/github/actions/workflow/status/spbu-coding-2024/graphs-graphs-team-1/build.yml)
 
 We present MVVVM graph application designed to simplify user interaction with graphs and instruments to explore its properties.
+![img.png](resources/images/intro.png)
 
 ## Technologies
 
