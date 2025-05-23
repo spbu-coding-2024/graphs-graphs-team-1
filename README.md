@@ -77,6 +77,7 @@ There are several ways for user to interact with graph: through menu, keyboard a
    basic mode is sequential: selected sequence represents order in which edges are added, but also weighted graph 
    allow to set edge label, undirected graphs allow to connect all selected vertices
    * `Other` - secondary functions to ease user communications
+     ![img.gif](resources/images/menu.gif)
 2. Mouse
    * `Click on vertex` - add vertex to selected list (in corresponding order)
    * `Double-click on vertex` - open window with vertex data, where you can see key/value and modify them if necessary 
