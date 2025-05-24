@@ -111,6 +111,20 @@ In addition to classical graph algorithms, the application includes built-in imp
 
 Their modular design allows reuse outside UI context
 
+The application also supports advanced graph analysis algorithms:
+
+* [Harmonic Centrality](https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality) —
+  a measure of vertex influence implemented using [JGraphT](https://jgrapht.org/)'s optimized [algorithm](https://github.com/jgrapht/jgrapht/blob/master/jgrapht-core/src/main/java/org/jgrapht/alg/scoring/HarmonicCentrality.java) ([Javadoc](https://jgrapht.org/javadoc/org.jgrapht.core/org/jgrapht/alg/scoring/HarmonicCentrality.html)),
+  calculating centrality as the sum of reciprocal shortest path distances to all other reachable nodes.
+
+**License**: **LGPL-2.1-or-later** (selected from dual LGPL-2.1-or-later/EPL-2.0)
+**Compatibility**: Confirmed as GPLv3-compatible by [FSF](https://www.gnu.org/licenses/gpl-faq.en.html#AllCompatibility)
+
+  Provides two analysis modes:
+
+1. `findTopKeyVertices(count: Int)` - Retrieves top N vertices by centrality score
+
+2. `findVerticesWithMinCentrality(threshold: Double)` - Filters vertices by centrality threshold
 
 
 ## Graph Formats
@@ -118,7 +132,7 @@ Their modular design allows reuse outside UI context
 There are several formats to download/upload graph. Class `InternalFormatFactory` provides methods to convert graph 
 of type `Graph` to one of formats available. Class `GraphFactory` on the other hand creates graph from internal format.
 Formats available:
-* JSON file (You can see an examples of the structure in `resources/examples`)
+* JSON file (You can see an examples of the file's structure in `resources/examples`)
 * Neo4j database
 * SQLite database
 
@@ -131,7 +145,7 @@ There some important information, that needs to be known about graphs representa
 but there is a special attribute in vertex while uploading graph - special id (hash-code of object is used) 
 that helps to identify nodes from each other
 * Any format that you might use have to define objects correctly in terms of our classes architecture.
-  It means that field, that specifies properties of classes Vertex - value, key and Edge - weigth
+  It means that field, that specifies properties of classes `Vertex - value, key` and `Edge - weigth`
   must be present in graph representation
 
 
