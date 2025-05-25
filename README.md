@@ -7,7 +7,7 @@
 ![Build](https://img.shields.io/github/actions/workflow/status/spbu-coding-2024/graphs-graphs-team-1/build.yml)
 
 We present MVVVM graph application designed to simplify user interaction with graphs and instruments to explore its properties.
-![img.png](resources/images/intro.png)
+![img.png](/resources/images/intro.png)
 
 ## Technologies
 
@@ -77,7 +77,7 @@ There are several ways for user to interact with graph: through menu, keyboard a
    basic mode is sequential: selected sequence represents order in which edges are added, but also weighted graph 
    allow to set edge label, undirected graphs allow to connect all selected vertices
    * `Other` - secondary functions to ease user communications
-     ![img.gif](resources/images/menu.gif)
+     ![img.gif](/resources/images/menu.gif)
 2. Mouse
    * `Click on vertex` - add vertex to selected list (in corresponding order)
    * `Double-click on vertex` - open window with vertex data, where you can see key/value and modify them if necessary 
@@ -99,10 +99,13 @@ Also `Tab` button allows to switch between textfields/buttons/radiobuttons etc.
 
 The application supports a set of classical graph algorithms, implemented directly in the `model` package and accessible through the user interface:
 
-* [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) — finds the shortest path in a weighted graph with non-negative edge weights.
+* [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) — finds the shortest path in a weighted graph with **non-negative** edge weights (if you use an algorithm for a graph with negative edge weights, it may not work or work incorrectly).
+  ![img.png](/resources/images/dijkstra.png)
 * [Bellman-Ford algorithm](https://en.wikipedia.org/wiki/Bellman%E2%80%93Ford_algorithm) — computes shortest paths in graphs that may contain negative edge weights.
 * [Cycle detection algorithm](https://en.wikipedia.org/wiki/Cycle_(graph_theory)#Algorithm) — identifies whether a cycle exists that includes a selected vertex.
+  ![img.png](/resources/images/cycles.png)
 * [Kosaraju's algorithm](https://en.wikipedia.org/wiki/Kosaraju%27s_algorithm) — detects and extracts strongly connected components in directed graphs.
+  ![img.png](/resources/images/strongConnect.png)
 
 In addition to classical graph algorithms, the application includes built-in implementations of layout algorithms used for automatic graph visualization:
 
@@ -111,13 +114,14 @@ In addition to classical graph algorithms, the application includes built-in imp
 
 Their modular design allows reuse outside UI context
 
-The application also supports advanced graph analysis algorithms:
+The application also supports algorithm for finding key vertices:
 
 * [Harmonic Centrality](https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality) —
   a measure of vertex influence implemented using [JGraphT](https://jgrapht.org/)'s optimized [algorithm](https://github.com/jgrapht/jgrapht/blob/master/jgrapht-core/src/main/java/org/jgrapht/alg/scoring/HarmonicCentrality.java) ([Javadoc](https://jgrapht.org/javadoc/org.jgrapht.core/org/jgrapht/alg/scoring/HarmonicCentrality.html)),
   calculating centrality as the sum of reciprocal shortest path distances to all other reachable nodes.
 
 **License**: **LGPL-2.1-or-later** (selected from dual LGPL-2.1-or-later/EPL-2.0)
+
 **Compatibility**: Confirmed as GPLv3-compatible by [FSF](https://www.gnu.org/licenses/gpl-faq.en.html#AllCompatibility)
 
   Provides two analysis modes:
@@ -125,6 +129,8 @@ The application also supports advanced graph analysis algorithms:
 1. `findTopKeyVertices(count: Int)` - Retrieves top N vertices by centrality score
 
 2. `findVerticesWithMinCentrality(threshold: Double)` - Filters vertices by centrality threshold
+
+  ![img.png](/resources/images/keyVerticesWindow.png)
 
 
 ## Graph Formats
