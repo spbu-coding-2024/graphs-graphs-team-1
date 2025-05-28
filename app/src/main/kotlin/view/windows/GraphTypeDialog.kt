@@ -60,7 +60,13 @@ fun graphTypeDialog(screenViewModel: MainScreenViewModel<*,*>) {
                         screenViewModel.graphTypeSelection(selectedOption, graphs)
                     }
                 ) { Text("OK") }
-
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        screenViewModel.graphType.value = false
+                    }
+                ) { Text("Cancel") }
             }
         )
     }

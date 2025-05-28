@@ -41,6 +41,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isShiftPressed
@@ -141,6 +142,10 @@ fun <K, V> mainScreen() {
     Scaffold(
         modifier = Modifier.focusRequester(requester).focusable().onKeyEvent { keyEvent ->
             when {
+                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.R -> {
+                    screenViewModel.resetSelected()
+                    true
+                }
                 keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.N && keyEvent.isCtrlPressed -> {
                     screenViewModel.graphType.value=true
                     true
@@ -265,7 +270,6 @@ fun <K, V> mainScreen() {
                                 screenViewModel.graphType.value = true
                             }
                         ) {
-
                             Text("New Graph...")
                         }
                     }
