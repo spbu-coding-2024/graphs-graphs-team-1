@@ -1,8 +1,15 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
+import org.gradle.internal.jvm.Jvm
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
     kotlin("jvm") version "1.9.20"
     id("org.jetbrains.compose")
+    id("org.jlleitschuh.gradle.ktlint") version "13.0.0-rc.1"
     `java-library`
     jacoco
 }
@@ -36,6 +43,15 @@ dependencies {
     implementation("com.google.code.gson:gson:2.13.1")
 }
 
+ktlint {
+    debug = true
+    verbose = true
+    reporters {
+        reporter(ReporterType.CHECKSTYLE)
+        reporter(ReporterType.PLAIN)
+    }
+}
+
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
     reports {
@@ -44,7 +60,6 @@ tasks.jacocoTestReport {
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
     }
 }
-
 
 compose.desktop {
     application {
@@ -62,3 +77,12 @@ tasks.test {
     finalizedBy(tasks.jacocoTestReport)
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
+    kotlinOptions {
+        freeCompilerArgs += "-nowarn"
+    }
+}
+
+tasks.build {
+    dependsOn(tasks.ktlintCheck)
+}
