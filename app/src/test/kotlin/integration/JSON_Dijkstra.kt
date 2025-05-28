@@ -40,6 +40,7 @@ class DijkstraIntegrationTest {
 
         viewModelMS.dijkstra()
 
+        // check dijkstra's algorithm for the original graph from the file
         assertEquals(6, viewModelMS.path.value)
         val originalPathVertices = viewModelMS.viewModel.vertices.values
             .filter { it.color.value == Color.Green }
@@ -60,6 +61,7 @@ class DijkstraIntegrationTest {
 
         viewModelMS.resetSelected()
 
+        // add new vertex and edges which make the path shorter
         viewModelMS.newVertexKey.value = "5"
         viewModelMS.newVertexValue.value = "50"
         viewModelMS.vertexAddition()
@@ -89,6 +91,7 @@ class DijkstraIntegrationTest {
         viewModelMS.viewModel.selected.clear()
         viewModelMS.viewModel.selected.addAll(listOf(v0, v2))
 
+        // check dijkstra's algorithm for the graph with new the shortest path
         viewModelMS.dijkstra()
 
         assertEquals(2, viewModelMS.path.value)
@@ -112,6 +115,7 @@ class DijkstraIntegrationTest {
 
         viewModelMS.uploadJson(outputFile)
 
+        // check output file correctness
         checkOutputFileContent()
     }
 
