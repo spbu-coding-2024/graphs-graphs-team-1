@@ -19,7 +19,7 @@ fun edgeErrorWindow(flag: MutableState<Boolean>) {
                 Button({ flag.value = false }) {
                     Text("OK")
                 }
-            }
+            },
         )
     }
 }

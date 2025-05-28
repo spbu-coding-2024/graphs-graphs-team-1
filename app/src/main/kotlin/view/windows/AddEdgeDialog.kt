@@ -1,3 +1,5 @@
+package view.windows
+
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,25 +19,25 @@ import androidx.compose.ui.unit.dp
 import viewmodel.MainScreenViewModel
 
 @Composable
-fun AddEdgeDialog(screenViewModel: MainScreenViewModel<*, *>) {
+fun addEdgeDialog(screenViewModel: MainScreenViewModel<*, *>) {
     AlertDialog(
         onDismissRequest = { screenViewModel.showAddEdgesDialog.value = false },
         title = { Text("Add Edges") },
-
         text = {
             Column {
-                if (screenViewModel.viewModel.graph::class.simpleName !in arrayOf("DirWeightGraph", "DirectedGraph"))
+                if (screenViewModel.viewModel.graph::class.simpleName !in arrayOf("DirWeightGraph", "DirectedGraph")) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         RadioButton(
                             selected = screenViewModel.isAllToAllMode.value,
-                            onClick = { screenViewModel.isAllToAllMode.value = true }
+                            onClick = { screenViewModel.isAllToAllMode.value = true },
                         )
                         Text("All to all", Modifier.padding(start = 4.dp))
                     }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(
                         selected = !screenViewModel.isAllToAllMode.value,
-                        onClick = { screenViewModel.isAllToAllMode.value = false }
+                        onClick = { screenViewModel.isAllToAllMode.value = false },
                     )
                     Text("Sequentially", Modifier.padding(start = 4.dp))
                 }
@@ -59,11 +61,11 @@ fun AddEdgeDialog(screenViewModel: MainScreenViewModel<*, *>) {
                 onClick = {
                     screenViewModel.edgeAddition()
                 },
-                enabled = screenViewModel.edgeWeightInput.value.toIntOrNull() != null
+                enabled = screenViewModel.edgeWeightInput.value.toIntOrNull() != null,
             ) { Text("Add") }
         },
         dismissButton = {
             Button({ screenViewModel.showAddEdgesDialog.value = false }) { Text("Cancel") }
-        }
+        },
     )
 }

@@ -7,14 +7,13 @@ import java.util.Vector
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
-const val DEFAULT=45
+const val DEFAULT = 45
 
 class IteratorTests {
-
     @Test
     fun testDFS() {
-        val graph= DirWeightGraph<Int, Int>()
-        var answer= Vector<Vertex<Int, Int>>()
+        val graph = DirWeightGraph<Int, Int>()
+        var answer = Vector<Vertex<Int, Int>>()
         var temp = Array<Vector<Vertex<Int, Int>>>(3) { Vector() }
 
         var current = Vertex(DEFAULT, DEFAULT)
@@ -35,26 +34,28 @@ class IteratorTests {
                 temp[i].add(current)
             }
         }
-        for (i in 2 downTo 0)
+        for (i in 2 downTo 0) {
             answer.addAll(temp[i])
+        }
         current = Vertex(DEFAULT, DEFAULT)
         graph.addVertex(current)
         answer.add(current)
 
-        var iter=graph.iteratorDFS()
+        var iter = graph.iteratorDFS()
         for (i in answer.indices) {
-            if (iter.hasNext())
+            if (iter.hasNext()) {
                 assertEquals(answer[i], iter.next())
-            else
+            } else {
                 throw Exception()
+            }
         }
         assertFalse(iter.hasNext())
     }
 
     @Test
     fun testBFS() {
-        val graph= UndirWeightGraph<Int, Int>()
-        var answer= Vector<Vertex<Int, Int>>()
+        val graph = UndirWeightGraph<Int, Int>()
+        var answer = Vector<Vertex<Int, Int>>()
 
         var current = Vertex(DEFAULT, DEFAULT)
         graph.addVertex(current)
@@ -65,8 +66,8 @@ class IteratorTests {
             current = new
             answer.add(current)
         }
-        var prev1=current
-        var prev2=current
+        var prev1 = current
+        var prev2 = current
 
         repeat(10) {
             var new1 = Vertex(DEFAULT, DEFAULT)
@@ -75,16 +76,17 @@ class IteratorTests {
             graph.addEdge(prev2, new2, DEFAULT)
             answer.add(new1)
             answer.add(new2)
-            prev1=new1
-            prev2=new2
+            prev1 = new1
+            prev2 = new2
         }
 
-        var iter=graph.iteratorBFS()
+        var iter = graph.iteratorBFS()
         for (i in answer.indices) {
-            if (iter.hasNext())
+            if (iter.hasNext()) {
                 assertEquals(answer[i], iter.next())
-            else
+            } else {
                 throw Exception()
+            }
         }
         assertFalse(iter.hasNext())
     }

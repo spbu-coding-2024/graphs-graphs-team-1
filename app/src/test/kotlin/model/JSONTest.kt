@@ -1,12 +1,15 @@
 package model
 
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
-import model.graphs.*
+import model.graphs.DirWeightGraph
+import model.graphs.Graph
 import org.junit.jupiter.api.Test
 import kotlin.String
 import kotlin.random.Random
-import kotlin.test.*
-import com.google.gson.JsonParser
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class JSONTest {
     private companion object {
@@ -22,7 +25,7 @@ class JSONTest {
             val keyType = object : TypeToken<K>() {}.type
             val valueType = object : TypeToken<V>() {}.type
             val constructor = { DirWeightGraph<K, V>() }
-            return GraphFactory.fromJSON(json,constructor as () -> Graph<K, V>, keyType, valueType) as DirWeightGraph<K, V>
+            return GraphFactory.fromJSON(json, constructor as () -> Graph<K, V>, keyType, valueType) as DirWeightGraph<K, V>
         }
     }
 
@@ -53,8 +56,10 @@ class JSONTest {
         val v5Hash = v5.hashCode()
 
         val actualJson = JsonParser.parseString(InternalFormatFactory.toJSON(graph)).asJsonObject
-        val expectedVertices = JsonParser.parseString(
-            """
+        val expectedVertices =
+            JsonParser
+                .parseString(
+                    """
                [
                    {"id": $v1Hash, "key": "key1", "value": 13},
                    {"id": $v2Hash, "key": "key2", "value": 52},
@@ -62,33 +67,38 @@ class JSONTest {
                    {"id": $v4Hash, "key": "key4", "value": 33},
                    {"id": $v5Hash, "key": "key5", "value": 7}
                ]
-               """
-        ).asJsonArray
+               """,
+                ).asJsonArray
 
         assertEquals(expectedVertices, actualJson["vertices"].asJsonArray)
 
-        val expectedEdges = setOf(
-            Triple(v1Hash, v5Hash, 5),
-            Triple(v2Hash, v3Hash, 55),
-            Triple(v3Hash, v5Hash, 77),
-            Triple(v4Hash, v1Hash, 7)
-        )
-
-        val actualEdges = actualJson["edges"].asJsonArray.map { edge ->
-            val edgeObj = edge.asJsonObject
-            Triple(
-                edgeObj["from"].asInt,
-                edgeObj["to"].asInt,
-                edgeObj["weight"].asInt
+        val expectedEdges =
+            setOf(
+                Triple(v1Hash, v5Hash, 5),
+                Triple(v2Hash, v3Hash, 55),
+                Triple(v3Hash, v5Hash, 77),
+                Triple(v4Hash, v1Hash, 7),
             )
-        }.toSet()
+
+        val actualEdges =
+            actualJson["edges"]
+                .asJsonArray
+                .map { edge ->
+                    val edgeObj = edge.asJsonObject
+                    Triple(
+                        edgeObj["from"].asInt,
+                        edgeObj["to"].asInt,
+                        edgeObj["weight"].asInt,
+                    )
+                }.toSet()
 
         assertEquals(expectedEdges, actualEdges)
     }
 
     @Test
     fun `test graph deserialization`() {
-        val json = """
+        val json =
+            """
             {
                 "vertices": [
                     {
@@ -110,7 +120,7 @@ class JSONTest {
                     }
                 ]
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val graph = deserializeGraph<String, Int>(json)
         assertEquals(2, graph.vertices.size)
@@ -129,17 +139,26 @@ class JSONTest {
 
         assertEquals(52, edge.weight)
         assertEquals("key1", edge.link.first.key)
-        assertEquals(1, edge.link.first.value.toInt())
+        assertEquals(
+            1,
+            edge.link.first.value
+                .toInt(),
+        )
         assertEquals("key2", edge.link.second.key)
-        assertEquals(2, edge.link.second.value.toInt())
+        assertEquals(
+            2,
+            edge.link.second.value
+                .toInt(),
+        )
     }
 
     @Test
     fun `serialize and deserialize graph with correct vertices and edges`() {
         val graph = DirWeightGraph<Int, Int>()
-        val vertices = List(VERTEX_AMOUNT) {
-            Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100))
-        }
+        val vertices =
+            List(VERTEX_AMOUNT) {
+                Vertex(Random.nextInt(0, 100), Random.nextInt(0, 100))
+            }
 
         vertices.forEach { graph.addVertex(it) }
 

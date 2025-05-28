@@ -10,23 +10,24 @@ import viewmodel.GraphViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun <K, V>  graphView(
-    graphViewModel: GraphViewModel<K, V>) {
-    Box(modifier = Modifier
-        .fillMaxSize()
+fun <K, V> graphView(graphViewModel: GraphViewModel<K, V>) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize(),
     ) {
-
         graphViewModel.edges.values.forEach {
-            if (graphViewModel.graph is DirWeightGraph<*, *>)
-                EdgeViewDirected(it)
-            else
-                EdgeViewUndirected(it)
+            if (graphViewModel.graph is DirWeightGraph<*, *>) {
+                edgeViewDirected(it)
+            } else {
+                edgeViewUndirected(it)
+            }
         }
         graphViewModel.vertices.values.forEach { vertexVM ->
-            VertexView(
+            vertexView(
                 viewModel = vertexVM,
                 graphViewModel = graphViewModel,
-                modifier = Modifier
+                modifier = Modifier,
             )
         }
     }

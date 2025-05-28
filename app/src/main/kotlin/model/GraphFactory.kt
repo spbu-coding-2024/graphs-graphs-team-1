@@ -1,18 +1,15 @@
 package model
 
-import model.graphs.AbstractGraph
-import model.graphs.*
-import org.neo4j.driver.AuthTokens
-import org.neo4j.driver.GraphDatabase
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
-import com.google.gson.JsonDeserializationContext
-import com.google.gson.GsonBuilder
-import java.lang.reflect.Type
 import com.google.gson.reflect.TypeToken
-import java.util.Objects
-import kotlin.reflect.full.createType
-import kotlin.reflect.javaType
+import model.graphs.AbstractGraph
+import model.graphs.Graph
+import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.GraphDatabase
+import java.lang.reflect.Type
 
 class GraphFactory {
     companion object {
@@ -20,37 +17,44 @@ class GraphFactory {
             constructor: () -> Graph<K, V>,
             uri: String,
             user: String,
-            password: String
+            password: String,
         ): Graph<K, V> {
             val graph = constructor.invoke()
             val driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password))
             val session = driver.session()
             session.executeRead { transaction ->
-                val amount = transaction.run(
-                    "MATCH (n) RETURN max(ID(n))"
-                ).list()[0].get("max(ID(n))")
+                val amount =
+                    transaction
+                        .run(
+                            "MATCH (n) RETURN max(ID(n))",
+                        ).list()[0]
+                        .get("max(ID(n))")
                 val vertices = Array<Vertex<K, V>?>(amount.asInt() + 1) { null }
-                var result = transaction.run(
-                    "MATCH (x: Vertex)-[t]->(y: Vertex) RETURN ID(x) AS fid, x.key AS fk, x.value AS fv, " +
-                            "ID(y) as sid, y.key AS sk, y.value AS sv, t.weight AS weight"
-                )
+                var result =
+                    transaction.run(
+                        "MATCH (x: Vertex)-[t]->(y: Vertex) RETURN ID(x) AS fid, x.key AS fk, x.value AS fv, " +
+                            "ID(y) as sid, y.key AS sk, y.value AS sv, t.weight AS weight",
+                    )
                 for (record in result) {
-                    if (vertices[record["fid"].asInt()] == null)
+                    if (vertices[record["fid"].asInt()] == null) {
                         vertices[record["fid"].asInt()] = Vertex(record["fk"].asObject() as K, record["fv"].asObject() as V)
+                    }
 
-                    if (vertices[record["sid"].asInt()] == null)
+                    if (vertices[record["sid"].asInt()] == null) {
                         vertices[record["sid"].asInt()] = Vertex(record["sk"].asObject() as K, record["sv"].asObject() as V)
+                    }
                     graph.addEdge(
                         vertices[record["fid"].asInt()] ?: throw IllegalStateException(),
                         vertices[record["sid"].asInt()] ?: throw IllegalStateException(),
-                        record["weight"].asInt()
+                        record["weight"].asInt(),
                     )
                 }
-                result = transaction.run(
-                    "MATCH (s: Vertex) RETURN ID(s) AS id, s.key AS k, s.value AS v"
-                )
+                result =
+                    transaction.run(
+                        "MATCH (s: Vertex) RETURN ID(s) AS id, s.key AS k, s.value AS v",
+                    )
                 for (record in result) {
-                    if (vertices[record["id"].asInt()]==null) {
+                    if (vertices[record["id"].asInt()] == null) {
                         vertices[record["id"].asInt()] = Vertex(record["k"].asObject() as K, record["v"].asObject() as V)
                         graph.addVertex(vertices[record["id"].asInt()] ?: throw IllegalStateException())
                     }
@@ -66,7 +70,12 @@ class GraphFactory {
             TODO()
         }
 
-        fun <K, V> fromJSON(json: String, constructor: () -> Graph<K, V>, keyType: Type, valueType: Type): Graph<K, V> {
+        fun <K, V> fromJSON(
+            json: String,
+            constructor: () -> Graph<K, V>,
+            keyType: Type,
+            valueType: Type,
+        ): Graph<K, V> {
             val typeToken = TypeToken.getParameterized(Graph::class.java, keyType, valueType).type
             return GsonBuilder()
                 .registerTypeAdapter(typeToken, GraphJsonDeserializer(constructor, keyType, valueType))
@@ -76,9 +85,16 @@ class GraphFactory {
     }
 }
 
-class GraphJsonDeserializer<K, V> (private val constructor: () -> Graph<K, V>, private val keyType: Type,
-                                   private val valueType: Type) : JsonDeserializer<Graph<K, V>> {
-    override fun deserialize(json: JsonElement, type: Type, context: JsonDeserializationContext): Graph<K, V> {
+class GraphJsonDeserializer<K, V>(
+    private val constructor: () -> Graph<K, V>,
+    private val keyType: Type,
+    private val valueType: Type,
+) : JsonDeserializer<Graph<K, V>> {
+    override fun deserialize(
+        json: JsonElement,
+        type: Type,
+        context: JsonDeserializationContext,
+    ): Graph<K, V> {
         if (!json.isJsonObject) {
             throw IllegalArgumentException("Expected JSON object")
         }
@@ -95,10 +111,16 @@ class GraphJsonDeserializer<K, V> (private val constructor: () -> Graph<K, V>, p
 
                     try {
                         val id = vertexObj.get("id").asInt
-                        val key = context.deserialize<K>(
-                            vertexObj.get("key"), keyType) as K
-                        val value = context.deserialize<V>(
-                            vertexObj.get("value"), valueType) as V
+                        val key =
+                            context.deserialize<K>(
+                                vertexObj.get("key"),
+                                keyType,
+                            ) as K
+                        val value =
+                            context.deserialize<V>(
+                                vertexObj.get("value"),
+                                valueType,
+                            ) as V
                         if (key != null && value != null) {
                             vertexMap[id] = Vertex<K, V>(key, value).also { graph.addVertex(it) }
                         } else {

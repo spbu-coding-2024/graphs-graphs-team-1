@@ -1,17 +1,20 @@
 package algorithms
 
-import model.graphs.DirectedGraph
-import model.graphs.UndirectedGraph
-import model.graphs.DirWeightGraph
-import model.graphs.UndirWeightGraph
+import algo.keyvertex.JGraphTAdapter
+import algo.keyvertex.KeyVertexFinder
 import model.Vertex
-import algo.keyvertex.*
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
+import model.graphs.DirWeightGraph
+import model.graphs.DirectedGraph
+import model.graphs.UndirWeightGraph
+import model.graphs.UndirectedGraph
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class KeyVertexTest {
+class FindKeyVerticesTest {
     private lateinit var v1: Vertex<Int, String>
     private lateinit var v2: Vertex<Int, String>
     private lateinit var v3: Vertex<Int, String>
@@ -43,7 +46,7 @@ class KeyVertexTest {
             v2: Vertex<Int, String>,
             v3: Vertex<Int, String>,
             v4: Vertex<Int, String>,
-            v5: Vertex<Int, String>
+            v5: Vertex<Int, String>,
         ): DirectedGraph<Int, String> {
             val graph = DirectedGraph<Int, String>()
             listOf(v1, v2, v3, v4, v5).forEach { graph.addVertex(it) }
@@ -62,7 +65,7 @@ class KeyVertexTest {
             v2: Vertex<Int, String>,
             v3: Vertex<Int, String>,
             v4: Vertex<Int, String>,
-            v5: Vertex<Int, String>
+            v5: Vertex<Int, String>,
         ): UndirectedGraph<Int, String> {
             val graph = UndirectedGraph<Int, String>()
             listOf(v1, v2, v3, v4, v5).forEach { graph.addVertex(it) }
@@ -81,7 +84,7 @@ class KeyVertexTest {
             v2: Vertex<Int, String>,
             v3: Vertex<Int, String>,
             v4: Vertex<Int, String>,
-            v5: Vertex<Int, String>
+            v5: Vertex<Int, String>,
         ): DirWeightGraph<Int, String> {
             val graph = DirWeightGraph<Int, String>()
             listOf(v1, v2, v3, v4, v5).forEach { graph.addVertex(it) }
@@ -100,7 +103,7 @@ class KeyVertexTest {
             v2: Vertex<Int, String>,
             v3: Vertex<Int, String>,
             v4: Vertex<Int, String>,
-            v5: Vertex<Int, String>
+            v5: Vertex<Int, String>,
         ): UndirWeightGraph<Int, String> {
             val graph = UndirWeightGraph<Int, String>()
             listOf(v1, v2, v3, v4, v5).forEach { graph.addVertex(it) }
@@ -172,7 +175,6 @@ class KeyVertexTest {
         assertEquals(2.0, adaptedGraph.getEdgeWeight(adaptedGraph.getEdge(v3, v1)))
         assertEquals(7.0, adaptedGraph.getEdgeWeight(adaptedGraph.getEdge(v3, v4)))
         assertEquals(1.0, adaptedGraph.getEdgeWeight(adaptedGraph.getEdge(v4, v5)))
-
     }
 
     @Test
@@ -273,7 +275,6 @@ class KeyVertexTest {
         assertEquals(v3, topVertices[1])
         assertEquals(v2, topVertices[2])
         assertEquals(v1, topVertices[3])
-
     }
 
     @Test

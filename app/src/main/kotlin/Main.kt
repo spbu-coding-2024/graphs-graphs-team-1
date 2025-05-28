@@ -3,10 +3,11 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import view.mainScreen
 
-fun main() = application {
-    Window(onCloseRequest = ::exitApplication, title = "Graph Application") {
-        MaterialTheme {
-            mainScreen<Any, Any>()
+fun main() =
+    application {
+        Window(onCloseRequest = ::exitApplication, title = "Graph Application") {
+            MaterialTheme {
+                mainScreen<Any, Any>()
+            }
         }
     }
-}
