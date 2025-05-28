@@ -46,8 +46,10 @@ object Dijkstra {
                 if (newDistance < distances.getValue(neighbor)) {
                     distances[neighbor] = newDistance
                     predecessors[neighbor] = current
-                    queue.remove(neighbor)  // remove and then add to update priority
-                    queue.add(neighbor)
+                    if (queue.contains(neighbor)) {
+                        queue.remove(neighbor)
+                    }
+                    queue.add(neighbor) // remove and then add to update priority
                 }
             }
         }
