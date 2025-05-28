@@ -124,11 +124,11 @@ class DijkstraIntegrationTest {
 
         assertTrue(json.has("vertices"), "JSON should have vertices array")
         val vertices = json["vertices"].asJsonArray
-        assertTrue(vertices.size() >= 6, "Should contain 6 vertices")
+        assertTrue(vertices.size() == 6, "Should contain 6 vertices")
 
         assertTrue(json.has("edges"), "JSON should have edges array")
         val edges = json["edges"].asJsonArray
-        assertTrue(edges.size() >= 7, "Should contain 7 edges")
+        assertTrue(edges.size() == 7, "Should contain 7 edges")
 
         val vertex5 = vertices.firstOrNull {
             it.asJsonObject["key"].asInt == 5
