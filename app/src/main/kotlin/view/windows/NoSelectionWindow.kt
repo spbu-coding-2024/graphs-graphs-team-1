@@ -7,13 +7,13 @@ import androidx.compose.runtime.Composable
 import viewmodel.MainScreenViewModel
 
 @Composable
-fun SelectionErrorWindow(screenViewModel: MainScreenViewModel<*,*>) {
+fun selectionErrorWindow(screenViewModel: MainScreenViewModel<*, *>) {
     AlertDialog(
         onDismissRequest = { screenViewModel.showNoSelectionWarning.value = false },
         title = { Text("No selection") },
         text = { Text("Please select vertices to delete") },
         confirmButton = {
             Button({ screenViewModel.showNoSelectionWarning.value = false }) { Text("OK") }
-        }
+        },
     )
 }

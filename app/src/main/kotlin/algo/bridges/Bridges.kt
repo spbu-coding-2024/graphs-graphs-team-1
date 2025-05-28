@@ -1,4 +1,3 @@
 package algo.bridges
 
-interface Bridges {
-}
+interface Bridges

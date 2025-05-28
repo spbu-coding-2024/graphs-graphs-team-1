@@ -6,13 +6,16 @@ import model.graphs.Graph
 object Cycles {
     private enum class Color { WHITE, GRAY, BLACK }
 
-
-    fun <K, V> findCycles(graph: Graph<K, V>, start: Vertex<K, V>): Set<List<Vertex<K, V>>> {
+    fun <K, V> findCycles(
+        graph: Graph<K, V>,
+        start: Vertex<K, V>,
+    ): Set<List<Vertex<K, V>>> {
         val cycles = mutableSetOf<List<Vertex<K, V>>>()
         val currentPath = mutableListOf<Vertex<K, V>>()
-        val color = mutableMapOf<Vertex<K, V>, Color>().apply {
-            graph.vertices.forEach { this[it] = Color.WHITE }
-        }
+        val color =
+            mutableMapOf<Vertex<K, V>, Color>().apply {
+                graph.vertices.forEach { this[it] = Color.WHITE }
+            }
 
         // Vertex and index correspondence in current path
         val vertexToIndex = mutableMapOf<Vertex<K, V>, Int>()

@@ -1,11 +1,12 @@
 package algo.keyvertex
 
-import org.jgrapht.alg.scoring.HarmonicCentrality
-import model.graphs.Graph
 import model.Vertex
+import model.graphs.Graph
+import org.jgrapht.alg.scoring.HarmonicCentrality
 
-class KeyVertexFinder<K, V>(private val graph: Graph<K, V>) : KeyVertex<K, V> {
-
+class KeyVertexFinder<K, V>(
+    private val graph: Graph<K, V>,
+) : KeyVertex<K, V> {
     private val adaptedGraph = JGraphTAdapter(graph).getAdaptedGraph()
 
     override fun findTopKeyVertices(count: Int): List<Vertex<K, V>> {

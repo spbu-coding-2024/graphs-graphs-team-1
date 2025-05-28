@@ -1,22 +1,18 @@
 package viewmodel
 
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import model.Vertex
-import java.awt.Toolkit
 import kotlin.random.Random
 
-class VertexViewModel<K, V> (
+class VertexViewModel<K, V>(
     var vertex: Vertex<K, V>,
     radius: Double,
     var degree: Int,
     var width: Int,
-    var height: Int
-    ) {
+    var height: Int,
+) {
     var color = mutableStateOf(Color.Cyan)
     var selected = mutableStateOf(false)
     var radius = mutableStateOf(radius)
