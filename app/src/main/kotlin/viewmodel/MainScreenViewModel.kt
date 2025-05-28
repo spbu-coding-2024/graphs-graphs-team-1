@@ -391,6 +391,7 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
     fun resetSelected() {
         viewModel.vertices.values.forEach {
             it.color.value=Color.Cyan
+            it.selected.value=false
         }
         viewModel.edges.values.forEach {
             it.color.value=Color.Black
