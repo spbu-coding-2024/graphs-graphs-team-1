@@ -140,13 +140,13 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                             selectedVertices[i],
                             selectedVertices[j],
                             weight.value.toIntOrNull() ?: throw IllegalArgumentException())
-                        )
-                        stateHolder.pushEdge(
-                            graph.edges.values
-                                .flatten().first {
+                        ) {
+                            stateHolder.pushEdge(
+                                graph.edges.values.flatten().first {
                                     it.link.first === selectedVertices[i] && it.link.second === selectedVertices[j]
                                 }
-                        )
+                            )
+                        }
                     }
                 }
             } else {
@@ -156,12 +156,11 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                         selectedVertices[i + 1],
                         weight.value.toIntOrNull() ?: throw IllegalArgumentException())
                     )
-                    stateHolder.pushEdge(
-                        graph.edges.values
-                            .flatten().first {
+                        stateHolder.pushEdge(
+                            graph.edges.values.flatten().first {
                                 it.link.first === selectedVertices[i] && it.link.second === selectedVertices[i+1]
                             }
-                    )
+                        )
                 }
             }
         }
@@ -187,7 +186,11 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                     edge.link.second,
                     edge.weight)
                 )
-                stateHolder.pushEdge(edge)
+                    stateHolder.pushEdge(
+                        graph.edges.values.flatten().first {
+                            it.link.first === edge.link.first && it.link.second === edge.link.second
+                        }
+                    )
             }
             updateEdgesView()
     }
@@ -230,13 +233,21 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                                    .map { it.vertex }): Boolean {
 
         if (selectedVertices.isEmpty()) return false
+        println(selectedVertices.size)
         selectedVertices.forEach { vertex ->
             graph.deleteVertex(vertex)
             vertices.remove(vertex)
-            stateHolder.vertices.removeAll {it===vertex}
-            edges.keys.removeAll() { edge ->
-                stateHolder.edges.removeAll { it===edge }
+            stateHolder.actions.removeAll {
+                it.type== Object.VERTEX && it.obj===vertex
+            }
+            val temp = edges.keys.filter { edge ->
                 edge.link.first == vertex || edge.link.second == vertex
+            }
+            temp.forEach {edge ->
+                stateHolder.actions.removeIf {
+                    it.type== Object.EDGE &&it.obj===edge
+                }
+                edges.remove(edge)
             }
 
 
@@ -254,25 +265,35 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
             DeletionMode.ALL -> {
                 for (i in selectedVertices) {
                     for (j in selectedVertices) {
-                        if (i != j) {
-                            graph.deleteEdge(i, j)
-                            edges.keys.removeAll { edge ->
-                                stateHolder.edges.removeAll { it===edge }
-                                edge.link.first == i && edge.link.first == j
+                        if (i !== j && graph.deleteEdge(i, j)) {
+                            val temp = edges.keys.filter { edge ->
+                                edge.link.first === i && edge.link.first === j
                             }
+                            temp.forEach {edge ->
+                                stateHolder.actions.removeAll {
+                                    it.type == Object.EDGE && it.obj===edge
+                                }
+                            }
+                            edges.keys.removeAll(temp)
                         }
                     }
                 }
             }
             DeletionMode.SEQUENCE -> {
                 for (i in 0..<selectedVertices.size - 1) {
-                    graph.deleteEdge(
+                    if (graph.deleteEdge(
                         selectedVertices[i],
                         selectedVertices[i + 1]
-                    )
-                    edges.keys.removeAll { edge ->
-                        stateHolder.edges.removeAll { it===edge }
-                        edge.link.first == selectedVertices[i] && edge.link.second == selectedVertices[i + 1]
+                    )) {
+                        val temp = edges.keys.filter { edge ->
+                            edge.link.first == selectedVertices[i] && edge.link.first == selectedVertices[i+1]
+                        }
+                        temp.forEach {edge ->
+                            stateHolder.actions.removeAll {
+                                it.type== Object.EDGE && it.obj===edge
+                            }
+                        }
+                        edges.keys.removeAll(temp)
                     }
                 }
             }
@@ -286,15 +307,18 @@ class GraphViewModel<K, V>(var graph: Graph<K, V>) {
                         }
                     }
                 }
-                temp.forEach{
-                    graph.deleteEdge(it.link.first, it.link.second)
-                    stateHolder.edges.remove(it)
+                temp.forEach{edge ->
+                    if (graph.deleteEdge(edge.link.first, edge.link.second))
+                        stateHolder.actions.removeAll {
+                            it.obj===edge
+                        }
                 }
             }
         }
         vertices.values.forEach { vertexVM ->
             vertexVM.degree = graph.getOutDegreeOfVertex(vertexVM.vertex)
         }
+        updateEdgesView()
     }
 }
 

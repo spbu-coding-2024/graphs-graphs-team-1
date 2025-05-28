@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,9 @@ import viewmodel.VertexViewModel
 import viewmodel.GraphViewModel
 import java.awt.Toolkit
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -43,8 +47,17 @@ fun <K, V> VertexView(
     val tempValue = remember { mutableStateOf("") }
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
+    val requester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        requester.requestFocus()
+    }
+
+
     Box(
         modifier = modifier
+            .focusRequester(requester)
+            .focusable()
             .size(viewModel.radius.value.dp * 2, viewModel.radius.value.dp * 2)
             .offset(viewModel.x.value.dp + width.dp / 2, viewModel.y.value.dp + height.dp / 2)
             .background(
