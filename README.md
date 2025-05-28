@@ -105,7 +105,7 @@ The application supports a set of classical graph algorithms, implemented direct
 * [Cycle detection algorithm](https://en.wikipedia.org/wiki/Cycle_(graph_theory)#Algorithm) — identifies whether a cycle exists that includes a selected vertex.
   ![img.png](/resources/images/cycles.png)
 * [Kosaraju's algorithm](https://en.wikipedia.org/wiki/Kosaraju%27s_algorithm) — detects and extracts strongly connected components in directed graphs.
-  ![img.png](/resources/images/strongConnect.png)
+  ![img.png](/resources/images/connectedComponents.png)
 
 In addition to classical graph algorithms, the application includes built-in implementations of layout algorithms used for automatic graph visualization:
 
