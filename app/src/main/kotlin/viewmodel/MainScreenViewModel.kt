@@ -484,7 +484,6 @@ class MainScreenViewModel<K, V>(
                 throw NoGraphException()
             }
             viewModel.deleteSelectedVertices()
-            showDeleteConfirmationVertex.value = true
         } catch (e: NoGraphException) {
             errorText.value = "Choose graph type first"
             error.value = true

@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.onDrag
@@ -46,17 +48,9 @@ fun <K, V> vertexView(
     val tempValue = remember { mutableStateOf("") }
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
-    val requester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        requester.requestFocus()
-    }
-
     Box(
         modifier =
             modifier
-                .focusRequester(requester)
-                .focusable()
                 .size(viewModel.radius.value.dp * 2, viewModel.radius.value.dp * 2)
                 .offset(viewModel.x.value.dp + width.dp / 2, viewModel.y.value.dp + height.dp / 2)
                 .background(
@@ -66,9 +60,8 @@ fun <K, V> vertexView(
                     viewModel.onDrag(offset)
                 })
                 .border(BorderStroke(2.dp, Color.Black), CircleShape)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = {
+                .combinedClickable(
+                     onClick = {
                             viewModel.selected.value = !viewModel.selected.value
                             viewModel.color.value = if (!viewModel.selected.value) Color.Cyan else Color.Red
                             if (viewModel.selected.value) {
@@ -77,14 +70,14 @@ fun <K, V> vertexView(
                                 graphViewModel.selected.remove(viewModel)
                             }
                         },
-                        onDoubleTap = {
+                        onDoubleClick = {
                             openDialog.value = true
                             tempKey.value = viewModel.vertex.key?.toString() ?: ""
                             tempValue.value = viewModel.vertex.value?.toString() ?: ""
                             errorMessage.value = null
                         },
-                    )
-                },
+
+                    ),
     ) {
         if (openDialog.value) {
             AlertDialog(
