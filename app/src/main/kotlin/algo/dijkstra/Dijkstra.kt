@@ -20,7 +20,7 @@ object Dijkstra {
         for (edges in graph.edges.values) {
             for (edge in edges) {
                 if (edge.weight < 0) {
-                    return distances to predecessors
+                    throw IllegalArgumentException("Graph has negative edge weights. Please use Bellman-Ford algorithm")
                 }
             }
         }

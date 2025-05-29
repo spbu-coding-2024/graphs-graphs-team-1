@@ -11,6 +11,7 @@ import java.util.Vector
 import java.util.stream.Stream
 import kotlin.random.Random
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 
 const val AMOUNT=200
@@ -132,25 +133,29 @@ class FindShortestPathTest {
     @MethodSource("graphGenerator")
     fun `check for different weights`(
         nodes: Int, graph: DirWeightGraph<Int, Int>, answer: Int,
-        start: Vertex<Int, Int>, end: Vertex<Int, Int>, branch: Vector<Vertex<Int, Int>>) {
-        val (length, path) = Dijkstra.buildShortestPath(graph, start, end)
-        var counter = 0
+        start: Vertex<Int, Int>, end: Vertex<Int, Int>, branch: Vector<Vertex<Int, Int>>
+    ) {
+        var hasNegativeWeights = false
         for (edges in graph.edges.values) {
             for (edge in edges) {
                 if (edge.weight < 0) {
-                    counter++
+                    hasNegativeWeights = true
+                    break
                 }
             }
         }
-        if (counter <= 0) {
+        if (hasNegativeWeights) {
+            assertFailsWith<IllegalArgumentException>(
+                message = "Graph has negative edge weights. Please use Bellman-Ford algorithm"
+            ) {
+                Dijkstra.buildShortestPath(graph, start, end)
+            }
+        } else {
+            val (length, path) = Dijkstra.buildShortestPath(graph, start, end)
             assertEquals(answer, length)
             assertEquals(path.size, branch.size)
             for (i in 0..<path.size)
                 assertEquals(path[i], branch[i])
-        } else {
-            assertEquals(Int.MAX_VALUE, length)
-            assert(path.size == 1)
         }
-
     }
 }

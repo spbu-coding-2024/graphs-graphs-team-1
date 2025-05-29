@@ -124,6 +124,9 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         } catch (e: NoGraphException) {
             errorText.value="Choose graph type first"
             error.value =true
+        } catch (e: IllegalArgumentException) {
+            errorText.value = e.message ?: "Graph contains negative weights"
+            error.value = true
         } catch (e: Exception) {
             errorText.value=e.message.toString()
             error.value=true
