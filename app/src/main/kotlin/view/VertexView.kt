@@ -4,10 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,14 +18,10 @@ import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import viewmodel.GraphViewModel
 import viewmodel.VertexViewModel
@@ -61,23 +54,22 @@ fun <K, V> vertexView(
                 })
                 .border(BorderStroke(2.dp, Color.Black), CircleShape)
                 .combinedClickable(
-                     onClick = {
-                            viewModel.selected.value = !viewModel.selected.value
-                            viewModel.color.value = if (!viewModel.selected.value) Color.Cyan else Color.Red
-                            if (viewModel.selected.value) {
-                                graphViewModel.selected.add(viewModel)
-                            } else {
-                                graphViewModel.selected.remove(viewModel)
-                            }
-                        },
-                        onDoubleClick = {
-                            openDialog.value = true
-                            tempKey.value = viewModel.vertex.key?.toString() ?: ""
-                            tempValue.value = viewModel.vertex.value?.toString() ?: ""
-                            errorMessage.value = null
-                        },
-
-                    ),
+                    onClick = {
+                        viewModel.selected.value = !viewModel.selected.value
+                        viewModel.color.value = if (!viewModel.selected.value) Color.Cyan else Color.Red
+                        if (viewModel.selected.value) {
+                            graphViewModel.selected.add(viewModel)
+                        } else {
+                            graphViewModel.selected.remove(viewModel)
+                        }
+                    },
+                    onDoubleClick = {
+                        openDialog.value = true
+                        tempKey.value = viewModel.vertex.key?.toString() ?: ""
+                        tempValue.value = viewModel.vertex.value?.toString() ?: ""
+                        errorMessage.value = null
+                    },
+                ),
     ) {
         if (openDialog.value) {
             AlertDialog(
