@@ -337,10 +337,11 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.dijkstra()
-                                expAlgo = false },
-                            ) {
-                                Text("Dijkstra")
-                            }
+                                expAlgo = false
+                            },
+                        ) {
+                            Text("Dijkstra")
+                        }
                         if (screenViewModel.viewModel.graph !is UndirWeightGraph<*, *>) {
                             // алгоритм Форда-Беллмана
                             DropdownMenuItem(
