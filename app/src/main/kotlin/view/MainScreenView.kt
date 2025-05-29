@@ -42,12 +42,14 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.DelicateCoroutinesApi
 import model.graphs.EmptyGraph
+import model.graphs.UndirWeightGraph
 import view.windows.addEdgeDialog
 import view.windows.addVertexDialog
 import view.windows.deleteConfirmWindow
 import view.windows.deleteEdgeDialog
 import view.windows.edgeErrorWindow
 import view.windows.errorWindow
+import view.windows.exceptionWindow
 import view.windows.graphTypeDialog
 import view.windows.indexErrorWindow
 import view.windows.inputNeo4j
@@ -340,17 +342,19 @@ fun <K, V> mainScreen() {
                         ) {
                             Text("Dijkstra")
                         }
-                        // алгоритм Форда-Беллмана
-                        DropdownMenuItem(
-                            onClick = {
-                                screenViewModel.fordBellman()
-                                expAlgo = false
-                            },
-                        ) {
-                            Text("Ford-Bellman")
-                        }
+                        if (screenViewModel.viewModel.graph !is UndirWeightGraph<*, *>) {
+                            // алгоритм Форда-Беллмана
+                            DropdownMenuItem(
+                                onClick = {
+                                    screenViewModel.fordBellman()
+                                    expAlgo = false
+                                },
+                            ) {
+                                Text("Ford-Bellman")
+                            }
 
-                        Divider()
+                            Divider()
+                        }
                         // алгоритм поиска циклов
                         DropdownMenuItem(
                             onClick = {
@@ -528,7 +532,7 @@ fun <K, V> mainScreen() {
             }),
         ) {
             graphView(screenViewModel.viewModel)
-            errorWindow(screenViewModel.errorText.value, screenViewModel.error)
+            exceptionWindow(screenViewModel.errorText.value, screenViewModel.error)
             indexErrorWindow(screenViewModel.warning)
             inputNeo4j(screenViewModel)
             processNeo4j(screenViewModel.readyNeo4j)
@@ -539,6 +543,7 @@ fun <K, V> mainScreen() {
             )
             edgeErrorWindow(screenViewModel.edgeError)
             graphTypeDialog(screenViewModel)
+            errorWindow(screenViewModel.fatalError)
 
             if (screenViewModel.showAddVertexDialog.value) {
                 addVertexDialog(screenViewModel)

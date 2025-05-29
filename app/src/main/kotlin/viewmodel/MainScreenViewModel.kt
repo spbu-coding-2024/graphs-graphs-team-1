@@ -16,7 +16,6 @@ import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
-import viewmodel.ColorList
 import java.io.File
 import kotlin.collections.forEach
 
@@ -60,6 +59,8 @@ class MainScreenViewModel<K, V>(
 
     var isAllToAllMode = mutableStateOf(true)
     val edgeError = mutableStateOf(false)
+
+    val fatalError = mutableStateOf(false)
 
     var allEdgesFromSelected = mutableStateOf(DeletionMode.SOLO)
 
@@ -125,9 +126,12 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun fordBellman() {
         clean()
         try {
@@ -178,6 +182,10 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -212,6 +220,8 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -245,6 +255,8 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -261,6 +273,8 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -277,6 +291,8 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -304,6 +320,8 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message ?: "Error finding key vertices"
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -321,6 +339,8 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         } finally {
             repainter.value = false
         }
@@ -340,6 +360,8 @@ class MainScreenViewModel<K, V>(
             openNeo4j.value = false
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -362,6 +384,8 @@ class MainScreenViewModel<K, V>(
                     openNeo4j.value = false
                     errorText.value = e.message.toString()
                     error.value = true
+                } catch (e: Error) {
+                    fatalError.value = true
                 } finally {
                     repainter.value = false
                     readyNeo4j.value = true
@@ -382,6 +406,8 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -403,6 +429,8 @@ class MainScreenViewModel<K, V>(
             openNeo4j.value = false
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         } finally {
             readyNeo4j.value = true
         }
@@ -418,6 +446,8 @@ class MainScreenViewModel<K, V>(
             openNeo4j.value = false
             errorText.value = "Choose graph type first"
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -457,6 +487,8 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -475,6 +507,8 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -484,13 +518,14 @@ class MainScreenViewModel<K, V>(
                 throw NoGraphException()
             }
             viewModel.deleteSelectedVertices()
-            showDeleteConfirmationVertex.value = true
         } catch (e: NoGraphException) {
             errorText.value = "Choose graph type first"
             error.value = true
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 
@@ -507,6 +542,8 @@ class MainScreenViewModel<K, V>(
         } catch (e: Exception) {
             errorText.value = e.message.toString()
             error.value = true
+        } catch (e: Error) {
+            fatalError.value = true
         }
     }
 

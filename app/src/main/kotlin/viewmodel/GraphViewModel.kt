@@ -5,8 +5,6 @@ import algo.cycles.Cycles
 import algo.dijkstra.Dijkstra
 import algo.strconnect.KosarujuSharir
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import com.google.gson.reflect.TypeToken
 import model.Edge
 import model.GraphFactory
@@ -195,6 +193,7 @@ class GraphViewModel<K, V>(
                 }
             }
         }
+        updateEdgesView()
     }
 
     fun downloader(result: Graph<K, V>?) {
@@ -274,15 +273,9 @@ class GraphViewModel<K, V>(
                 .toMutableMap()
     }
 
-    fun deleteSelectedVertices(
-        selectedVertices: List<Vertex<K, V>> =
-            vertices.values
-                .filter { it.selected.value }
-                .map { it.vertex },
-    ): Boolean {
-        if (selectedVertices.isEmpty()) return false
-        println(selectedVertices.size)
-        selectedVertices.forEach { vertex ->
+    fun deleteSelectedVertices(): Boolean {
+        if (selected.isEmpty()) return false
+        selected.map { it.vertex }.forEach { vertex ->
             graph.deleteVertex(vertex)
             vertices.remove(vertex)
             stateHolder.actions.removeAll {
@@ -296,12 +289,14 @@ class GraphViewModel<K, V>(
                 stateHolder.actions.removeIf {
                     it.type == Object.EDGE && it.obj === edge
                 }
+                graph.deleteEdge(edge.link.first, edge.link.second)
                 edges.remove(edge)
             }
         }
         vertices.values.forEach { vertexVM ->
             vertexVM.degree = graph.getOutDegreeOfVertex(vertexVM.vertex)
         }
+        selected.clear()
         return true
     }
 
