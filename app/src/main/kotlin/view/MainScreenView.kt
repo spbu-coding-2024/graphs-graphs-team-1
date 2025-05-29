@@ -42,6 +42,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.DelicateCoroutinesApi
 import model.graphs.EmptyGraph
+import model.graphs.UndirWeightGraph
 import view.windows.addEdgeDialog
 import view.windows.addVertexDialog
 import view.windows.deleteConfirmWindow
@@ -336,22 +337,23 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.dijkstra()
-                                expAlgo = false
-                            },
-                        ) {
-                            Text("Dijkstra")
-                        }
-                        // алгоритм Форда-Беллмана
-                        DropdownMenuItem(
-                            onClick = {
-                                screenViewModel.fordBellman()
-                                expAlgo = false
-                            },
-                        ) {
-                            Text("Ford-Bellman")
-                        }
+                                expAlgo = false },
+                            ) {
+                                Text("Dijkstra")
+                            }
+                        if (screenViewModel.viewModel.graph !is UndirWeightGraph<*, *>) {
+                            // алгоритм Форда-Беллмана
+                            DropdownMenuItem(
+                                onClick = {
+                                    screenViewModel.fordBellman()
+                                    expAlgo = false
+                                },
+                            ) {
+                                Text("Ford-Bellman")
+                            }
 
-                        Divider()
+                            Divider()
+                        }
                         // алгоритм поиска циклов
                         DropdownMenuItem(
                             onClick = {
