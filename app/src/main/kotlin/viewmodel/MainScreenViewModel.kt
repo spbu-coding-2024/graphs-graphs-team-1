@@ -178,6 +178,11 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
         try {
             if (viewModel.graph is EmptyGraph<*, *>)
                 throw NoGraphException()
+            if (viewModel.selected.size != 1) {
+                errorText.value = "For cycles algorithm, exactly one vertex must be selected"
+                error.value = true
+                return
+            }
             val temp = viewModel.cycles()
             temp.forEach { cycle ->
                 for (i in 0..cycle.size - 1) {
