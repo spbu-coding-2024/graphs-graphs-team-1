@@ -1,5 +1,6 @@
 package viewmodel
 
+import algo.keyvertex.KeyVertexFinder
 import algo.planar.ForceAtlas2
 import algo.planar.Planar
 import algo.planar.YifanHu
@@ -10,43 +11,37 @@ import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import model.Edge
-import algo.keyvertex.KeyVertexFinder
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
 import viewmodel.ColorList
-import java.awt.Toolkit
 import java.io.File
-import java.util.Vector
 import kotlin.collections.forEach
 
-class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
-    enum class DeletionMode{
+class MainScreenViewModel<K, V>(
+    graphViewModel: GraphViewModel<K, V>,
+) {
+    enum class DeletionMode {
         SOLO,
         ALL,
-        SEQUENCE
+        SEQUENCE,
     }
 
-
-
-    private class NoGraphException(): Throwable()
+    private class NoGraphException : Throwable()
 
     var viewModel by mutableStateOf(graphViewModel)
 
-
-    var repainter= mutableStateOf(false)
+    var repainter = mutableStateOf(false)
     var pathDialog = mutableStateOf(false)
     var warning = mutableStateOf(false)
     var error = mutableStateOf(false)
     var errorText = mutableStateOf("")
 
-    var statusNeo4j=mutableStateOf(true)
-    val openNeo4j=mutableStateOf(false)
-    val readyNeo4j=mutableStateOf(true)
-
+    var statusNeo4j = mutableStateOf(true)
+    val openNeo4j = mutableStateOf(false)
+    val readyNeo4j = mutableStateOf(true)
 
     val uriNeo4j = mutableStateOf("")
     val passwordNeo4j = mutableStateOf("")
@@ -54,130 +49,147 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
     val showAddVertexDialog = mutableStateOf(false)
     val newVertexKey = mutableStateOf("")
-    val newVertexValue =  mutableStateOf("")
+    val newVertexValue = mutableStateOf("")
     val addVertexError = mutableStateOf<String?>(null)
 
     var showDeleteEdgeDialog = mutableStateOf(false)
     var showAddEdgesDialog = mutableStateOf(false)
-    var edgeWeightInput=mutableStateOf("1")
+    var edgeWeightInput = mutableStateOf("1")
 
-    var graphType=mutableStateOf(false)
+    var graphType = mutableStateOf(false)
 
     var isAllToAllMode = mutableStateOf(true)
-    val edgeError =  mutableStateOf(false)
+    val edgeError = mutableStateOf(false)
 
     var allEdgesFromSelected = mutableStateOf(DeletionMode.SOLO)
 
-    val showDeleteConfirmationVertex =  mutableStateOf(false)
-    val showNoSelectionWarning =  mutableStateOf(false)
+    val showDeleteConfirmationVertex = mutableStateOf(false)
+    val showNoSelectionWarning = mutableStateOf(false)
 
-
-    val buttonEdgeLabel=mutableStateOf(false)
-    val path=mutableStateOf(0)
+    val buttonEdgeLabel = mutableStateOf(false)
+    val path = mutableStateOf(0)
 
     val showKeyVertexDialog = mutableStateOf(false)
     val showKeyVerticesResult = mutableStateOf(false)
     val keyVerticesCount = mutableStateOf(0)
 
-
-
-
     val planarAlgos: (Planar) -> Unit = {
         clean()
-        val temp= it.apply(viewModel.graph)
+        val temp = it.apply(viewModel.graph)
         temp.forEach { v, c ->
-            viewModel.vertices[v]?.x?.value=c.first.toDouble()
-            viewModel.vertices[v]?.y?.value=c.second.toDouble()
+            viewModel.vertices[v]?.x?.value = c.first.toDouble()
+            viewModel.vertices[v]?.y?.value = c.second.toDouble()
         }
     }
     val clean = {
         viewModel.vertices.values.forEach {
-            if (it.color.value!=Color.Red)
-                it.color.value=Color.Cyan
+            if (it.color.value != Color.Red) {
+                it.color.value = Color.Cyan
+            }
         }
         viewModel.edges.values.forEach {
-            it.color.value=Color.Black
+            it.color.value = Color.Black
         }
     }
-
 
     fun dijkstra() {
         clean()
         try {
-            if (viewModel.graph is EmptyGraph<*, *>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
             val temp = viewModel.dijkstra()
             path.value = temp.first
             temp.second.forEach {
-                if (viewModel.vertices[it]?.selected?.value==false)
+                if (viewModel.vertices[it]?.selected?.value == false) {
                     viewModel.vertices[it]?.color?.value = Color.Green
-            }
-            for (i in 1..temp.second.size - 1)
-                viewModel.edges.forEach {
-                    if (it.key.link.first === temp.second[i - 1] && it.key.link.second === temp.second[i] ||
-                        it.key.link.second === temp.second[i - 1] && it.key.link.first === temp.second[i])
-                        it.value.color.value = Color.Red
                 }
+            }
+            for (i in 1..temp.second.size - 1) {
+                viewModel.edges.forEach {
+                    if (it.key.link.first === temp.second[i - 1] &&
+                        it.key.link.second === temp.second[i] ||
+                        it.key.link.second === temp.second[i - 1] &&
+                        it.key.link.first === temp.second[i]
+                    ) {
+                        it.value.color.value = Color.Red
+                    }
+                }
+            }
             pathDialog.value = true
         } catch (e: IndexOutOfBoundsException) {
-            warning.value =true
+            warning.value = true
         } catch (e: NoGraphException) {
-            errorText.value="Choose graph type first"
-            error.value =true
+            errorText.value = "Choose graph type first"
+            error.value = true
         } catch (e: IllegalArgumentException) {
             errorText.value = e.message ?: "Graph contains negative weights"
             error.value = true
         } catch (e: Exception) {
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
 
     fun fordBellman() {
         clean()
         try {
-            if (viewModel.graph is EmptyGraph<*, *>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
             val temp =
                 viewModel.fordBellman()
             path.value = temp.first
             temp.second?.forEach {
-                if (viewModel.vertices[it]?.selected?.value==false)
+                if (viewModel.vertices[it]?.selected?.value == false) {
                     viewModel.vertices[it]?.color?.value = Color.Green
+                }
             }
             temp.third?.forEach {
-                if (viewModel.vertices[it]?.selected?.value==false)
+                if (viewModel.vertices[it]?.selected?.value == false) {
                     viewModel.vertices[it]?.color?.value = Color.Yellow
+                }
             }
-            for (i in 1..(temp.second?.size?.minus(1) ?: 0))
+            for (i in 1..(temp.second?.size?.minus(1) ?: 0)) {
                 viewModel.edges.forEach {
-                    if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(i) ||
-                        it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(i))
+                    if (it.key.link.first === temp.second?.get(i - 1) &&
+                        it.key.link.second === temp.second?.get(i) ||
+                        it.key.link.second === temp.second?.get(i - 1) &&
+                        it.key.link.first === temp.second?.get(i)
+                    ) {
                         it.value.color.value = Color.Green
+                    }
                 }
-            for (i in 1..(temp.third?.size?.minus(1) ?: 0))
+            }
+            for (i in 1..(temp.third?.size?.minus(1) ?: 0)) {
                 viewModel.edges.forEach {
-                    if (it.key.link.first === temp.second?.get(i - 1) && it.key.link.second === temp.second?.get(i) ||
-                        it.key.link.second === temp.second?.get(i - 1) && it.key.link.first === temp.second?.get(i))
+                    if (it.key.link.first === temp.second?.get(i - 1) &&
+                        it.key.link.second === temp.second?.get(i) ||
+                        it.key.link.second === temp.second?.get(i - 1) &&
+                        it.key.link.first === temp.second?.get(i)
+                    ) {
                         it.value.color.value = Color.Yellow
+                    }
                 }
+            }
             pathDialog.value = true
         } catch (e: NoGraphException) {
-            errorText.value="Choose graph type first"
-            error.value=true
+            errorText.value = "Choose graph type first"
+            error.value = true
         } catch (e: IndexOutOfBoundsException) {
-            warning.value=true
+            warning.value = true
         } catch (e: Exception) {
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
 
     fun cycles() {
         clean()
         try {
-            if (viewModel.graph is EmptyGraph<*, *>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
             if (viewModel.selected.size != 1) {
                 errorText.value = "For cycles algorithm, exactly one vertex must be selected"
                 error.value = true
@@ -189,29 +201,34 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                     viewModel.vertices[cycle[i]]?.color?.value = Color.Magenta
                     if (i > 0) {
                         viewModel.edges.forEach { p0, p1 ->
-                            if (p0.link.first === cycle[i - 1] && p0.link.second === cycle[i] ||
-                                p0.link.second === cycle[i - 1] && p0.link.first === cycle[i])
+                            if (p0.link.first === cycle[i - 1] &&
+                                p0.link.second === cycle[i] ||
+                                p0.link.second === cycle[i - 1] &&
+                                p0.link.first === cycle[i]
+                            ) {
                                 p1.color.value = Color.Magenta
+                            }
                         }
                     }
                 }
             }
-        }  catch (e: NoSuchElementException) {
-            warning.value=true
+        } catch (e: NoSuchElementException) {
+            warning.value = true
         } catch (e: NoGraphException) {
-            errorText.value="Choose graph type first"
-            error.value=true
+            errorText.value = "Choose graph type first"
+            error.value = true
         } catch (e: Exception) {
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
 
     fun kosajuruSharir() {
         clean()
         try {
-            if (viewModel.graph is EmptyGraph<*, *>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
             val colors = ColorList().iterator()
             val temp =
                 viewModel.kosarujuSharir()
@@ -224,62 +241,69 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
                 component.forEach { v ->
                     viewModel.vertices[v]?.color?.value = Color(red, green, blue)
                     viewModel.edges.values.forEach { e ->
-                        if (e.from.vertex === v)
+                        if (e.from.vertex === v) {
                             e.color.value = Color(red, green, blue)
+                        }
                     }
                 }
-
             }
         } catch (e: NoGraphException) {
-            errorText.value="Choose graph type first"
-            error.value=true
+            errorText.value = "Choose graph type first"
+            error.value = true
         } catch (e: Exception) {
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
 
     fun forceAtlas2() {
         clean()
         try {
-            if (viewModel.graph is EmptyGraph<*, *>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
             planarAlgos(ForceAtlas2())
         } catch (e: NoGraphException) {
-            errorText.value="Choose graph type first"
-            error.value=true
+            errorText.value = "Choose graph type first"
+            error.value = true
         } catch (e: Exception) {
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
 
     fun yuifanHu() {
         clean()
         try {
-            if (viewModel.graph is EmptyGraph<*, *>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
             planarAlgos(YifanHu())
         } catch (e: NoGraphException) {
-            errorText.value="Choose graph type first"
-            error.value=true
+            errorText.value = "Choose graph type first"
+            error.value = true
         } catch (e: Exception) {
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
-    
-    fun findKeyVertices(count: Int? = null, minCentrality: Double? = null) {
+
+    fun findKeyVertices(
+        count: Int? = null,
+        minCentrality: Double? = null,
+    ) {
         clean()
         try {
-            if (viewModel.graph is EmptyGraph<*, *>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw IllegalStateException("Graph is empty")
-            val finder = KeyVertexFinder(viewModel.graph)
-            val keyVertices = when {
-                count != null -> finder.findTopKeyVertices(count)
-                minCentrality != null -> finder.findVerticesWithMinCentrality(minCentrality)
-                else -> throw IllegalArgumentException("Specify count or minCentrality")
             }
+            val finder = KeyVertexFinder(viewModel.graph)
+            val keyVertices =
+                when {
+                    count != null -> finder.findTopKeyVertices(count)
+                    minCentrality != null -> finder.findVerticesWithMinCentrality(minCentrality)
+                    else -> throw IllegalArgumentException("Specify count or minCentrality")
+                }
             keyVertices.forEach { vertex ->
                 viewModel.vertices[vertex]?.color?.value = Color.Yellow
             }
@@ -293,74 +317,79 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
     fun downloadJson(file: File?) {
         try {
-            if (viewModel.graph is EmptyGraph<*, *>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
             val result = viewModel.downloadJson(file)
             viewModel.downloader(result)
-            repainter.value=true
+            repainter.value = true
         } catch (e: NoGraphException) {
-            errorText.value="Choose graph type first"
-            error.value=true
+            errorText.value = "Choose graph type first"
+            error.value = true
         } catch (e: Exception) {
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         } finally {
-            repainter.value=false
+            repainter.value = false
         }
     }
 
     fun downloadNeo4j() {
         try {
-            if (viewModel.graph is EmptyGraph<*, *>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
-            openNeo4j.value=true
+            }
+            openNeo4j.value = true
         } catch (e: NoGraphException) {
             openNeo4j.value = false
             errorText.value = "Choose graph type first"
             error.value = true
-        } catch (e: Exception){
+        } catch (e: Exception) {
             openNeo4j.value = false
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
     fun downloadNeo4jBasic() {
-            GlobalScope.launch(
-                block = {
-                    try {
-                        openNeo4j.value = false
-                        readyNeo4j.value = false
-                        val result = viewModel.downloadNeo4j(
+        GlobalScope.launch(
+            block = {
+                try {
+                    openNeo4j.value = false
+                    readyNeo4j.value = false
+                    val result =
+                        viewModel.downloadNeo4j(
                             uriNeo4j.value,
-                            loginNeo4j.value, passwordNeo4j.value
+                            loginNeo4j.value,
+                            passwordNeo4j.value,
                         )
-                        viewModel.downloader(result)
-                        repainter.value=true
-                    } catch (e: Exception) {
-                        openNeo4j.value = false
-                        errorText.value = e.message.toString()
-                        error.value = true
-                    } finally {
-                        repainter.value=false
-                        readyNeo4j.value = true
-                    }
+                    viewModel.downloader(result)
+                    repainter.value = true
+                } catch (e: Exception) {
+                    openNeo4j.value = false
+                    errorText.value = e.message.toString()
+                    error.value = true
+                } finally {
+                    repainter.value = false
+                    readyNeo4j.value = true
                 }
-            )
+            },
+        )
     }
 
     fun uploadJson(file: File?) {
         try {
-            if (viewModel.graph is EmptyGraph<*, *>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
             file?.writeText(viewModel.uploadJson())
         } catch (e: NoGraphException) {
-            errorText.value="Choose graph type first"
-            error.value=true
+            errorText.value = "Choose graph type first"
+            error.value = true
         } catch (e: Exception) {
-            errorText.value= e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
 
@@ -371,9 +400,12 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
             readyNeo4j.value = false
             GlobalScope.launch(
                 block = {
-                        viewModel.uploadNeo4j(uriNeo4j.value,
-                            loginNeo4j.value, passwordNeo4j.value)
-                }
+                    viewModel.uploadNeo4j(
+                        uriNeo4j.value,
+                        loginNeo4j.value,
+                        passwordNeo4j.value,
+                    )
+                },
             )
         } catch (e: Exception) {
             openNeo4j.value = false
@@ -386,9 +418,10 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
     fun uploadNeo4j() {
         try {
-            if (viewModel.graph is EmptyGraph<*, *>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
-            openNeo4j.value=true
+            }
+            openNeo4j.value = true
         } catch (e: NoGraphException) {
             openNeo4j.value = false
             errorText.value = "Choose graph type first"
@@ -398,96 +431,104 @@ class MainScreenViewModel<K, V>(graphViewModel: GraphViewModel<K, V>) {
 
     fun resetSelected() {
         viewModel.vertices.values.forEach {
-            it.color.value=Color.Cyan
+            it.color.value = Color.Cyan
         }
         viewModel.edges.values.forEach {
-            it.color.value=Color.Black
+            it.color.value = Color.Black
         }
         viewModel.selected.clear()
     }
 
     fun visibleEdges() {
         viewModel.edges.values.forEach {
-            it.isVisible.value=!it.isVisible.value
-            buttonEdgeLabel.value=!buttonEdgeLabel.value
+            it.isVisible.value = !it.isVisible.value
+            buttonEdgeLabel.value = !buttonEdgeLabel.value
         }
     }
 
-
     fun vertexAddition() {
         try {
-            if (viewModel.graph is EmptyGraph<*,*>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
-            addVertexError.value = viewModel.addVertex(
-                newVertexKey.value,
-                newVertexValue.value,
-                viewModel.screenSize.width,
-                viewModel.screenSize.height
-            )
-        }  catch (e: NoGraphException) {
-            errorText.value="Choose graph type first"
-            error.value=true
+            }
+            addVertexError.value =
+                viewModel.addVertex(
+                    newVertexKey.value,
+                    newVertexValue.value,
+                    viewModel.screenSize.width,
+                    viewModel.screenSize.height,
+                )
+        } catch (e: NoGraphException) {
+            errorText.value = "Choose graph type first"
+            error.value = true
         } catch (e: Exception) {
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
 
     fun edgeAddition() {
         try {
-            if (viewModel.graph is EmptyGraph<*,*>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
             viewModel.addEdge(edgeWeightInput, isAllToAllMode)
-            edgeWeightInput.value="1"
+            edgeWeightInput.value = "1"
             viewModel.updateEdgesView()
             showAddEdgesDialog.value = false
         } catch (e: NoGraphException) {
-            errorText.value="Choose graph type first"
-            error.value=true
+            errorText.value = "Choose graph type first"
+            error.value = true
         } catch (e: Exception) {
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
 
     fun vertexDeletion() {
         try {
-            if (viewModel.graph is EmptyGraph<*,*>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
             viewModel.deleteSelectedVertices()
             showDeleteConfirmationVertex.value = true
         } catch (e: NoGraphException) {
-            errorText.value="Choose graph type first"
-            error.value=true
+            errorText.value = "Choose graph type first"
+            error.value = true
         } catch (e: Exception) {
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
 
     fun edgeDeletion() {
         try {
-            if (viewModel.graph is EmptyGraph<*,*>)
+            if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
             viewModel.deleteEdges(allEdgesFromSelected)
-            allEdgesFromSelected.value= DeletionMode.SOLO
+            allEdgesFromSelected.value = DeletionMode.SOLO
         } catch (e: NoGraphException) {
             errorText.value = "Choose graph type first"
             error.value = true
         } catch (e: Exception) {
-            errorText.value=e.message.toString()
-            error.value=true
+            errorText.value = e.message.toString()
+            error.value = true
         }
     }
 
-    fun graphTypeSelection(selectedOption: String, graphs: List<String>) {
-        val graph = when (selectedOption) {
-            graphs[0] -> UndirectedGraph<K, V>()
-            graphs[1] -> UndirWeightGraph()
-            graphs[2] -> DirWeightGraph()
-            else -> DirectedGraph()
-        }
+    fun graphTypeSelection(
+        selectedOption: String,
+        graphs: List<String>,
+    ) {
+        val graph =
+            when (selectedOption) {
+                graphs[0] -> UndirectedGraph<K, V>()
+                graphs[1] -> UndirWeightGraph()
+                graphs[2] -> DirWeightGraph()
+                else -> DirectedGraph()
+            }
         viewModel = GraphViewModel(graph)
-        graphType.value=false
+        graphType.value = false
     }
 }
