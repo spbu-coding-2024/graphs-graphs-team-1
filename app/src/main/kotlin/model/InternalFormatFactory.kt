@@ -11,7 +11,7 @@ import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 import java.lang.reflect.Type
 
-class InternalFormatFactory {
+abstract class InternalFormatFactory {
     companion object {
         fun <K, V> toNeo4j(
             graph: Graph<K, V>,

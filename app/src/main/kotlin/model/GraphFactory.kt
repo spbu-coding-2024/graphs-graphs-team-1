@@ -11,7 +11,7 @@ import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 import java.lang.reflect.Type
 
-class GraphFactory {
+abstract class GraphFactory {
     companion object {
         fun <K, V> fromNeo4j(
             constructor: () -> Graph<K, V>,
