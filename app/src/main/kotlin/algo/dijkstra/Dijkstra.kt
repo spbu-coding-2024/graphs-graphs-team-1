@@ -1,9 +1,6 @@
 package algo.dijkstra
 
 import model.Vertex
-import model.graphs.AbstractGraph
-import model.graphs.DirWeightGraph
-import org.gephi.graph.api.Graph
 import java.util.PriorityQueue
 import java.util.Vector
 
