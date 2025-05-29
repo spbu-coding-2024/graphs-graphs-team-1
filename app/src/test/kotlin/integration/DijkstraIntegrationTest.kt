@@ -44,6 +44,7 @@ class DijkstraIntegrationTest {
 
         viewModelMS.dijkstra()
 
+        // check dijkstra's algorithm for the original graph from the file
         assertEquals(6, viewModelMS.path.value)
         val originalPathVertices =
             viewModelMS.viewModel.vertices.values
@@ -70,6 +71,7 @@ class DijkstraIntegrationTest {
 
         viewModelMS.resetSelected()
 
+        // add new vertex and edges which make the path shorter
         viewModelMS.newVertexKey.value = "5"
         viewModelMS.newVertexValue.value = "50"
         viewModelMS.vertexAddition()
@@ -105,6 +107,7 @@ class DijkstraIntegrationTest {
         viewModelMS.viewModel.selected.clear()
         viewModelMS.viewModel.selected.addAll(listOf(v0, v2))
 
+        // check dijkstra's algorithm for the graph with new the shortest path
         viewModelMS.dijkstra()
 
         assertEquals(2, viewModelMS.path.value)
@@ -134,6 +137,7 @@ class DijkstraIntegrationTest {
 
         viewModelMS.uploadJson(outputFile)
 
+        // check output file correctness
         checkOutputFileContent()
     }
 
@@ -146,11 +150,11 @@ class DijkstraIntegrationTest {
 
         assertTrue(json.has("vertices"), "JSON should have vertices array")
         val vertices = json["vertices"].asJsonArray
-        assertTrue(vertices.size() >= 6, "Should contain 6 vertices")
+        assertTrue(vertices.size() == 6, "Should contain 6 vertices")
 
         assertTrue(json.has("edges"), "JSON should have edges array")
         val edges = json["edges"].asJsonArray
-        assertTrue(edges.size() >= 7, "Should contain 7 edges")
+        assertTrue(edges.size() == 7, "Should contain 7 edges")
 
         val vertex5 =
             vertices.firstOrNull {

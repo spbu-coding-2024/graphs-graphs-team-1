@@ -99,6 +99,11 @@ class MainScreenViewModel<K, V>(
             if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
             }
+            if (viewModel.selected.size != 2) {
+                errorText.value = "For dijkstra algorithm, exactly two vertices must be selected"
+                error.value = true
+                return
+            }
             val temp = viewModel.dijkstra()
             path.value = temp.first
             temp.second.forEach {
@@ -122,6 +127,9 @@ class MainScreenViewModel<K, V>(
             warning.value = true
         } catch (e: NoGraphException) {
             errorText.value = "Choose graph type first"
+            error.value = true
+        } catch (e: IllegalArgumentException) {
+            errorText.value = e.message ?: "Graph contains negative weights"
             error.value = true
         } catch (e: Exception) {
             errorText.value = e.message.toString()
@@ -194,6 +202,11 @@ class MainScreenViewModel<K, V>(
         try {
             if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
+            }
+            if (viewModel.selected.size != 1) {
+                errorText.value = "For cycles algorithm, exactly one vertex must be selected"
+                error.value = true
+                return
             }
             val temp = viewModel.cycles()
             temp.forEach { cycle ->
@@ -454,7 +467,6 @@ class MainScreenViewModel<K, V>(
     fun resetSelected() {
         viewModel.vertices.values.forEach {
             it.color.value = Color.Cyan
-            it.selected.value = false
         }
         viewModel.edges.values.forEach {
             it.color.value = Color.Black

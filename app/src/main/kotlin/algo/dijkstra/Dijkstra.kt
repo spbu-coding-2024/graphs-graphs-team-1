@@ -21,7 +21,7 @@ object Dijkstra {
         for (edges in graph.edges.values) {
             for (edge in edges) {
                 if (edge.weight < 0) {
-                    return distances to predecessors
+                    throw IllegalArgumentException("Graph has negative edge weights. Please use Bellman-Ford algorithm")
                 }
             }
         }
@@ -47,8 +47,10 @@ object Dijkstra {
                 if (newDistance < distances.getValue(neighbor)) {
                     distances[neighbor] = newDistance
                     predecessors[neighbor] = current
-                    queue.remove(neighbor) // remove and then add to update priority
-                    queue.add(neighbor)
+                    if (queue.contains(neighbor)) {
+                        queue.remove(neighbor)
+                    }
+                    queue.add(neighbor) // remove and then add to update priority
                 }
             }
         }
