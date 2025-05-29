@@ -99,6 +99,11 @@ class MainScreenViewModel<K, V>(
             if (viewModel.graph is EmptyGraph<*, *>) {
                 throw NoGraphException()
             }
+            if (viewModel.selected.size != 2) {
+                errorText.value = "For dijkstra algorithm, exactly two vertices must be selected"
+                error.value = true
+                return
+            }
             val temp = viewModel.dijkstra()
             path.value = temp.first
             temp.second.forEach {
