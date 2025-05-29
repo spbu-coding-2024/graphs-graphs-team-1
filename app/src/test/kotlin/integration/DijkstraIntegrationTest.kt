@@ -1,6 +1,7 @@
 package integration
 
 import androidx.compose.ui.graphics.Color
+import com.google.gson.JsonParser
 import model.graphs.DirWeightGraph
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -9,9 +10,8 @@ import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
 import java.io.File
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlin.test.assertNotNull
-import com.google.gson.JsonParser
+import kotlin.test.assertTrue
 
 class DijkstraIntegrationTest {
     private val inputFile = File("src/test/kotlin/integration/inputForTest.json")
@@ -30,8 +30,12 @@ class DijkstraIntegrationTest {
 
     @Test
     fun testDijkstraWithNewVertexAndEdges() {
-        val vertex0 = viewModelMS.viewModel.vertices.values.first { it.vertex.key == 0 }
-        val vertex2 = viewModelMS.viewModel.vertices.values.first { it.vertex.key == 2 }
+        val vertex0 =
+            viewModelMS.viewModel.vertices.values
+                .first { it.vertex.key == 0 }
+        val vertex2 =
+            viewModelMS.viewModel.vertices.values
+                .first { it.vertex.key == 2 }
 
         vertex0.selected.value = true
         vertex2.selected.value = true
@@ -42,17 +46,23 @@ class DijkstraIntegrationTest {
 
         // check dijkstra's algorithm for the original graph from the file
         assertEquals(6, viewModelMS.path.value)
-        val originalPathVertices = viewModelMS.viewModel.vertices.values
-            .filter { it.color.value == Color.Green }
-            .map { it.vertex.key }
+        val originalPathVertices =
+            viewModelMS.viewModel.vertices.values
+                .filter { it.color.value == Color.Green }
+                .map { it.vertex.key }
         assertEquals(listOf(3, 4), originalPathVertices)
 
-        val originalRedEdges = viewModelMS.viewModel.edges.values
-            .filter { it.color.value == Color.Red }
-            .map { edge ->
-                Pair(edge.from.vertex.key.toInt(), edge.to.vertex.key.toInt())
-            }
-            .toSet()
+        val originalRedEdges =
+            viewModelMS.viewModel.edges.values
+                .filter { it.color.value == Color.Red }
+                .map { edge ->
+                    Pair(
+                        edge.from.vertex.key
+                            .toInt(),
+                        edge.to.vertex.key
+                            .toInt(),
+                    )
+                }.toSet()
 
         assertEquals(3, originalRedEdges.size)
         assertTrue(Pair(0, 3) in originalRedEdges)
@@ -66,9 +76,15 @@ class DijkstraIntegrationTest {
         viewModelMS.newVertexValue.value = "50"
         viewModelMS.vertexAddition()
 
-        val v0 = viewModelMS.viewModel.vertices.values.first { it.vertex.key == 0 }
-        val v2 = viewModelMS.viewModel.vertices.values.first { it.vertex.key == 2 }
-        val newVertex = viewModelMS.viewModel.vertices.values.first { it.vertex.key == 5 }
+        val v0 =
+            viewModelMS.viewModel.vertices.values
+                .first { it.vertex.key == 0 }
+        val v2 =
+            viewModelMS.viewModel.vertices.values
+                .first { it.vertex.key == 2 }
+        val newVertex =
+            viewModelMS.viewModel.vertices.values
+                .first { it.vertex.key == 5 }
 
         v0.selected.value = true
         newVertex.selected.value = true
@@ -95,17 +111,23 @@ class DijkstraIntegrationTest {
         viewModelMS.dijkstra()
 
         assertEquals(2, viewModelMS.path.value)
-        val pathVertices = viewModelMS.viewModel.vertices.values
-            .filter { it.color.value == Color.Green }
-            .map { it.vertex.key }
+        val pathVertices =
+            viewModelMS.viewModel.vertices.values
+                .filter { it.color.value == Color.Green }
+                .map { it.vertex.key }
         assertEquals(listOf(5), pathVertices)
 
-        val newRedEdges = viewModelMS.viewModel.edges.values
-            .filter { it.color.value == Color.Red }
-            .map { edge ->
-                Pair(edge.from.vertex.key.toInt(), edge.to.vertex.key.toInt())
-            }
-            .toSet()
+        val newRedEdges =
+            viewModelMS.viewModel.edges.values
+                .filter { it.color.value == Color.Red }
+                .map { edge ->
+                    Pair(
+                        edge.from.vertex.key
+                            .toInt(),
+                        edge.to.vertex.key
+                            .toInt(),
+                    )
+                }.toSet()
 
         assertEquals(2, newRedEdges.size)
         assertTrue(Pair(0, 5) in newRedEdges)
@@ -134,28 +156,37 @@ class DijkstraIntegrationTest {
         val edges = json["edges"].asJsonArray
         assertTrue(edges.size() == 7, "Should contain 7 edges")
 
-        val vertex5 = vertices.firstOrNull {
-            it.asJsonObject["key"].asInt == 5
-        }
+        val vertex5 =
+            vertices.firstOrNull {
+                it.asJsonObject["key"].asInt == 5
+            }
         assertNotNull(vertex5, "Vertex with key = 5 should exist")
         assertEquals(50, vertex5.asJsonObject["value"].asInt, "Vertex 5 should have value 50")
 
-        val v0 = viewModelMS.viewModel.vertices.values.first { it.vertex.key == 0 }
-        val v5 = viewModelMS.viewModel.vertices.values.first { it.vertex.key == 5 }
-        val v2 = viewModelMS.viewModel.vertices.values.first { it.vertex.key == 2 }
+        val v0 =
+            viewModelMS.viewModel.vertices.values
+                .first { it.vertex.key == 0 }
+        val v5 =
+            viewModelMS.viewModel.vertices.values
+                .first { it.vertex.key == 5 }
+        val v2 =
+            viewModelMS.viewModel.vertices.values
+                .first { it.vertex.key == 2 }
 
-        val edge0to5 = edges.firstOrNull { edge ->
-            edge.asJsonObject["from"].asInt == v0.vertex.hashCode() &&
+        val edge0to5 =
+            edges.firstOrNull { edge ->
+                edge.asJsonObject["from"].asInt == v0.vertex.hashCode() &&
                     edge.asJsonObject["to"].asInt == v5.vertex.hashCode() &&
                     edge.asJsonObject["weight"].asInt == 1
-        }
+            }
         assertNotNull(edge0to5, "Edge 0->5 with weight 1 should exist")
 
-        val edge5to2 = edges.firstOrNull { edge ->
-            edge.asJsonObject["from"].asInt == v5.vertex.hashCode() &&
+        val edge5to2 =
+            edges.firstOrNull { edge ->
+                edge.asJsonObject["from"].asInt == v5.vertex.hashCode() &&
                     edge.asJsonObject["to"].asInt == v2.vertex.hashCode() &&
                     edge.asJsonObject["weight"].asInt == 1
-        }
+            }
         assertNotNull(edge5to2, "Edge 5->2 with weight 1 should exist")
     }
 

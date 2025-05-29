@@ -4,35 +4,40 @@ import model.Edge
 import model.Vertex
 import java.util.Vector
 
-abstract class AbstractGraph <K, V>: Graph<K, V> {
-    protected val _vertices = Vector<Vertex<K, V>>()
-    protected val _edges = hashMapOf<Vertex<K, V>, Vector<Edge<K, V>>>()
+abstract class AbstractGraph<K, V> : Graph<K, V> {
+    protected val realVertices = Vector<Vertex<K, V>>()
+    protected val realEdges = hashMapOf<Vertex<K, V>, Vector<Edge<K, V>>>()
 
     override val vertices
-        get() = _vertices
+        get() = realVertices
     override val edges
-        get() = _edges
+        get() = realEdges
 
     fun iteratorDFS() = DFS().iterator()
+
     fun iteratorBFS() = BFS().iterator()
 
-    protected class RealStack<K>(): Vector<K>() {
+    protected class RealStack<K> : Vector<K>() {
         override fun add(e: K?): Boolean {
             super.addFirst(e)
             return true
         }
     }
 
-    protected open inner class DFS (var start: Vertex<K, V> = vertices.firstElement()) : Iterator<Vertex<K, V>> {
+    protected open inner class DFS(
+        var start: Vertex<K, V> = vertices.firstElement(),
+    ) : Iterator<Vertex<K, V>> {
         var visited = hashMapOf<Vertex<K, V>, Boolean>()
         open var stack: Vector<Vertex<K, V>> = RealStack()
         var started = false
-        init {
-            for (vertex in vertices)
-                visited[vertex] = false
-            if (!vertices.map { it === start }.contains(true))
-                throw IllegalArgumentException()
 
+        init {
+            for (vertex in vertices) {
+                visited[vertex] = false
+            }
+            if (!vertices.map { it === start }.contains(true)) {
+                throw IllegalArgumentException()
+            }
         }
 
         override fun hasNext(): Boolean {
@@ -45,8 +50,9 @@ abstract class AbstractGraph <K, V>: Graph<K, V> {
         }
 
         override fun next(): Vertex<K, V> {
-            if (stack.isEmpty())
+            if (stack.isEmpty()) {
                 stack.add(visited.filter { it.value == false }.keys.elementAt(0))
+            }
             var current = stack.removeFirst()
             visited[current] = true
             edges[current]?.forEach {
@@ -59,7 +65,7 @@ abstract class AbstractGraph <K, V>: Graph<K, V> {
         }
     }
 
-    protected inner class BFS(): DFS() {
+    protected inner class BFS : DFS() {
         /* Here "stack" is a queue because Vector.add() adds elements to the end, and .removeFirst() removes elements
         from the beginning. This corresponds to FIFO(first in, first out) which forms a queue
          */

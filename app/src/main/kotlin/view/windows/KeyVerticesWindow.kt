@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import viewmodel.MainScreenViewModel
 
 @Composable
-fun <K, V> KeyVertexDialog(viewModel: MainScreenViewModel<K, V>) {
+fun <K, V> keyVertexDialog(viewModel: MainScreenViewModel<K, V>) {
     var mode by remember { mutableStateOf("count") }
     var count by remember { mutableStateOf("3") }
     var minCentrality by remember { mutableStateOf("0.5") }
@@ -35,7 +35,7 @@ fun <K, V> KeyVertexDialog(viewModel: MainScreenViewModel<K, V>) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(
                         selected = mode == "count",
-                        onClick = { mode = "count" }
+                        onClick = { mode = "count" },
                     )
                     Text("Top N vertices")
                     Spacer(modifier = Modifier.width(8.dp))
@@ -47,7 +47,7 @@ fun <K, V> KeyVertexDialog(viewModel: MainScreenViewModel<K, V>) {
                             }
                         },
                         enabled = mode == "count",
-                        modifier = Modifier.width(100.dp)
+                        modifier = Modifier.width(100.dp),
                     )
                 }
 
@@ -56,7 +56,7 @@ fun <K, V> KeyVertexDialog(viewModel: MainScreenViewModel<K, V>) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(
                         selected = mode == "centrality",
-                        onClick = { mode = "centrality" }
+                        onClick = { mode = "centrality" },
                     )
                     Text("Vertices with centrality ≥")
                     Spacer(modifier = Modifier.width(8.dp))
@@ -68,7 +68,7 @@ fun <K, V> KeyVertexDialog(viewModel: MainScreenViewModel<K, V>) {
                             }
                         },
                         enabled = mode == "centrality",
-                        modifier = Modifier.width(100.dp)
+                        modifier = Modifier.width(100.dp),
                     )
                 }
             }
@@ -104,10 +104,10 @@ fun <K, V> KeyVertexDialog(viewModel: MainScreenViewModel<K, V>) {
         },
         dismissButton = {
             Button(
-                onClick = { viewModel.showKeyVertexDialog.value = false }
+                onClick = { viewModel.showKeyVertexDialog.value = false },
             ) {
                 Text("Cancel")
             }
-        }
+        },
     )
 }

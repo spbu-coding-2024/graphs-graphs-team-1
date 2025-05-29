@@ -1,4 +1,3 @@
 package algo.communities
 
-interface Community {
-}
+interface Community

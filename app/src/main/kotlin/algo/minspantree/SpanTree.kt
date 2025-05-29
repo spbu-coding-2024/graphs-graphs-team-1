@@ -1,4 +1,3 @@
 package algo.minspantree
 
-interface SpanTree {
-}
+interface SpanTree

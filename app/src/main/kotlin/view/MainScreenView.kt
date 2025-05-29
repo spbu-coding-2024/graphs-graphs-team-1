@@ -1,21 +1,14 @@
 package view
 
-import AddEdgeDialog
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.RadioButton
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomAppBar
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
@@ -26,7 +19,6 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
-import androidx.compose.material.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.currentRecomposeScope
@@ -48,45 +40,33 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.DelicateCoroutinesApi
-import model.Vertex
-import model.graphs.DirWeightGraph
-import model.graphs.DirectedGraph
 import model.graphs.EmptyGraph
-import model.graphs.Graph
 import model.graphs.UndirWeightGraph
-import model.graphs.UndirectedGraph
-import view.windows.AddVertexDialog
-import view.windows.DeleteConfirmWindow
-import view.windows.DeleteEdgeDialog
-import view.windows.SelectionErrorWindow
+import view.windows.addEdgeDialog
+import view.windows.addVertexDialog
+import view.windows.deleteConfirmWindow
+import view.windows.deleteEdgeDialog
 import view.windows.edgeErrorWindow
 import view.windows.errorWindow
+import view.windows.exceptionWindow
+import view.windows.graphTypeDialog
 import view.windows.indexErrorWindow
 import view.windows.inputNeo4j
+import view.windows.keyVertexDialog
 import view.windows.processNeo4j
+import view.windows.selectionErrorWindow
 import view.windows.windowPath
-import view.windows.KeyVertexDialog
-import view.windows.graphTypeDialog
 import viewmodel.GraphViewModel
 import viewmodel.MainScreenViewModel
-import java.util.Vector
-import java.util.stream.Stream
 import kotlin.collections.forEach
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.random.Random
-import kotlin.reflect.full.primaryConstructor
-
-
 
 @OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun <K, V> mainScreen() {
-
-    val screenViewModel =MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
+    val screenViewModel = MainScreenViewModel<K, V>(GraphViewModel(EmptyGraph()))
 
     var scale by remember { mutableStateOf(100) }
 
@@ -97,23 +77,22 @@ fun <K, V> mainScreen() {
     var uploader by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
-    var enlargeNone=0
-    var lowNone=0
-
+    var enlargeNone = 0
+    var lowNone = 0
 
     val requester = remember { FocusRequester() }
-
 
     val enlarge: () -> Unit = {
         screenViewModel.viewModel.vertices.values.forEach {
             it.x.value *= 1.1
             it.y.value *= 1.1
-            if (enlargeNone>0)
+            if (enlargeNone > 0) {
                 enlargeNone--
-            else {
+            } else {
                 it.radius.value = min(it.radius.value * 1.1, 35.0)
-                if (it.radius.value == 35.0)
+                if (it.radius.value == 35.0) {
                     lowNone++
+                }
             }
         }
     }
@@ -122,126 +101,132 @@ fun <K, V> mainScreen() {
         screenViewModel.viewModel.vertices.values.forEach {
             it.x.value *= 0.9
             it.y.value *= 0.9
-            if (lowNone>0)
+            if (lowNone > 0) {
                 lowNone--
-            else {
+            } else {
                 it.radius.value = max(it.radius.value * 0.9, 10.0)
-                if (it.radius.value == 10.0)
+                if (it.radius.value == 10.0) {
                     enlargeNone++
+                }
             }
         }
     }
-
 
     LaunchedEffect(Unit) {
         requester.requestFocus()
     }
 
-
     Scaffold(
-        modifier = Modifier.focusRequester(requester).focusable().onKeyEvent { keyEvent ->
-            when {
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.N && keyEvent.isCtrlPressed -> {
-                    screenViewModel.graphType.value=true
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Z && keyEvent.isCtrlPressed -> {
-                    screenViewModel.viewModel.stateHolder.undo()
-                    screenViewModel.repainter.value=true
-                    screenViewModel.repainter.value=false
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.V && keyEvent.isShiftPressed-> {
-                    if (screenViewModel.viewModel.selected.isNotEmpty()) {
-                        screenViewModel.showDeleteConfirmationVertex.value = true
-                    } else {
-                        screenViewModel.showNoSelectionWarning.value = true
+        modifier =
+            Modifier.focusRequester(requester).focusable().onKeyEvent { keyEvent ->
+                when {
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.R -> {
+                        screenViewModel.resetSelected()
+                        true
                     }
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.E && keyEvent.isShiftPressed-> {
-                    if (screenViewModel.viewModel.selected.isNotEmpty()) {
-                        screenViewModel.showDeleteEdgeDialog.value = true
-                    } else {
-                        screenViewModel.showNoSelectionWarning.value = true
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.N && keyEvent.isCtrlPressed -> {
+                        screenViewModel.graphType.value = true
+                        true
                     }
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.V -> {
-                    screenViewModel.showAddVertexDialog.value = true
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.E -> {
-                    if (screenViewModel.viewModel.selected.size >= 2) {
-                        screenViewModel.showAddEdgesDialog.value = true
-                        screenViewModel.edgeError.value = false
-                    } else {
-                        screenViewModel.edgeError.value = true
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Z && keyEvent.isCtrlPressed -> {
+                        screenViewModel.viewModel.stateHolder.undo()
+                        screenViewModel.repainter.value = true
+                        screenViewModel.repainter.value = false
+                        true
                     }
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Minus -> {
-                    lower()
-                    scale -= 10
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Equals -> {
-                    enlarge()
-                    scale += 10
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionRight -> {
-                    screenViewModel.viewModel.vertices.values.forEach {
-                        it.onDrag(Offset(25f, 0f))
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.V && keyEvent.isShiftPressed -> {
+                        if (screenViewModel.viewModel.selected.isNotEmpty()) {
+                            screenViewModel.showDeleteConfirmationVertex.value = true
+                        } else {
+                            screenViewModel.showNoSelectionWarning.value = true
+                        }
+                        true
                     }
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionLeft -> {
-                    screenViewModel.viewModel.vertices.values.forEach {
-                        it.onDrag(Offset(-25f, 0f))
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.E && keyEvent.isShiftPressed -> {
+                        if (screenViewModel.viewModel.selected.isNotEmpty()) {
+                            screenViewModel.showDeleteEdgeDialog.value = true
+                        } else {
+                            screenViewModel.showNoSelectionWarning.value = true
+                        }
+                        true
                     }
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionUp -> {
-                    screenViewModel.viewModel.vertices.values.forEach {
-                        it.onDrag(Offset(0f, -25f,))
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.V -> {
+                        screenViewModel.showAddVertexDialog.value = true
+                        true
                     }
-                    true
-                }
-                keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionDown -> {
-                    screenViewModel.viewModel.vertices.values.forEach {
-                        it.onDrag(Offset(0f, 25f))
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.E -> {
+                        if (screenViewModel.viewModel.selected.size >= 2) {
+                            screenViewModel.showAddEdgesDialog.value = true
+                            screenViewModel.edgeError.value = false
+                        } else {
+                            screenViewModel.edgeError.value = true
+                        }
+                        true
                     }
-                    true
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Minus -> {
+                        lower()
+                        scale -= 10
+                        true
+                    }
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Equals -> {
+                        enlarge()
+                        scale += 10
+                        true
+                    }
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionRight -> {
+                        screenViewModel.viewModel.vertices.values.forEach {
+                            it.onDrag(Offset(25f, 0f))
+                        }
+                        true
+                    }
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionLeft -> {
+                        screenViewModel.viewModel.vertices.values.forEach {
+                            it.onDrag(Offset(-25f, 0f))
+                        }
+                        true
+                    }
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionUp -> {
+                        screenViewModel.viewModel.vertices.values.forEach {
+                            it.onDrag(Offset(0f, -25f))
+                        }
+                        true
+                    }
+                    keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionDown -> {
+                        screenViewModel.viewModel.vertices.values.forEach {
+                            it.onDrag(Offset(0f, 25f))
+                        }
+                        true
+                    }
+                    else -> false
                 }
-                else -> false
-            }
-        },
+            },
         bottomBar = {
             BottomAppBar(backgroundColor = Color.White, modifier = Modifier.height(40.dp)) {
                 Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxSize()) {
                     Button(
-                        onClick = { screenViewModel.viewModel.stateHolder.undo()
-                            screenViewModel.repainter.value=screenViewModel.repainter.value.not() },
-                        content = {Text("Undo")},
+                        onClick = {
+                            screenViewModel.viewModel.stateHolder.undo()
+                            screenViewModel.repainter.value = screenViewModel.repainter.value.not()
+                        },
+                        content = { Text("Undo") },
                     )
-                    Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically){
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Button(
                             onClick = {
                                 scale += 10
                                 enlarge()
                             },
-                            ) {
+                        ) {
                             Text("+")
                         }
                         Box(Modifier.padding(horizontal = 10.dp)) {
-                            Text("${scale}%")
+                            Text("$scale%")
                         }
                         Button(
                             onClick = {
                                 scale -= 10
                                 lower()
-                            }
+                            },
                         ) {
                             Text("-")
                         }
@@ -251,7 +236,7 @@ fun <K, V> mainScreen() {
         },
         topBar = {
             TopAppBar(backgroundColor = Color.White, modifier = Modifier.height(40.dp)) {
-                //выбор графа
+                // выбор графа
                 Box {
                     IconButton(onClick = { create = !create }, Modifier.padding(8.dp, 2.dp)) {
                         Text("Graphs")
@@ -263,18 +248,19 @@ fun <K, V> mainScreen() {
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.graphType.value = true
-                            }
+                            },
                         ) {
-
                             Text("New Graph...")
                         }
                     }
                 }
-                //загрузка графа
+                // загрузка графа
                 Box {
-                    IconButton(onClick = { downloader = !downloader },
+                    IconButton(
+                        onClick = { downloader = !downloader },
                         Modifier.padding(8.dp, 2.dp),
-                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*,*>) {
+                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*, *>,
+                    ) {
                         Text("Download")
                     }
                     DropdownMenu(
@@ -283,30 +269,31 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(
                             onClick = {
-                                screenViewModel.downloadJson(JsonDownloader())
+                                screenViewModel.downloadJson(jsonDownloader())
                                 downloader = false
-                            }
+                            },
                         ) {
                             Text("From JSON...")
                         }
 
                         DropdownMenuItem(
                             onClick = {
-                                screenViewModel.statusNeo4j.value=true
+                                screenViewModel.statusNeo4j.value = true
                                 screenViewModel.downloadNeo4j()
                                 downloader = false
-                            }
+                            },
                         ) {
                             Text("From Neo4j...")
-
                         }
-
                     }
                 }
-                //выгрузка графа
+                // выгрузка графа
                 Box {
-                    IconButton(onClick = { uploader = !uploader }, Modifier.padding(8.dp, 2.dp),
-                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*,*>) {
+                    IconButton(
+                        onClick = { uploader = !uploader },
+                        Modifier.padding(8.dp, 2.dp),
+                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*, *>,
+                    ) {
                         Text("Upload")
                     }
                     DropdownMenu(
@@ -315,58 +302,60 @@ fun <K, V> mainScreen() {
                     ) {
                         DropdownMenuItem(
                             onClick = {
-                                screenViewModel.uploadJson(JsonUploader())
+                                screenViewModel.uploadJson(jsonUploader())
                                 uploader = false
-                            }
+                            },
                         ) {
                             Text("To JSON...")
                         }
 
                         DropdownMenuItem(
                             onClick = {
-                                screenViewModel.statusNeo4j.value=false
+                                screenViewModel.statusNeo4j.value = false
                                 screenViewModel.uploadNeo4j()
                                 uploader = false
-                            }
+                            },
                         ) {
                             Text("To Neo4j...")
-
                         }
                     }
-
                 }
-                //алгоритмы
+                // алгоритмы
                 Box {
-                    IconButton(onClick = { expAlgo = !expAlgo }, Modifier.padding(8.dp, 2.dp),
-                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*,*>) {
+                    IconButton(
+                        onClick = { expAlgo = !expAlgo },
+                        Modifier.padding(8.dp, 2.dp),
+                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*, *>,
+                    ) {
                         Text("Algorithms")
                     }
                     DropdownMenu(
                         expanded = expAlgo,
-                        onDismissRequest = { expAlgo = false }
+                        onDismissRequest = { expAlgo = false },
                     ) {
-                        //алгоритм Дейкстры
+                        // алгоритм Дейкстры
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.dijkstra()
                                 expAlgo = false
-                            }
+                            },
                         ) {
                             Text("Dijkstra")
                         }
-                        //алгоритм Форда-Беллмана
-                        DropdownMenuItem(
-                            onClick = {
-                                screenViewModel.fordBellman()
-                                expAlgo = false
+                        if (screenViewModel.viewModel.graph !is UndirWeightGraph<*, *>) {
+                            // алгоритм Форда-Беллмана
+                            DropdownMenuItem(
+                                onClick = {
+                                    screenViewModel.fordBellman()
+                                    expAlgo = false
+                                },
+                            ) {
+                                Text("Ford-Bellman")
                             }
 
-                        ) {
-                            Text("Ford-Bellman")
+                            Divider()
                         }
-
-                        Divider()
-                        //алгоритм поиска циклов
+                        // алгоритм поиска циклов
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.cycles()
@@ -377,7 +366,7 @@ fun <K, V> mainScreen() {
                         }
 
                         Divider()
-                        //компоненты сильной связанности
+                        // компоненты сильной связанности
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.kosajuruSharir()
@@ -387,21 +376,21 @@ fun <K, V> mainScreen() {
                             Text("Connected components search")
                         }
                         Divider()
-                        //forseAtlas2
+                        // forseAtlas2
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.forceAtlas2()
                                 expAlgo = false
-                            }
+                            },
                         ) {
                             Text("ForceAtlas2")
                         }
-                        //YuifanHu
+                        // YuifanHu
                         DropdownMenuItem(
                             onClick = {
                                 screenViewModel.yuifanHu()
                                 expAlgo = false
-                            }
+                            },
                         ) {
                             Text("YuifanHu")
                         }
@@ -417,31 +406,32 @@ fun <K, V> mainScreen() {
                         }
                     }
                 }
-                //добавление/удаление
+                // добавление/удаление
                 Box {
-                    IconButton(onClick = { expanded = true }, modifier = Modifier.padding(8.dp, 2.dp),
-                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*,*>) {
+                    IconButton(
+                        onClick = { expanded = true },
+                        modifier = Modifier.padding(8.dp, 2.dp),
+                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*, *>,
+                    ) {
                         Text("Paint")
                     }
                     DropdownMenu(
                         expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                        onDismissRequest = { expanded = false },
                     ) {
                         DropdownMenuItem(
-
                             onClick = {
                                 screenViewModel.showAddVertexDialog.value = true
                                 expanded = false
-                            }
+                            },
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text("Add vertex")
                                 Text("V", color = Color.Gray, modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp))
                             }
-
                         }
                         DropdownMenuItem(
                             onClick = {
@@ -452,16 +442,15 @@ fun <K, V> mainScreen() {
                                     screenViewModel.edgeError.value = true
                                 }
                                 expanded = false
-                            }
+                            },
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text("Add edges")
                                 Text("E", color = Color.Gray, modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp))
                             }
-
                         }
                         DropdownMenuItem(
                             onClick = {
@@ -471,11 +460,11 @@ fun <K, V> mainScreen() {
                                     screenViewModel.showNoSelectionWarning.value = true
                                 }
                                 expanded = false
-                            }
+                            },
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text("Delete vertices")
                                 Text("Shift + V", color = Color.Gray, modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp))
@@ -483,16 +472,17 @@ fun <K, V> mainScreen() {
                         }
                         DropdownMenuItem(
                             onClick = {
-                                if (screenViewModel.viewModel.selected.isNotEmpty())
+                                if (screenViewModel.viewModel.selected.isNotEmpty()) {
                                     screenViewModel.showDeleteEdgeDialog.value = true
-                                else
+                                } else {
                                     screenViewModel.showNoSelectionWarning.value = true
+                                }
                                 expanded = false
-                            }
+                            },
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text("Delete edges")
                                 Text("Shift + E", color = Color.Gray, modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp))
@@ -500,80 +490,88 @@ fun <K, V> mainScreen() {
                         }
                     }
                 }
-                //побочные функции
+                // побочные функции
                 Box {
-                    IconButton(onClick = { expandedSecondary = !expandedSecondary }, Modifier.padding(8.dp, 2.dp),
-                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*,*>) {
+                    IconButton(
+                        onClick = { expandedSecondary = !expandedSecondary },
+                        Modifier.padding(8.dp, 2.dp),
+                        enabled = screenViewModel.viewModel.graph !is EmptyGraph<*, *>,
+                    ) {
                         Text("Other")
                     }
                     DropdownMenu(
                         expanded = expandedSecondary,
-                        onDismissRequest = { expandedSecondary = false }
+                        onDismissRequest = { expandedSecondary = false },
                     ) {
                         DropdownMenuItem(onClick = {
                             screenViewModel.resetSelected()
-                            expandedSecondary=false
+                            expandedSecondary = false
                         }) { Text("Reset") }
 
                         DropdownMenuItem(onClick = {
                             screenViewModel.visibleEdges()
-                            expandedSecondary=false
-                        })
-                        {
+                            expandedSecondary = false
+                        }) {
                             Text(
                                 when (screenViewModel.buttonEdgeLabel.value) {
                                     false -> "Show edge weights"
                                     true -> "Hide edge weights"
-                                }
+                                },
                             )
                         }
                     }
                 }
             }
-        }
+        },
     ) {
         Surface(
             Modifier.fillMaxSize().onDrag(onDrag = { offset ->
                 screenViewModel.viewModel.vertices.values.forEach {
                     it.onDrag(offset)
                 }
-            })
+            }),
         ) {
-
             graphView(screenViewModel.viewModel)
-            errorWindow(screenViewModel.errorText.value, screenViewModel.error)
+            exceptionWindow(screenViewModel.errorText.value, screenViewModel.error)
             indexErrorWindow(screenViewModel.warning)
             inputNeo4j(screenViewModel)
             processNeo4j(screenViewModel.readyNeo4j)
-            windowPath(screenViewModel.viewModel.selected,
-                screenViewModel.path,screenViewModel.pathDialog)
+            windowPath(
+                screenViewModel.viewModel.selected,
+                screenViewModel.path,
+                screenViewModel.pathDialog,
+            )
             edgeErrorWindow(screenViewModel.edgeError)
             graphTypeDialog(screenViewModel)
+            errorWindow(screenViewModel.fatalError)
 
-            if (screenViewModel.showAddVertexDialog.value)
-                AddVertexDialog(screenViewModel)
+            if (screenViewModel.showAddVertexDialog.value) {
+                addVertexDialog(screenViewModel)
+            }
 
-            if (screenViewModel.showAddEdgesDialog.value)
-                AddEdgeDialog(screenViewModel)
+            if (screenViewModel.showAddEdgesDialog.value) {
+                addEdgeDialog(screenViewModel)
+            }
 
-            if (screenViewModel.showDeleteConfirmationVertex.value)
-                DeleteConfirmWindow(screenViewModel, "vertices")
+            if (screenViewModel.showDeleteConfirmationVertex.value) {
+                deleteConfirmWindow(screenViewModel, "vertices")
+            }
 
-            if (screenViewModel.showDeleteEdgeDialog.value)
-                DeleteEdgeDialog(screenViewModel)
+            if (screenViewModel.showDeleteEdgeDialog.value) {
+                deleteEdgeDialog(screenViewModel)
+            }
 
-            if (screenViewModel.showNoSelectionWarning.value)
-                SelectionErrorWindow(screenViewModel)
+            if (screenViewModel.showNoSelectionWarning.value) {
+                selectionErrorWindow(screenViewModel)
+            }
 
-            if (screenViewModel.showKeyVertexDialog.value)
-                KeyVertexDialog(screenViewModel)
+            if (screenViewModel.showKeyVertexDialog.value) {
+                keyVertexDialog(screenViewModel)
+            }
 
-            if (screenViewModel.repainter.value)
+            if (screenViewModel.repainter.value) {
                 currentRecomposeScope.invalidate()
-
-
-
-
+            }
         }
     }
 }

@@ -20,13 +20,14 @@ import androidx.compose.ui.unit.dp
 import viewmodel.MainScreenViewModel
 
 @Composable
-fun graphTypeDialog(screenViewModel: MainScreenViewModel<*,*>) {
-    val graphs = listOf(
-        "Undirected Graph",
-        "Undirected Weighted Graph",
-        "Directed Weighted Graph",
-        "Directed Graph"
-    )
+fun graphTypeDialog(screenViewModel: MainScreenViewModel<*, *>) {
+    val graphs =
+        listOf(
+            "Undirected Graph",
+            "Undirected Weighted Graph",
+            "Directed Weighted Graph",
+            "Directed Graph",
+        )
     val (selectedOption, onOptionSelected) = remember { mutableStateOf(graphs[0]) }
     if (screenViewModel.graphType.value) {
         AlertDialog(
@@ -41,13 +42,13 @@ fun graphTypeDialog(screenViewModel: MainScreenViewModel<*,*>) {
                                 .selectable(
                                     selected = (text == selectedOption),
                                     onClick = { onOptionSelected(text) },
-                                    role = Role.RadioButton
+                                    role = Role.RadioButton,
                                 ),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(
                                 selected = (text == selectedOption),
-                                onClick = null
+                                onClick = null,
                             )
                             Text(text = text)
                         }
@@ -58,11 +59,16 @@ fun graphTypeDialog(screenViewModel: MainScreenViewModel<*,*>) {
                 Button(
                     onClick = {
                         screenViewModel.graphTypeSelection(selectedOption, graphs)
-                    }
+                    },
                 ) { Text("OK") }
-
-            }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        screenViewModel.graphType.value = false
+                    },
+                ) { Text("Cancel") }
+            },
         )
     }
-
 }
