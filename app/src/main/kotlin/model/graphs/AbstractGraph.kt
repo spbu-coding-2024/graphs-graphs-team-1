@@ -25,7 +25,7 @@ abstract class AbstractGraph<K, V> : Graph<K, V> {
     }
 
     protected open inner class Iterate(
-        var start: Vertex<K, V> = vertices.firstElement(),
+        protected var start: Vertex<K, V> = vertices.firstElement(),
     ) : Iterator<Vertex<K, V>> {
         protected var visited = hashMapOf<Vertex<K, V>, Boolean>()
         protected open lateinit var stack: Vector<Vertex<K, V>>
@@ -73,9 +73,6 @@ abstract class AbstractGraph<K, V> : Graph<K, V> {
     }
 
     protected inner class DFS : Iterate() {
-        /* Here "stack" is a queue because Vector.add() adds elements to the end, and .removeFirst() removes elements
-        from the beginning. This corresponds to FIFO(first in, first out) which forms a queue
-         */
         override var stack: Vector<Vertex<K, V>> = RealStack()
     }
 }
