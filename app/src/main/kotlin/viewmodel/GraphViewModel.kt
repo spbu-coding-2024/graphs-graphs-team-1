@@ -278,17 +278,13 @@ class GraphViewModel<K, V>(
         selected.map { it.vertex }.forEach { vertex ->
             graph.deleteVertex(vertex)
             vertices.remove(vertex)
-            stateHolder.actions.removeAll {
-                it.type == Object.VERTEX && it.obj === vertex
-            }
+            stateHolder.removeAssociatedWithObj(vertex)
             val temp =
                 edges.keys.filter { edge ->
                     edge.link.first == vertex || edge.link.second == vertex
                 }
             temp.forEach { edge ->
-                stateHolder.actions.removeIf {
-                    it.type == Object.EDGE && it.obj === edge
-                }
+                stateHolder.removeAssociatedWithObj(edge)
                 graph.deleteEdge(edge.link.first, edge.link.second)
                 edges.remove(edge)
             }
@@ -314,9 +310,7 @@ class GraphViewModel<K, V>(
                                     edge.link.first === i && edge.link.first === j
                                 }
                             temp.forEach { edge ->
-                                stateHolder.actions.removeAll {
-                                    it.type == Object.EDGE && it.obj === edge
-                                }
+                                stateHolder.removeAssociatedWithObj(edge)
                             }
                             edges.keys.removeAll(temp)
                         }
@@ -335,9 +329,7 @@ class GraphViewModel<K, V>(
                                 edge.link.first == selectedVertices[i] && edge.link.first == selectedVertices[i + 1]
                             }
                         temp.forEach { edge ->
-                            stateHolder.actions.removeAll {
-                                it.type == Object.EDGE && it.obj === edge
-                            }
+                            stateHolder.removeAssociatedWithObj(edge)
                         }
                         edges.keys.removeAll(temp)
                     }
@@ -355,9 +347,7 @@ class GraphViewModel<K, V>(
                 }
                 temp.forEach { edge ->
                     if (graph.deleteEdge(edge.link.first, edge.link.second)) {
-                        stateHolder.actions.removeAll {
-                            it.obj === edge
-                        }
+                        stateHolder.removeAssociatedWithObj(edge)
                     }
                 }
             }
