@@ -11,11 +11,11 @@ import kotlin.collections.hashMapOf
 import kotlin.random.Random
 
 abstract class Planar {
-    val width = Toolkit.getDefaultToolkit().screenSize.width
-    val height = Toolkit.getDefaultToolkit().screenSize.height
-    val project = Lookup.getDefault().lookup(ProjectController::class.java).newProject()
+    private val width = Toolkit.getDefaultToolkit().screenSize.width
+    private val height = Toolkit.getDefaultToolkit().screenSize.height
+    private val project = Lookup.getDefault().lookup(ProjectController::class.java).newProject()
     var graphModel = Lookup.getDefault().lookup(GraphController::class.java).graphModel
-    var new = graphModel.directedGraph
+    private var new = graphModel.directedGraph
 
     fun <K, V> init(graph: Graph<K, V>): HashMap<Vertex<K, V>, Node> {
         var array = hashMapOf<Vertex<K, V>, Node>()

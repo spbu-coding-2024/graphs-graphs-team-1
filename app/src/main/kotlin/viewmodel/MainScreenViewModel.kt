@@ -30,7 +30,7 @@ class MainScreenViewModel<K, V>(
 
     private class NoGraphException : Throwable()
 
-    var viewModel by mutableStateOf(graphViewModel)
+    private var viewModel by mutableStateOf(graphViewModel)
 
     var repainter = mutableStateOf(false)
     var pathDialog = mutableStateOf(false)

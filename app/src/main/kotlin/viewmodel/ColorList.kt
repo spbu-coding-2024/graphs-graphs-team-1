@@ -3,7 +3,7 @@ package viewmodel
 class ColorList : Iterator<String> {
     private var index = 0
 
-    val colors: Array<String> =
+    private val colors: Array<String> =
         arrayOf(
             "FFFF00",
             "1CE6FF",

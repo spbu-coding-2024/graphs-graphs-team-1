@@ -24,7 +24,7 @@ class Record(
 class StateHolder<K, V>(
     var graphViewModel: GraphViewModel<K, V>,
 ) {
-    var actions = LinkedList<Record>()
+    private var actions = LinkedList<Record>()
 
     fun pushVertex(vertex: Vertex<K, V>) {
         actions.push(Record(Status.ADDITION, Object.VERTEX, vertex))
