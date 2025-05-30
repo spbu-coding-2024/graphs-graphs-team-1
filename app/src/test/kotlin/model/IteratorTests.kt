@@ -13,22 +13,22 @@ class IteratorTests {
     @Test
     fun testDFS() {
         val graph = DirWeightGraph<Int, Int>()
-        var answer = Vector<Vertex<Int, Int>>()
-        var temp = Array<Vector<Vertex<Int, Int>>>(3) { Vector() }
+        val answer = Vector<Vertex<Int, Int>>()
+        val temp = Array<Vector<Vertex<Int, Int>>>(3) { Vector() }
 
         var current = Vertex(DEFAULT, DEFAULT)
         answer.add(current)
         repeat(10) {
-            var new = Vertex(DEFAULT, DEFAULT)
+            val new = Vertex(DEFAULT, DEFAULT)
             graph.addEdge(current, new, DEFAULT)
             current = new
             answer.add(current)
         }
-        var end = current
+        val end = current
         for (i in 0..2) {
             current = end
             repeat(10) {
-                var new = Vertex(DEFAULT, DEFAULT)
+                val new = Vertex(DEFAULT, DEFAULT)
                 graph.addEdge(current, new, DEFAULT)
                 current = new
                 temp[i].add(current)
@@ -41,7 +41,7 @@ class IteratorTests {
         graph.addVertex(current)
         answer.add(current)
 
-        var iter = graph.iteratorDFS()
+        val iter = graph.iteratorDFS()
         for (i in answer.indices) {
             if (iter.hasNext()) {
                 assertEquals(answer[i], iter.next())
@@ -55,13 +55,12 @@ class IteratorTests {
     @Test
     fun testBFS() {
         val graph = UndirWeightGraph<Int, Int>()
-        var answer = Vector<Vertex<Int, Int>>()
-
+        val answer = Vector<Vertex<Int, Int>>()
         var current = Vertex(DEFAULT, DEFAULT)
         graph.addVertex(current)
         answer.add(current)
         repeat(10) {
-            var new = Vertex(DEFAULT, DEFAULT)
+            val new = Vertex(DEFAULT, DEFAULT)
             graph.addEdge(current, new, DEFAULT)
             current = new
             answer.add(current)
@@ -70,8 +69,8 @@ class IteratorTests {
         var prev2 = current
 
         repeat(10) {
-            var new1 = Vertex(DEFAULT, DEFAULT)
-            var new2 = Vertex(DEFAULT, DEFAULT)
+            val new1 = Vertex(DEFAULT, DEFAULT)
+            val new2 = Vertex(DEFAULT, DEFAULT)
             graph.addEdge(prev1, new1, DEFAULT)
             graph.addEdge(prev2, new2, DEFAULT)
             answer.add(new1)
@@ -80,7 +79,7 @@ class IteratorTests {
             prev2 = new2
         }
 
-        var iter = graph.iteratorBFS()
+        val iter = graph.iteratorBFS()
         for (i in answer.indices) {
             if (iter.hasNext()) {
                 assertEquals(answer[i], iter.next())
