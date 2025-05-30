@@ -26,6 +26,12 @@ class StateHolder<K, V>(
 ) {
     private var actions = LinkedList<Record>()
 
+    fun removeAssociatedWithObj(obj: GraphPartModel) {
+        actions.removeAll {
+            it.obj === obj
+        }
+    }
+
     fun pushVertex(vertex: Vertex<K, V>) {
         actions.push(Record(Status.ADDITION, Object.VERTEX, vertex))
     }
