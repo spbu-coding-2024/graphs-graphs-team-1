@@ -25,7 +25,7 @@ abstract class AbstractGraph<K, V> : Graph<K, V> {
     }
 
     protected open inner class Iterate(
-        var start: Vertex<K, V> = vertices.firstElement(),
+        protected var start: Vertex<K, V> = vertices.firstElement(),
     ) : Iterator<Vertex<K, V>> {
         protected var visited = hashMapOf<Vertex<K, V>, Boolean>()
         protected open lateinit var stack: Vector<Vertex<K, V>>
