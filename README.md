@@ -5,6 +5,7 @@
 ![Java](https://img.shields.io/badge/Java-21-yellow.svg)
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 ![Build](https://img.shields.io/github/actions/workflow/status/spbu-coding-2024/graphs-graphs-team-1/build.yml)
+[![CodeFactor](https://www.codefactor.io/repository/github/spbu-coding-2024/graphs-graphs-team-1/badge/main)](https://www.codefactor.io/repository/github/spbu-coding-2024/graphs-graphs-team-1/overview/main)
 ### We present MVVM graph application designed to simplify user interaction with graphs and instruments to explore its properties.
 ![img.png](/resources/images/intro.png)
 
