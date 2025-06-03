@@ -40,14 +40,14 @@ fun graphTypeDialog(screenViewModel: MainScreenViewModel<*, *>) {
                                 .fillMaxWidth()
                                 .height(56.dp)
                                 .selectable(
-                                    selected = (text == selectedOption),
+                                    selected = text == selectedOption,
                                     onClick = { onOptionSelected(text) },
                                     role = Role.RadioButton,
                                 ),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(
-                                selected = (text == selectedOption),
+                                selected = text == selectedOption,
                                 onClick = null,
                             )
                             Text(text = text)
