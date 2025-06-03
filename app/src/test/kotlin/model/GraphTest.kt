@@ -2,9 +2,11 @@ package model
 
 import model.graphs.DirWeightGraph
 import model.graphs.DirectedGraph
+import model.graphs.EmptyGraph
 import model.graphs.Graph
 import model.graphs.UndirWeightGraph
 import model.graphs.UndirectedGraph
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -16,6 +18,7 @@ import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 class GraphTest {
     fun edgeAddition(
@@ -289,5 +292,33 @@ class GraphTest {
                 graph.getEdge(from, to)?.link?.second,
             )
         }
+    }
+
+    @Test
+    fun `empty graph test`() {
+        val graph = EmptyGraph<Int, Int>()
+        val vertices = Array(20) { Vertex(4, 4) }
+
+        vertices.forEach {
+            graph.addVertex(it)
+        }
+        assert(graph.vertices.isEmpty())
+
+        for (i in 1..19) {
+            assertFalse(graph.addEdge(vertices[i - 1], vertices[i], 4))
+        }
+        assert(graph.vertices.isEmpty())
+        assert(graph.edges.isEmpty())
+
+        vertices.forEach {
+            assertFalse(graph.deleteVertex(it))
+        }
+        assert(graph.vertices.isEmpty())
+
+        for (i in 1..19) {
+            assertFalse(graph.deleteEdge(vertices[i - 1], vertices[i]))
+        }
+        assert(graph.vertices.isEmpty())
+        assert(graph.edges.isEmpty())
     }
 }
