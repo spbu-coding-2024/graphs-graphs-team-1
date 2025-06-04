@@ -69,10 +69,10 @@ class GraphViewModel<K, V>(
         }
         return GraphFactory.fromJSON(
             file.readText(),
-            when (graph::class.simpleName) {
-                "DirectedGraph" -> ::DirectedGraph
-                "DirWeightGraph" -> ::DirWeightGraph
-                "UndirectedGraph" -> ::UndirectedGraph
+            when (graph) {
+                is DirectedGraph -> ::DirectedGraph
+                is UndirectedGraph -> ::UndirectedGraph
+                is DirWeightGraph -> ::DirWeightGraph
                 else -> ::UndirWeightGraph
             },
             object : TypeToken<K>() {}.type,
@@ -88,10 +88,10 @@ class GraphViewModel<K, V>(
         passwordNeo4j: String,
     ): Graph<K, V> =
         GraphFactory.fromNeo4j(
-            when (graph::class.simpleName) {
-                "DirectedGraph" -> ::DirectedGraph
-                "DirWeightGraph" -> ::DirWeightGraph
-                "UndirectedGraph" -> ::UndirectedGraph
+            when (graph) {
+                is DirectedGraph -> ::DirectedGraph
+                is UndirectedGraph -> ::UndirectedGraph
+                is DirWeightGraph -> ::DirWeightGraph
                 else -> ::UndirWeightGraph
             },
             uriNeo4j,

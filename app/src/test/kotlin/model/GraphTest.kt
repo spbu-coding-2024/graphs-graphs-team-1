@@ -35,7 +35,7 @@ class GraphTest {
                 continue
             }
             if (graph.addEdge(array[first] ?: continue, array[second] ?: continue, Random.nextInt())) {
-                if (graph::class.simpleName in arrayOf("UndirectedGraph", "UndirWeightGraph")) {
+                if (graph is UndirWeightGraph<*, *>) {
                     amounts[second]++
                 }
                 amounts[first]++
@@ -85,17 +85,15 @@ class GraphTest {
                         if (fromVertex[from] == null) {
                             fromVertex[from] = Vector()
                         }
-                        when (graph::class.simpleName) {
-                            "UndirWeightGraph", "UndirectedGraph" -> {
-                                if (toVertex[from] == null) {
-                                    toVertex[from] = Vector()
-                                }
-                                if (fromVertex[to] == null) {
-                                    fromVertex[to] = Vector()
-                                }
-                                fromVertex[to]?.add(from)
-                                toVertex[from]?.add(to)
+                        if (graph is UndirWeightGraph) {
+                            if (toVertex[from] == null) {
+                                toVertex[from] = Vector()
                             }
+                            if (fromVertex[to] == null) {
+                                fromVertex[to] = Vector()
+                            }
+                            fromVertex[to]?.add(from)
+                            toVertex[from]?.add(to)
                         }
                         if (toVertex[to] == null) {
                             toVertex[to] = Vector()
