@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import model.graphs.NoWeightGraph
+import model.graphs.UndirWeightGraph
 import viewmodel.MainScreenViewModel
 
 @Composable
@@ -25,7 +27,7 @@ fun addEdgeDialog(screenViewModel: MainScreenViewModel<*, *>) {
         title = { Text("Add Edges") },
         text = {
             Column {
-                if (screenViewModel.viewModel.graph::class.simpleName !in arrayOf("DirWeightGraph", "DirectedGraph")) {
+                if (screenViewModel.viewModel.graph is UndirWeightGraph<*, *>) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         RadioButton(
                             selected = screenViewModel.isAllToAllMode.value,
@@ -41,7 +43,7 @@ fun addEdgeDialog(screenViewModel: MainScreenViewModel<*, *>) {
                     )
                     Text("Sequentially", Modifier.padding(start = 4.dp))
                 }
-                if (screenViewModel.viewModel.graph::class.simpleName !in arrayOf("UndirectedGraph", "DirectedGraph")) {
+                if (screenViewModel.viewModel.graph !is NoWeightGraph<*, *>) {
                     Spacer(Modifier.height(16.dp))
                     TextField(
                         modifier = Modifier.focusable().padding(0.dp, 10.dp),
